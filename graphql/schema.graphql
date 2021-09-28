@@ -1,0 +1,42 @@
+type Query {
+  getSetupConfig: GetSetupConfigResponse
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  getQuote(id: String): Quote
+    @withPermissions
+    @withSession
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  getQuotes(
+    organization: [String]
+    costCenter: [String]
+    status: [String]
+    search: String
+    page: Int = 1
+    pageSize: Int = 25
+    sortOrder: String = "DESC"
+    sortedBy: String = "lastUpdate"
+  ): Quotes
+    @withPermissions
+    @withSession
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+}
+
+type Mutation {
+  createQuote(
+    referenceName: String
+    items: [QuoteItemInput]
+    subtotal: Float
+    note: String
+    sendToSalesRep: Boolean
+  ): String @withPermissions @withSession
+  updateQuote(
+    id: String
+    items: [QuoteItemInput]
+    subtotal: Float
+    note: String
+    decline: Boolean
+  ): String @withPermissions @withSession
+  useQuote(id: String, orderFormId: String): String
+    @withPermissions
+    @withSession
+  clearCart(orderFormId: String): String
+}

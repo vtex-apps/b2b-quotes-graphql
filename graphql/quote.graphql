@@ -1,0 +1,66 @@
+input QuoteItemInput {
+  name: String
+  skuName: String
+  refId: String
+  id: String
+  productId: String
+  imageUrl: String
+  listPrice: Float
+  price: Float
+  quantity: Int
+  sellingPrice: Float
+  seller: String
+}
+
+type Quotes {
+  data: [Quote]
+  pagination: Pagination
+}
+
+type Pagination {
+  page: Int
+  pageSize: Int
+  total: Int
+}
+
+type Quote {
+  id: String
+  referenceName: String
+  creatorEmail: String
+  creatorRole: String
+  creationDate: String
+  expirationDate: String
+  lastUpdate: String
+  updateHistory: [QuoteUpdate]
+  items: [QuoteItem]
+  subtotal: Float
+  status: String
+  organization: String
+  organizationName: String
+  costCenter: String
+  costCenterName: String
+  viewedBySales: Boolean
+  viewedByCustomer: Boolean
+}
+
+type QuoteUpdate {
+  email: String
+  role: String
+  date: String
+  status: String
+  note: String
+}
+
+type QuoteItem {
+  name: String
+  skuName: String
+  refId: String
+  id: String
+  productId: String
+  imageUrl: String
+  listPrice: Float
+  price: Float
+  quantity: Int
+  sellingPrice: Float
+  seller: String
+}
