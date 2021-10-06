@@ -1,7 +1,7 @@
 {
   "vendor": "vtex",
   "name": "b2b-quotes-graphql",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "title": "B2B Quotes GraphQL",
   "description": "Backend for the B2B Quotes & Carts app",
   "builders": {
@@ -12,9 +12,7 @@
   "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "read-workspace-apps"
@@ -77,7 +75,7 @@
     }
   ],
   "settingsSchema": {
-    "title": "Order Quote",
+    "title": "B2B Quotes & Carts",
     "type": "object",
     "properties": {
       "hasSchema": {
@@ -85,11 +83,11 @@
         "default": false
       },
       "adminSetup": {
-        "title": "Order Quote Settings",
+        "title": "B2B Quotes Settings",
         "type": "object",
         "properties": {
           "cartLifeSpan": {
-            "title": "Lifespan (in days) of saved cart",
+            "title": "Default expiration date (in days) for quotes and saved carts",
             "type": "number",
             "minimum": 1
           },
@@ -98,41 +96,19 @@
             "type": "string"
           }
         },
-        "required": [
-          "cartLifeSpan",
-          "storeLogoUrl"
-        ]
+        "required": ["cartLifeSpan", "storeLogoUrl"]
       }
     },
-    "required": [
-      "adminSetup"
-    ]
+    "required": ["adminSetup"]
   },
   "settingsUiSchema": {
-    "ui:order": [
-      "adminSetup",
-      "hasSchema"
-    ],
+    "ui:order": ["adminSetup", "hasSchema"],
     "adminSetup": {
-      "ui:order": [
-        "cartLifeSpan",
-        "storeLogoUrl"
-      ]
+      "ui:order": ["cartLifeSpan", "storeLogoUrl"]
     },
     "hasSchema": {
       "ui:widget": "hidden"
     }
-  },
-  "billingOptions": {
-    "termsURL": "https://compliance.vtex.com/gdpr/policies/vtex-privacy-policy",
-    "support": {
-      "url": "https://support.vtex.com/hc/requests"
-    },
-    "free": true,
-    "type": "free",
-    "availableCountries": [
-      "*"
-    ]
   },
   "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"
 }
