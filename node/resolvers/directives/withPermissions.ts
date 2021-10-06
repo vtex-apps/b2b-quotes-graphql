@@ -11,21 +11,21 @@ export class WithPermissions extends SchemaDirectiveVisitor {
     field.resolve = async (root: any, args: any, context: any, info: any) => {
       const {
         clients: { storefrontPermissions },
-        headers,
         vtex: { logger },
       } = context
 
       context.vtex.storefrontPermissions = await storefrontPermissions
-        .checkUserPermission(headers)
+        .checkUserPermission()
         .then((result: any) => {
           return result.data.checkUserPermission
         })
-        .catch((error: any) =>
+        .catch((error: any) => {
+          console.error(error)
           logger.error({
             message: 'getPermissionsError',
             error,
           })
-        )
+        })
 
       return resolve(root, args, context, info)
     }

@@ -21,20 +21,8 @@ type Query {
 }
 
 type Mutation {
-  createQuote(
-    referenceName: String
-    items: [QuoteItemInput]
-    subtotal: Float
-    note: String
-    sendToSalesRep: Boolean
-  ): String @withPermissions @withSession
-  updateQuote(
-    id: String
-    items: [QuoteItemInput]
-    subtotal: Float
-    note: String
-    decline: Boolean
-  ): String @withPermissions @withSession
+  createQuote(input: QuoteInput!): String @withPermissions @withSession
+  updateQuote(input: QuoteUpdateInput!): String @withPermissions @withSession
   useQuote(id: String, orderFormId: String): String
     @withPermissions
     @withSession

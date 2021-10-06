@@ -7,7 +7,7 @@ const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
 }
 
-const SCHEMA_VERSION = 'v1.0'
+const SCHEMA_VERSION = 'v1.1'
 const QUOTE_DATA_ENTITY = 'quotes'
 const QUOTE_FIELDS = [
   'id',
@@ -74,14 +74,17 @@ const schema = {
     creationDate: {
       type: 'string',
       title: 'Creation Date',
+      format: 'date-time',
     },
     expirationDate: {
       type: 'string',
       title: 'Expiration Date',
+      format: 'date-time',
     },
     lastUpdate: {
       type: 'string',
       title: 'Last Update',
+      format: 'date-time',
     },
     updateHistory: {
       type: 'array',
@@ -244,7 +247,7 @@ export const resolvers = {
         !storefrontPermissions?.permissions?.length ||
         !sessionData?.namespaces['storefront-permissions']?.organization
           ?.value ||
-        !sessionData?.namespaces['storefront-permissions']?.costCenter?.value
+        !sessionData?.namespaces['storefront-permissions']?.costcenter?.value
       ) {
         return null
       }
@@ -254,7 +257,7 @@ export const resolvers = {
         sessionData.namespaces['storefront-permissions'].organization.value
 
       const userCostCenterId =
-        sessionData.namespaces['storefront-permissions'].costCenter.value
+        sessionData.namespaces['storefront-permissions'].costcenter.value
 
       if (
         !permissions.some(
@@ -341,7 +344,7 @@ export const resolvers = {
         !storefrontPermissions?.permissions?.length ||
         !sessionData?.namespaces['storefront-permissions']?.organization
           ?.value ||
-        !sessionData?.namespaces['storefront-permissions']?.costCenter?.value
+        !sessionData?.namespaces['storefront-permissions']?.costcenter?.value
       ) {
         return null
       }
@@ -351,7 +354,7 @@ export const resolvers = {
         sessionData.namespaces['storefront-permissions'].organization.value
 
       const userCostCenterId =
-        sessionData.namespaces['storefront-permissions'].costCenter.value
+        sessionData.namespaces['storefront-permissions'].costcenter.value
 
       if (
         !permissions.some(
@@ -435,8 +438,8 @@ export const resolvers = {
           schema: SCHEMA_VERSION,
           pagination: { page, pageSize },
           sort: `${sortedBy} ${sortOrder}`,
-          ...(where ? { where } : {}),
-          ...(search ? { keyword: search } : {}),
+          ...(where && { where }),
+          ...(search && { keyword: search }),
         })
 
         return quotes
@@ -488,17 +491,15 @@ export const resolvers = {
     createQuote: async (
       _: any,
       {
-        referenceName,
-        items,
-        subtotal,
-        note,
-        sendToSalesRep,
+        input: { referenceName, items, subtotal, note, sendToSalesRep },
       }: {
-        referenceName: string
-        items: QuoteItem[]
-        subtotal: number
-        note: string
-        sendToSalesRep: boolean
+        input: {
+          referenceName: string
+          items: QuoteItem[]
+          subtotal: number
+          note: string
+          sendToSalesRep: boolean
+        }
       },
       ctx: Context
     ) => {
@@ -512,11 +513,7 @@ export const resolvers = {
 
       const settings = await checkConfig(ctx)
 
-      if (!storefrontPermissions?.permissions?.length) {
-        throw new GraphQLError('permissions-not-found')
-      }
-
-      if (!sessionData?.namespaces['storefront-permissions']) {
+      if (!sessionData?.namespaces['storefront-permissions']?.organization) {
         throw new GraphQLError('organization-data-not-found')
       }
 
@@ -524,7 +521,7 @@ export const resolvers = {
         throw new GraphQLError('email-not-found')
       }
 
-      if (!storefrontPermissions.permissions.includes('create-quotes')) {
+      if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
         throw new GraphQLError('operation-not-permitted')
       }
 
@@ -535,7 +532,7 @@ export const resolvers = {
 
       const {
         organization: { value: organizationId },
-        costCenter: { value: costCenterId },
+        costcenter: { value: costCenterId },
       } = sessionData.namespaces['storefront-permissions']
 
       const now = new Date()
@@ -572,8 +569,8 @@ export const resolvers = {
         costCenter: costCenterId,
         lastUpdate,
         updateHistory,
-        viewedByCustomer: false,
-        viewedBySales: false,
+        viewedByCustomer: sendToSalesRep,
+        viewedBySales: !sendToSalesRep,
       }
 
       try {
@@ -603,17 +600,15 @@ export const resolvers = {
     updateQuote: async (
       _: any,
       {
-        id,
-        items,
-        subtotal,
-        note,
-        decline,
+        input: { id, items, subtotal, note, decline },
       }: {
-        id: string
-        items: QuoteItem[]
-        subtotal: number
-        note: string
-        decline: boolean
+        input: {
+          id: string
+          items: QuoteItem[]
+          subtotal: number
+          note: string
+          decline: boolean
+        }
       },
       ctx: Context
     ) => {
@@ -639,17 +634,26 @@ export const resolvers = {
         role: { slug },
       } = storefrontPermissions
 
+      const isCustomer = slug.indexOf('customer') >= 0
+      const isSales = slug.indexOf('sales') >= 0
+
       if (
-        !permissions.some(
-          (permission: string) => permission.indexOf('edit-quotes') >= 0
-        )
+        (items?.length &&
+          !permissions.some(
+            (permission: string) => permission.indexOf('edit-quotes') >= 0
+          )) ||
+        (!items?.length &&
+          !permissions.some(
+            (permission: string) => permission.indexOf('access-quotes') >= 0
+          )) ||
+        (decline && !permissions.includes('decline-quotes'))
       ) {
         throw new GraphQLError('operation-not-permitted')
       }
 
       const {
         organization: { value: userOrganizationId },
-        costCenter: { value: userCostCenterId },
+        costcenter: { value: userCostCenterId },
       } = sessionData.namespaces['storefront-permissions']
 
       const now = new Date()
@@ -662,7 +666,13 @@ export const resolvers = {
           fields: QUOTE_FIELDS,
         })) as Quote
 
-        if (!existingQuote) throw new GraphQLError('No quote found to update')
+        if (!existingQuote) throw new GraphQLError('quote-not-found')
+        if (
+          existingQuote.status === 'expired' ||
+          existingQuote.status === 'declined'
+        ) {
+          throw new GraphQLError('quote-cannot-be-updated')
+        }
 
         // if user only has permission to edit their organization's quotes, check that the org matches
         if (
@@ -684,7 +694,11 @@ export const resolvers = {
           }
         }
 
-        const status = decline ? 'declined' : items.length ? 'ready' : 'revised'
+        const status = decline
+          ? 'declined'
+          : items?.length
+          ? 'ready'
+          : 'revised'
 
         const lastUpdate = nowISO
         const update = {
@@ -701,7 +715,9 @@ export const resolvers = {
 
         const updatedQuote = {
           ...existingQuote,
-          items: items.length ? items : existingQuote.items,
+          viewedByCustomer: decline || isCustomer,
+          viewedBySales: decline || isSales,
+          items: items?.length ? items : existingQuote.items,
           subtotal: subtotal ?? existingQuote.subtotal,
           lastUpdate,
           updateHistory,
@@ -759,6 +775,13 @@ export const resolvers = {
         throw new GraphQLError('operation-not-permitted')
       }
 
+      const token = ctx.cookies.get(`VtexIdclientAutCookie`)
+
+      const useHeaders = {
+        'Content-Type': 'application/json',
+        Cookie: `VtexIdclientAutCookie=${token};`,
+      }
+
       try {
         // GET QUOTE DATA
         const quote = (await masterdata.getDocument({
@@ -774,9 +797,25 @@ export const resolvers = {
         const { items } = quote
 
         // CLEAR CURRENT CART
-        await hub.post(routes.clearCart(account, orderFormId), {
-          expectedOrderFormSections: ['items'],
-        })
+        if (orderFormId !== 'default-order-form') {
+          await hub.post(
+            routes.clearCart(account, orderFormId),
+            {
+              expectedOrderFormSections: ['items'],
+            },
+            useHeaders
+          )
+        }
+
+        // CREATE CART IF IT DOESN'T EXIST YET
+        if (orderFormId === 'default-order-form') {
+          const newOrderForm = await hub.get(
+            routes.orderForm(account),
+            useHeaders
+          )
+
+          orderFormId = (newOrderForm.data as any).orderFormId
+        }
 
         // ADD ITEMS TO CART
         const data = await hub
@@ -816,13 +855,6 @@ export const resolvers = {
             price: prop(item.id, sellingPriceMap).price,
           })
         })
-
-        const token = ctx.cookies.get(`VtexIdclientAutCookie`)
-
-        const useHeaders = {
-          'Content-Type': 'application/json',
-          Cookie: `VtexIdclientAutCookie=${token};`,
-        }
 
         await hub.post(
           routes.addPriceToItems(account, orderFormId),

@@ -1,3 +1,11 @@
+input QuoteInput {
+  referenceName: String
+  items: [QuoteItemInput]
+  subtotal: Float
+  note: String
+  sendToSalesRep: Boolean
+}
+
 input QuoteItemInput {
   name: String
   skuName: String
@@ -10,6 +18,14 @@ input QuoteItemInput {
   quantity: Int
   sellingPrice: Float
   seller: String
+}
+
+input QuoteUpdateInput {
+  id: String
+  items: [QuoteItemInput]
+  subtotal: Float
+  note: String
+  decline: Boolean
 }
 
 type Quotes {

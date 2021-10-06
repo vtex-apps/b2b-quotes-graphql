@@ -1,15 +1,12 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
-import { AppClient, GraphQLClient } from '@vtex/api'
+import { AppGraphQLClient } from '@vtex/api'
 
-export default class StorefrontPermissions extends AppClient {
-  protected graphql: GraphQLClient
-
+export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super('vtex.storefront-permissions@1.x', ctx, options)
-    this.graphql = new GraphQLClient(this.http)
   }
 
-  public checkUserPermission = async (headers: any): Promise<any> => {
+  public checkUserPermission = async (): Promise<any> => {
     const graphQLQuery = `query GetPermissions {
         checkUserPermission {
           role {
@@ -33,10 +30,7 @@ export default class StorefrontPermissions extends AppClient {
           },
         },
       },
-      {
-        headers,
-        url: '/_v/graphql',
-      }
+      {}
     )
   }
 }
