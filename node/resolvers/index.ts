@@ -7,7 +7,7 @@ const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
 }
 
-const SCHEMA_VERSION = 'v1.1'
+const SCHEMA_VERSION = 'v1.2'
 const QUOTE_DATA_ENTITY = 'quotes'
 const QUOTE_FIELDS = [
   'id',
@@ -139,6 +139,7 @@ const schema = {
     'subtotal',
     'status',
   ],
+  'v-immediate-indexing': true,
   'v-cache': false,
 }
 
