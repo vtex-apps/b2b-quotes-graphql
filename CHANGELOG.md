@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Enable immediate indexing in MD schema
+
 ## [1.0.0] - 2021-10-06
 
 ### Removed
