@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2021-12-23
+
 ### Fixed
 
 - Move app settings to `vtex.b2b-quotes` so that this app can function as a dependency app without being explicitly installed in a workspace
