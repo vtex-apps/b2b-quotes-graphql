@@ -157,70 +157,80 @@ const defaultHeaders = (authToken: string) => ({
 
 const checkConfig = async (ctx: Context) => {
   const {
-    vtex: { account, authToken },
+    vtex: { account, authToken, logger },
     clients: { hub, apps, masterdata },
   } = ctx
 
   const appId = 'vtex.b2b-quotes@0.x'
-  let settings = await apps.getAppSettings(appId)
-  let changed = false
 
-  if (!settings.adminSetup) {
-    settings = defaultSettings
-    changed = true
-  }
+  try {
+    let settings = await apps.getAppSettings(appId)
+    let changed = false
 
-  if (
-    !settings.adminSetup.hasSchema ||
-    settings.adminSetup.schemaVersion !== SCHEMA_VERSION
-  ) {
-    changed = true
-    try {
-      await masterdata.createOrUpdateSchema({
-        dataEntity: QUOTE_DATA_ENTITY,
-        schemaName: SCHEMA_VERSION,
-        schemaBody: schema,
-      })
+    if (!settings?.adminSetup?.schemaVersion) {
+      settings = defaultSettings
+      changed = true
+    }
 
-      settings.adminSetup.hasSchema = true
-      settings.adminSetup.schemaVersion = SCHEMA_VERSION
-    } catch (e) {
-      if (e.response.status >= 400) {
-        settings.adminSetup.hasSchema = false
-      } else {
+    if (
+      !settings?.adminSetup?.hasSchema ||
+      settings?.adminSetup?.schemaVersion !== SCHEMA_VERSION
+    ) {
+      changed = true
+      try {
+        await masterdata.createOrUpdateSchema({
+          dataEntity: QUOTE_DATA_ENTITY,
+          schemaName: SCHEMA_VERSION,
+          schemaBody: schema,
+        })
+
         settings.adminSetup.hasSchema = true
         settings.adminSetup.schemaVersion = SCHEMA_VERSION
+      } catch (e) {
+        if (e.response.status >= 400) {
+          settings.adminSetup.hasSchema = false
+        } else {
+          settings.adminSetup.hasSchema = true
+          settings.adminSetup.schemaVersion = SCHEMA_VERSION
+        }
       }
     }
-  }
 
-  if (!settings.adminSetup.allowManualPrice) {
-    changed = true
-    try {
-      settings.adminSetup.allowManualPrice = true
-      const url = routes.checkoutConfig(account)
-      const headers = defaultHeaders(authToken)
+    if (!settings.adminSetup.allowManualPrice) {
+      changed = true
+      try {
+        settings.adminSetup.allowManualPrice = true
+        const url = routes.checkoutConfig(account)
+        const headers = defaultHeaders(authToken)
 
-      const { data: checkoutConfig } = await hub.get(url, headers, schema)
+        const { data: checkoutConfig } = await hub.get(url, headers, schema)
 
-      if (checkoutConfig.allowManualPrice !== true) {
-        await hub.post(
-          url,
-          JSON.stringify({
-            ...checkoutConfig,
-            allowManualPrice: true,
-          }),
-          headers
-        )
+        if (checkoutConfig.allowManualPrice !== true) {
+          await hub.post(
+            url,
+            JSON.stringify({
+              ...checkoutConfig,
+              allowManualPrice: true,
+            }),
+            headers
+          )
+        }
+      } catch (e) {
+        settings.adminSetup.allowManualPrice = false
       }
-    } catch (e) {
-      settings.adminSetup.allowManualPrice = false
     }
+
+    if (changed) await apps.saveAppSettings(appId, settings)
+
+    return settings
+  } catch (error) {
+    logger.error({
+      message: 'checkConfig-error',
+      error,
+    })
   }
 
-  if (changed) await apps.saveAppSettings(appId, settings)
-
-  return settings
+  return null
 }
 
 export const resolvers = {
