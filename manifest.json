@@ -12,12 +12,13 @@
   "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "read-workspace-apps"
+    },
+    {
+      "name": "read-write-apps-settings"
     },
     {
       "name": "update-app-settings"
@@ -76,52 +77,5 @@
       }
     }
   ],
-  "settingsSchema": {
-    "title": "B2B Quotes & Carts",
-    "type": "object",
-    "properties": {
-      "hasSchema": {
-        "type": "boolean",
-        "default": false
-      },
-      "adminSetup": {
-        "title": "B2B Quotes Settings",
-        "type": "object",
-        "properties": {
-          "cartLifeSpan": {
-            "title": "Default expiration date (in days) for quotes and saved carts",
-            "type": "number",
-            "minimum": 1
-          },
-          "storeLogoUrl": {
-            "title": "Store logo URL",
-            "type": "string"
-          }
-        },
-        "required": [
-          "cartLifeSpan",
-          "storeLogoUrl"
-        ]
-      }
-    },
-    "required": [
-      "adminSetup"
-    ]
-  },
-  "settingsUiSchema": {
-    "ui:order": [
-      "adminSetup",
-      "hasSchema"
-    ],
-    "adminSetup": {
-      "ui:order": [
-        "cartLifeSpan",
-        "storeLogoUrl"
-      ]
-    },
-    "hasSchema": {
-      "ui:widget": "hidden"
-    }
-  },
   "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"
 }

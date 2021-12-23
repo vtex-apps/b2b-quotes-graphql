@@ -3,10 +3,6 @@ import { indexBy, map, prop } from 'ramda'
 import { organizationName, costCenterName } from './fieldResolvers'
 import GraphQLError from '../utils/GraphQLError'
 
-const getAppId = (): string => {
-  return process.env.VTEX_APP_ID ?? ''
-}
-
 const SCHEMA_VERSION = 'v1.2'
 const QUOTE_DATA_ENTITY = 'quotes'
 const QUOTE_FIELDS = [
@@ -146,7 +142,6 @@ const schema = {
 const defaultSettings = {
   adminSetup: {
     cartLifeSpan: 30,
-    storeLogoUrl: '',
     hasSchema: false,
     allowManualPrice: false,
     schemaVersion: null,
@@ -166,8 +161,8 @@ const checkConfig = async (ctx: Context) => {
     clients: { hub, apps, masterdata },
   } = ctx
 
-  const app: string = getAppId()
-  let settings = await apps.getAppSettings(app)
+  const appId = 'vtex.b2b-quotes@0.x'
+  let settings = await apps.getAppSettings(appId)
   let changed = false
 
   if (!settings.adminSetup) {
@@ -223,17 +218,16 @@ const checkConfig = async (ctx: Context) => {
     }
   }
 
-  if (changed) await apps.saveAppSettings(app, settings)
+  if (changed) await apps.saveAppSettings(appId, settings)
 
   return settings
 }
 
 export const resolvers = {
   Query: {
-    getSetupConfig: async (_: any, __: any, ctx: Context) => {
-      const settings = await checkConfig(ctx)
-
-      return settings
+    getSetupConfig: async (_: any, __: any, ___: Context) => {
+      // deprecated
+      return null
     },
     getQuote: async (_: any, { id }: { id: string }, ctx: Context) => {
       const {
