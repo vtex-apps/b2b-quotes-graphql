@@ -144,8 +144,7 @@ const defaultSettings = {
     cartLifeSpan: 30,
     allowManualPrice: false,
   },
-  hasSchema: false,
-  schemaVersion: null,
+  schemaVersion: '',
 }
 
 const defaultHeaders = (authToken: string) => ({
@@ -176,13 +175,12 @@ const checkConfig = async (ctx: Context) => {
 
   if (!settings) return null
 
-  if (!settings?.adminSetup?.cartLifeSpan) {
+  if (!settings.adminSetup?.cartLifeSpan) {
     settings = defaultSettings
     changed = true
   }
 
-  if (!settings?.hasSchema || settings?.schemaVersion !== SCHEMA_VERSION) {
-    changed = true
+  if (settings.schemaVersion !== SCHEMA_VERSION) {
     try {
       await masterdata.createOrUpdateSchema({
         dataEntity: QUOTE_DATA_ENTITY,
@@ -190,22 +188,17 @@ const checkConfig = async (ctx: Context) => {
         schemaBody: schema,
       })
 
-      settings.hasSchema = true
+      changed = true
       settings.schemaVersion = SCHEMA_VERSION
     } catch (e) {
       if (e.response.status >= 400) {
-        settings.hasSchema = false
-      } else {
-        settings.hasSchema = true
-        settings.schemaVersion = SCHEMA_VERSION
+        settings.schemaVersion = ''
       }
     }
   }
 
-  if (!settings.adminSetup.allowManualPrice) {
-    changed = true
+  if (!settings.adminSetup?.allowManualPrice) {
     try {
-      settings.adminSetup.allowManualPrice = true
       const url = routes.checkoutConfig(account)
       const headers = defaultHeaders(authToken)
 
@@ -220,6 +213,8 @@ const checkConfig = async (ctx: Context) => {
           }),
           headers
         )
+        changed = true
+        settings.adminSetup.allowManualPrice = true
       }
     } catch (e) {
       settings.adminSetup.allowManualPrice = false
