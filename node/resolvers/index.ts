@@ -171,16 +171,16 @@ const checkConfig = async (ctx: Context) => {
       message: 'checkConfig-getAppSettingsError',
       error,
     })
+
+    return null
   }
 
-  if (!settings) return null
-
-  if (!settings.adminSetup?.cartLifeSpan) {
+  if (!settings?.adminSetup?.cartLifeSpan) {
     settings = defaultSettings
     changed = true
   }
 
-  if (settings.schemaVersion !== SCHEMA_VERSION) {
+  if (settings?.schemaVersion !== SCHEMA_VERSION) {
     try {
       await masterdata.createOrUpdateSchema({
         dataEntity: QUOTE_DATA_ENTITY,
@@ -197,7 +197,7 @@ const checkConfig = async (ctx: Context) => {
     }
   }
 
-  if (!settings.adminSetup?.allowManualPrice) {
+  if (!settings?.adminSetup?.allowManualPrice) {
     try {
       const url = routes.checkoutConfig(account)
       const headers = defaultHeaders(authToken)
