@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Move app settings to `vtex.b2b-quotes` so that this app can function as a dependency app without being explicitly installed in a workspace
+
+### Deprecated
+
+- unused `getSetupConfig` GraphQL query
+
 ## [1.0.1] - 2021-12-17
 
 ### Fixed

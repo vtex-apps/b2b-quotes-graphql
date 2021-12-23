@@ -3,10 +3,6 @@ import { indexBy, map, prop } from 'ramda'
 import { organizationName, costCenterName } from './fieldResolvers'
 import GraphQLError from '../utils/GraphQLError'
 
-const getAppId = (): string => {
-  return process.env.VTEX_APP_ID ?? ''
-}
-
 const SCHEMA_VERSION = 'v1.2'
 const QUOTE_DATA_ENTITY = 'quotes'
 const QUOTE_FIELDS = [
@@ -146,11 +142,9 @@ const schema = {
 const defaultSettings = {
   adminSetup: {
     cartLifeSpan: 30,
-    storeLogoUrl: '',
-    hasSchema: false,
     allowManualPrice: false,
-    schemaVersion: null,
   },
+  schemaVersion: '',
 }
 
 const defaultHeaders = (authToken: string) => ({
@@ -162,24 +156,31 @@ const defaultHeaders = (authToken: string) => ({
 
 const checkConfig = async (ctx: Context) => {
   const {
-    vtex: { account, authToken },
+    vtex: { account, authToken, logger },
     clients: { hub, apps, masterdata },
   } = ctx
 
-  const app: string = getAppId()
-  let settings = await apps.getAppSettings(app)
+  const appId = 'vtex.b2b-quotes@0.x'
+  let settings = null
   let changed = false
 
-  if (!settings.adminSetup) {
+  try {
+    settings = await apps.getAppSettings(appId)
+  } catch (error) {
+    logger.error({
+      message: 'checkConfig-getAppSettingsError',
+      error,
+    })
+
+    return null
+  }
+
+  if (!settings?.adminSetup?.cartLifeSpan) {
     settings = defaultSettings
     changed = true
   }
 
-  if (
-    !settings.adminSetup.hasSchema ||
-    settings.adminSetup.schemaVersion !== SCHEMA_VERSION
-  ) {
-    changed = true
+  if (settings?.schemaVersion !== SCHEMA_VERSION) {
     try {
       await masterdata.createOrUpdateSchema({
         dataEntity: QUOTE_DATA_ENTITY,
@@ -187,22 +188,17 @@ const checkConfig = async (ctx: Context) => {
         schemaBody: schema,
       })
 
-      settings.adminSetup.hasSchema = true
-      settings.adminSetup.schemaVersion = SCHEMA_VERSION
+      changed = true
+      settings.schemaVersion = SCHEMA_VERSION
     } catch (e) {
       if (e.response.status >= 400) {
-        settings.adminSetup.hasSchema = false
-      } else {
-        settings.adminSetup.hasSchema = true
-        settings.adminSetup.schemaVersion = SCHEMA_VERSION
+        settings.schemaVersion = ''
       }
     }
   }
 
-  if (!settings.adminSetup.allowManualPrice) {
-    changed = true
+  if (!settings?.adminSetup?.allowManualPrice) {
     try {
-      settings.adminSetup.allowManualPrice = true
       const url = routes.checkoutConfig(account)
       const headers = defaultHeaders(authToken)
 
@@ -217,23 +213,24 @@ const checkConfig = async (ctx: Context) => {
           }),
           headers
         )
+        changed = true
+        settings.adminSetup.allowManualPrice = true
       }
     } catch (e) {
       settings.adminSetup.allowManualPrice = false
     }
   }
 
-  if (changed) await apps.saveAppSettings(app, settings)
+  if (changed) await apps.saveAppSettings(appId, settings)
 
   return settings
 }
 
 export const resolvers = {
   Query: {
-    getSetupConfig: async (_: any, __: any, ctx: Context) => {
-      const settings = await checkConfig(ctx)
-
-      return settings
+    getSetupConfig: async (_: any, __: any, ___: Context) => {
+      // deprecated
+      return null
     },
     getQuote: async (_: any, { id }: { id: string }, ctx: Context) => {
       const {
