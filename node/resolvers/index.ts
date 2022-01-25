@@ -1,5 +1,6 @@
 import { indexBy, map, prop } from 'ramda'
 
+import { CHECKOUT_APP } from '../clients/Checkout'
 import { organizationName, costCenterName } from './fieldResolvers'
 import GraphQLError from '../utils/GraphQLError'
 
@@ -22,6 +23,10 @@ const QUOTE_FIELDS = [
   'viewedBySales',
   'viewedByCustomer',
 ]
+
+const getAppId = (): string => {
+  return process.env.VTEX_APP_ID ?? ''
+}
 
 const routes = {
   baseUrl: (account: string) =>
@@ -154,6 +159,63 @@ const defaultHeaders = (authToken: string) => ({
   'Proxy-Authorization': authToken,
 })
 
+// checks and configure the OrderForm based on quoteId
+const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
+  const {
+    clients: { apps, checkout },
+    vtex: { logger },
+  } = ctx
+
+  const app: string = getAppId()
+  const accountSettings = await apps.getAppSettings(app)
+
+  if (!accountSettings?.hasQuoteId) {
+    const checkoutConfig: any = await checkout
+      .getOrderFormConfiguration()
+      .catch((error) => {
+        logger.error({
+          message: 'getOrderformConfiguration-error',
+          error,
+        })
+      })
+
+    if (
+      checkoutConfig?.apps.findIndex(
+        (currApp: any) => currApp.id === CHECKOUT_APP
+      ) === -1
+    ) {
+      checkoutConfig.apps.push({
+        major: 1,
+        id: CHECKOUT_APP,
+        fields: ['quoteId'],
+      })
+      const setCheckoutConfig: any = await checkout
+        .setOrderFormConfiguration(checkoutConfig, ctx.vtex.authToken)
+        .then(() => true)
+        .catch((error) => {
+          logger.error({
+            message: 'setOrderformConfiguration-error',
+            error,
+          })
+
+          return false
+        })
+
+      if (setCheckoutConfig) {
+        accountSettings.hasQuoteId = true
+        await apps.saveAppSettings(app, accountSettings).catch((error) => {
+          logger.error({
+            message: 'saveAppSettings-error',
+            error,
+          })
+        })
+      }
+
+      logger.info('the orderFom configuration has been completed')
+    }
+  }
+}
+
 const checkConfig = async (ctx: Context) => {
   const {
     vtex: { account, authToken, logger },
@@ -222,6 +284,7 @@ const checkConfig = async (ctx: Context) => {
   }
 
   if (changed) await apps.saveAppSettings(appId, settings)
+  await checkAndCreateQuotesConfig(ctx)
 
   return settings
 }

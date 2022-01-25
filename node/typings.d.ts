@@ -41,3 +41,17 @@ declare module '*.json' {
   const value: any
   export default value
 }
+
+interface OrderFormConfiguration {
+  paymentConfiguration?: PaymentConfiguration
+  taxConfiguration?: TaxConfiguration
+  minimumQuantityAccumulatedForItems?: number
+  decimalDigitsPrecision?: number
+  minimumValueAccumulated?: number
+  apps?: [App]
+  allowMultipleDeliveries?: boolean
+  allowManualPrice?: boolean
+  maxIntOfWhiteLabelSellers?: number
+  maskFirstPurchaseData?: boolean
+  recaptchaValidation?: boolean
+}
