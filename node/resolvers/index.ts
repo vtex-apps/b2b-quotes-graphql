@@ -52,8 +52,15 @@ const routes = {
     `${routes.orderForm(account)}/${id}/items/removeAll`,
   addToCart: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/`,
-  addCustomData: (account: string, orderFormId: string, appId: string) =>
-    `${routes.orderForm(account)}/${orderFormId}/customData/${appId}`,
+  addCustomData: (
+    account: string,
+    orderFormId: string,
+    appId: string,
+    property?: string
+  ) =>
+    `${routes.orderForm(account)}/${orderFormId}/customData/${appId}/${
+      property ?? ''
+    }`,
   addPriceToItems: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/update`,
 }
@@ -877,6 +884,25 @@ export const resolvers = {
 
           orderFormId = (newOrderForm.data as any).orderFormId
         }
+
+        await checkAndCreateQuotesConfig(ctx)
+        await hub
+          .put(
+            routes.addCustomData(account, orderFormId, CHECKOUT_APP, 'quoteId'),
+            {
+              value: id,
+            },
+            useHeaders
+          )
+          .then((res: any) => {
+            return res.data
+          })
+          .catch((e) =>
+            logger.error({
+              message: 'useQuote-error',
+              e,
+            })
+          )
 
         // ADD ITEMS TO CART
         const data = await hub
