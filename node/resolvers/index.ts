@@ -24,10 +24,6 @@ const QUOTE_FIELDS = [
   'viewedByCustomer',
 ]
 
-const getAppId = (): string => {
-  return process.env.VTEX_APP_ID ?? ''
-}
-
 const routes = {
   baseUrl: (account: string) =>
     `http://${account}.vtexcommercestable.com.br/api`,
@@ -169,19 +165,47 @@ const defaultHeaders = (authToken: string) => ({
 // checks and configure the OrderForm based on quoteId
 const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
   const {
-    clients: { apps, checkout },
-    vtex: { logger },
+    clients: { checkout, vbase },
+    vtex: { logger, authToken },
   } = ctx
 
-  const app: string = getAppId()
-  const accountSettings = await apps.getAppSettings(app)
+  let hasQuoteConfig = false
 
-  if (!accountSettings?.hasQuoteId) {
+  const saveQuotesConfig = async (flag: boolean) => {
+    return vbase
+      .saveJSON(CHECKOUT_APP, 'quotes', { quote: flag })
+      .then(() => true)
+      .catch((e) =>
+        logger.error({
+          message: 'vBaseSaveJson-error',
+          e,
+        })
+      )
+  }
+
+  try {
+    hasQuoteConfig =
+      (await vbase.getJSON<{ quote: boolean }>(CHECKOUT_APP, 'quotes'))
+        ?.quote ?? false
+  } catch (error) {
+    const errStr = error.toString()
+
+    if (errStr.match(/404/gm)) {
+      await saveQuotesConfig(false)
+    } else {
+      logger.error({
+        message: 'vBaseSaveGet-error',
+        error,
+      })
+    }
+  }
+
+  if (!hasQuoteConfig) {
     const checkoutConfig: any = await checkout
       .getOrderFormConfiguration()
       .catch((error) => {
         logger.error({
-          message: 'getOrderformConfiguration-error',
+          message: 'getOrderFormConfiguration-error',
           error,
         })
       })
@@ -197,11 +221,11 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
         fields: ['quoteId'],
       })
       const setCheckoutConfig: any = await checkout
-        .setOrderFormConfiguration(checkoutConfig, ctx.vtex.authToken)
+        .setOrderFormConfiguration(checkoutConfig, authToken)
         .then(() => true)
         .catch((error) => {
           logger.error({
-            message: 'setOrderformConfiguration-error',
+            message: 'setOrderFormConfiguration-error',
             error,
           })
 
@@ -209,16 +233,12 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
         })
 
       if (setCheckoutConfig) {
-        accountSettings.hasQuoteId = true
-        await apps.saveAppSettings(app, accountSettings).catch((error) => {
-          logger.error({
-            message: 'saveAppSettings-error',
-            error,
-          })
-        })
+        await saveQuotesConfig(true)
       }
 
       logger.info('the orderFom configuration has been completed')
+    } else {
+      saveQuotesConfig(true)
     }
   }
 }

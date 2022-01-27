@@ -12,10 +12,11 @@
   "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
+    {
+      "name": "vbase-read-write"
+    },
     {
       "name": "read-workspace-apps"
     },
