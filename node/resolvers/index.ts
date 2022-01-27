@@ -919,7 +919,7 @@ export const resolvers = {
           })
           .catch((e) =>
             logger.error({
-              message: 'useQuote-error',
+              message: 'useQuote-addCustomDataError',
               e,
             })
           )
