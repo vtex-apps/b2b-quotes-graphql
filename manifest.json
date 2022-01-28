@@ -1,7 +1,7 @@
 {
   "vendor": "vtex",
   "name": "b2b-quotes-graphql",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "title": "B2B Quotes GraphQL",
   "description": "Backend for the B2B Quotes & Carts app",
   "builders": {
@@ -12,7 +12,9 @@
   "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
-  "registries": ["smartcheckout"],
+  "registries": [
+    "smartcheckout"
+  ],
   "policies": [
     {
       "name": "vbase-read-write"
