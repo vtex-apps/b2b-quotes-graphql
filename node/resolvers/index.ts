@@ -1,5 +1,6 @@
 import { indexBy, map, prop } from 'ramda'
 
+import { CHECKOUT_APP } from '../clients/Checkout'
 import { organizationName, costCenterName } from './fieldResolvers'
 import GraphQLError from '../utils/GraphQLError'
 
@@ -47,8 +48,15 @@ const routes = {
     `${routes.orderForm(account)}/${id}/items/removeAll`,
   addToCart: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/`,
-  addCustomData: (account: string, orderFormId: string, appId: string) =>
-    `${routes.orderForm(account)}/${orderFormId}/customData/${appId}`,
+  addCustomData: (
+    account: string,
+    orderFormId: string,
+    appId: string,
+    property?: string
+  ) =>
+    `${routes.orderForm(account)}/${orderFormId}/customData/${appId}/${
+      property ?? ''
+    }`,
   addPriceToItems: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/update`,
 }
@@ -154,6 +162,87 @@ const defaultHeaders = (authToken: string) => ({
   'Proxy-Authorization': authToken,
 })
 
+// checks and configure the OrderForm based on quoteId
+const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
+  const {
+    clients: { checkout, vbase },
+    vtex: { logger, authToken },
+  } = ctx
+
+  let hasQuoteConfig = false
+
+  const saveQuotesConfig = async (flag: boolean) => {
+    return vbase
+      .saveJSON(CHECKOUT_APP, 'quotes', { quote: flag })
+      .then(() => true)
+      .catch((e) =>
+        logger.error({
+          message: 'vBaseSaveJson-error',
+          e,
+        })
+      )
+  }
+
+  try {
+    hasQuoteConfig =
+      (await vbase.getJSON<{ quote: boolean }>(CHECKOUT_APP, 'quotes'))
+        ?.quote ?? false
+  } catch (error) {
+    const errStr = error.toString()
+
+    if (errStr.match(/404/gm)) {
+      await saveQuotesConfig(false)
+    } else {
+      logger.error({
+        message: 'vBaseSaveGet-error',
+        error,
+      })
+    }
+  }
+
+  if (!hasQuoteConfig) {
+    const checkoutConfig: any = await checkout
+      .getOrderFormConfiguration()
+      .catch((error) => {
+        logger.error({
+          message: 'getOrderFormConfiguration-error',
+          error,
+        })
+      })
+
+    if (
+      checkoutConfig?.apps.findIndex(
+        (currApp: any) => currApp.id === CHECKOUT_APP
+      ) === -1
+    ) {
+      checkoutConfig.apps.push({
+        major: 1,
+        id: CHECKOUT_APP,
+        fields: ['quoteId'],
+      })
+      const setCheckoutConfig: any = await checkout
+        .setOrderFormConfiguration(checkoutConfig, authToken)
+        .then(() => true)
+        .catch((error) => {
+          logger.error({
+            message: 'setOrderFormConfiguration-error',
+            error,
+          })
+
+          return false
+        })
+
+      if (setCheckoutConfig) {
+        await saveQuotesConfig(true)
+      }
+
+      logger.info('the orderFom configuration has been completed')
+    } else {
+      saveQuotesConfig(true)
+    }
+  }
+}
+
 const checkConfig = async (ctx: Context) => {
   const {
     vtex: { account, authToken, logger },
@@ -222,6 +311,7 @@ const checkConfig = async (ctx: Context) => {
   }
 
   if (changed) await apps.saveAppSettings(appId, settings)
+  await checkAndCreateQuotesConfig(ctx)
 
   return settings
 }
@@ -814,6 +904,25 @@ export const resolvers = {
 
           orderFormId = (newOrderForm.data as any).orderFormId
         }
+
+        await checkAndCreateQuotesConfig(ctx)
+        await hub
+          .put(
+            routes.addCustomData(account, orderFormId, CHECKOUT_APP, 'quoteId'),
+            {
+              value: id,
+            },
+            useHeaders
+          )
+          .then((res: any) => {
+            return res.data
+          })
+          .catch((e) =>
+            logger.error({
+              message: 'useQuote-addCustomDataError',
+              e,
+            })
+          )
 
         // ADD ITEMS TO CART
         const data = await hub

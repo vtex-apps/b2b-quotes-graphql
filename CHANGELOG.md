@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added on getQuote/getQuote a checker if the property b2b-quote-graphQL exists in the orderForm if not then it creates a new property there.
+
 ## [1.0.3] - 2022-01-06
 
 ## [1.0.2] - 2021-12-23
