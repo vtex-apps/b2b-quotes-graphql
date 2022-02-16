@@ -27,7 +27,7 @@ export default class Organizations extends AppClient {
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.orderquote@1.x',
+            sender: 'vtex.b2b-quotes-graphql@1.x',
           },
         },
       },
@@ -52,7 +52,7 @@ export default class Organizations extends AppClient {
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.orderquote@1.x',
+            sender: 'vtex.b2b-quotes-graphql@1.x',
           },
         },
       },
@@ -78,7 +78,7 @@ export default class Organizations extends AppClient {
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.orderquote@1.x',
+            sender: 'vtex.b2b-quotes-graphql@1.x',
           },
         },
       },
@@ -103,7 +103,7 @@ export default class Organizations extends AppClient {
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.orderquote@1.x',
+            sender: 'vtex.b2b-quotes-graphql@1.x',
           },
         },
       },

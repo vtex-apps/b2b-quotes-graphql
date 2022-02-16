@@ -4,7 +4,8 @@ import RequestHub from '../utils/Hub'
 import StorefrontPermissions from './storefrontPermissions'
 import VtexId from './vtexId'
 import Organizations from './organizations'
-import { Checkout } from './Checkout'
+import Checkout from './checkout'
+import MailClient from './email'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
@@ -18,6 +19,10 @@ export class Clients extends IOClients {
 
   public get checkout() {
     return this.getOrSet('checkout', Checkout)
+  }
+
+  public get mail() {
+    return this.getOrSet('mail', MailClient)
   }
 
   public get organizations() {
