@@ -726,7 +726,7 @@ export const resolvers = {
             lastUpdate: {
               email,
               note,
-              status,
+              status: status.toUpperCase(),
             },
           })
         }
@@ -901,7 +901,7 @@ export const resolvers = {
           lastUpdate: {
             email,
             note,
-            status,
+            status: status.toUpperCase(),
           },
         })
 
