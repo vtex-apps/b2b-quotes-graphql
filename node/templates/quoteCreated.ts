@@ -18,7 +18,7 @@ export const quoteCreatedMessage = {
       To: '{{message.to}}',
       // CC: null,
       // BCC: null,
-      Subject: 'Request for Quotation',
+      Subject: '[{{quote.organization}}] Request for Quotation',
       Message: MESSAGE_BODY,
       Type: 'E',
       ProviderId: '00000000-0000-0000-0000-000000000000',
