@@ -1,5 +1,3 @@
-import GraphQLError from '../utils/GraphQLError'
-
 export const organizationName = async (
   { organization }: { organization: string },
   _: any,
@@ -17,17 +15,10 @@ export const organizationName = async (
 
     return organizationData?.data?.getOrganizationById?.name ?? null
   } catch (e) {
-    logger.error({
+    logger.warn({
       message: 'getOrganizationName-error',
       e,
     })
-    if (e.message) {
-      throw new GraphQLError(e.message)
-    } else if (e.response?.data?.message) {
-      throw new GraphQLError(e.response.data.message)
-    } else {
-      throw new GraphQLError(e)
-    }
   }
 }
 
@@ -46,16 +37,9 @@ export const costCenterName = async (
 
     return costCenterData?.data?.getCostCenterById?.name ?? null
   } catch (e) {
-    logger.error({
+    logger.warn({
       message: 'getCostCenterName-error',
       e,
     })
-    if (e.message) {
-      throw new GraphQLError(e.message)
-    } else if (e.response?.data?.message) {
-      throw new GraphQLError(e.response.data.message)
-    } else {
-      throw new GraphQLError(e)
-    }
   }
 }

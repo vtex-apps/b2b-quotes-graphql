@@ -1,8 +1,11 @@
 import { indexBy, map, prop } from 'ramda'
 
-import { CHECKOUT_APP } from '../clients/Checkout'
+import { CHECKOUT_APP } from '../clients/checkout'
 import { organizationName, costCenterName } from './fieldResolvers'
+import templates from '../templates'
+import { toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
+import message from '../utils/message'
 
 const SCHEMA_VERSION = 'v1.2'
 const QUOTE_DATA_ENTITY = 'quotes'
@@ -53,6 +56,7 @@ const routes = {
     orderFormId: string,
     appId: string,
     property?: string
+    // eslint-disable-next-line max-params
   ) =>
     `${routes.orderForm(account)}/${orderFormId}/customData/${appId}/${
       property ?? ''
@@ -147,12 +151,22 @@ const schema = {
   'v-cache': false,
 }
 
-const defaultSettings = {
+interface Settings {
+  adminSetup: {
+    cartLifeSpan: number
+    allowManualPrice: boolean
+  }
+  schemaVersion: string
+  templateHash: string | null
+}
+
+const defaultSettings: Settings = {
   adminSetup: {
     cartLifeSpan: 30,
     allowManualPrice: false,
   },
   schemaVersion: '',
+  templateHash: null,
 }
 
 const defaultHeaders = (authToken: string) => ({
@@ -246,12 +260,14 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
 const checkConfig = async (ctx: Context) => {
   const {
     vtex: { account, authToken, logger },
-    clients: { hub, apps, masterdata },
+    clients: { hub, apps, mail, masterdata },
   } = ctx
 
   const appId = 'vtex.b2b-quotes@0.x'
-  let settings = null
+  let settings: Settings | null = null
   let changed = false
+
+  const currTemplateHash = toHash(templates)
 
   try {
     settings = await apps.getAppSettings(appId)
@@ -282,6 +298,9 @@ const checkConfig = async (ctx: Context) => {
     } catch (e) {
       if (e.response.status >= 400) {
         settings.schemaVersion = ''
+      } else {
+        settings.schemaVersion = SCHEMA_VERSION
+        changed = true
       }
     }
   }
@@ -308,6 +327,34 @@ const checkConfig = async (ctx: Context) => {
     } catch (e) {
       settings.adminSetup.allowManualPrice = false
     }
+  }
+
+  if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
+    const updates: Array<Promise<any>> = []
+
+    changed = true
+
+    templates.forEach(async (template) => {
+      const existingData = await mail.getTemplate(template.Name)
+
+      if (!existingData) {
+        updates.push(mail.publishTemplate(template))
+      }
+    })
+
+    await Promise.all(updates)
+      .then(() => {
+        if (settings) {
+          settings.templateHash = currTemplateHash
+        }
+      })
+      .catch((e) => {
+        logger.error({
+          message: 'checkConfig-publishTemplateError',
+          error: e,
+        })
+        throw new Error(e)
+      })
   }
 
   if (changed) await apps.saveAppSettings(appId, settings)
@@ -628,7 +675,7 @@ export const resolvers = {
       const expirationDate = new Date()
 
       expirationDate.setDate(
-        expirationDate.getDate() + ((settings?.cartLifeSpan as number) ?? 30)
+        expirationDate.getDate() + (settings?.adminSetup?.cartLifeSpan ?? 30)
       )
       const expirationDateISO = expirationDate.toISOString()
 
@@ -670,7 +717,21 @@ export const resolvers = {
           })
           .then((res: any) => res)
 
-        return data.Id
+        if (sendToSalesRep) {
+          message(ctx).quoteCreated({
+            name: referenceName,
+            id: data.DocumentId,
+            organization: organizationId,
+            costCenter: costCenterId,
+            lastUpdate: {
+              email,
+              note,
+              status: status.toUpperCase(),
+            },
+          })
+        }
+
+        return data.DocumentId
       } catch (e) {
         logger.error({
           message: 'createQuote-error',
@@ -764,8 +825,12 @@ export const resolvers = {
 
         // if user only has permission to edit their organization's quotes, check that the org matches
         if (
-          !permissions.includes('edit-quotes-all') &&
-          permissions.includes('edit-quotes-organization')
+          (items?.length &&
+            !permissions.includes('edit-quotes-all') &&
+            permissions.includes('edit-quotes-organization')) ||
+          (!items?.length &&
+            !permissions.includes('access-quotes-all') &&
+            permissions.includes('access-quotes-organization'))
         ) {
           if (userOrganizationId !== existingQuote.organization) {
             throw new GraphQLError('operation-not-permitted')
@@ -774,8 +839,12 @@ export const resolvers = {
 
         // if user only has permission to edit their cost center's quotes, check that the cost center matches
         if (
-          !permissions.includes('edit-quotes-all') &&
-          !permissions.includes('edit-quotes-organization')
+          (items?.length &&
+            !permissions.includes('edit-quotes-all') &&
+            !permissions.includes('edit-quotes-organization')) ||
+          (!items?.length &&
+            !permissions.includes('access-quotes-all') &&
+            !permissions.includes('access-quotes-organization'))
         ) {
           if (userCostCenterId !== existingQuote.costCenter) {
             throw new GraphQLError('operation-not-permitted')
@@ -820,10 +889,26 @@ export const resolvers = {
           })
           .then((res: any) => res)
 
+        const users = updateHistory.map((anUpdate) => anUpdate.email)
+        const uniqueUsers = [...new Set(users)]
+
+        message(ctx).quoteUpdated({
+          users: uniqueUsers,
+          name: existingQuote.referenceName,
+          id: existingQuote.id,
+          organization: existingQuote.organization,
+          costCenter: existingQuote.costCenter,
+          lastUpdate: {
+            email,
+            note,
+            status: status.toUpperCase(),
+          },
+        })
+
         return data.id
       } catch (e) {
-        logger.error({
-          message: 'updateQuote-error',
+        logger.warn({
+          message: 'updateQuote-warning',
           e,
         })
         if (e.message) {

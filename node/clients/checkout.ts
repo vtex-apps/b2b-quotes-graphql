@@ -11,7 +11,7 @@ const CHECKOUT_ENDPOINT = 'api/checkout/pvt/configuration/orderForm'
 
 export const CHECKOUT_APP = 'b2b-quotes-graphql'
 
-export class Checkout extends JanusClient {
+export default class Checkout extends JanusClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
     super(ctx, {
       ...options,

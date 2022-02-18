@@ -12,9 +12,7 @@
   "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "vbase-read-write"
@@ -45,6 +43,15 @@
     },
     {
       "name": "Get_User_By_Identifier"
+    },
+    {
+      "name": "template-criar"
+    },
+    {
+      "name": "template-editar"
+    },
+    {
+      "name": "send-message"
     },
     {
       "name": "outbound-access",
