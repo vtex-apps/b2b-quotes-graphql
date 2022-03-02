@@ -749,7 +749,7 @@ export const resolvers = {
     updateQuote: async (
       _: any,
       {
-        input: { id, items, subtotal, note, decline },
+        input: { id, items, subtotal, note, decline, expirationDate },
       }: {
         input: {
           id: string
@@ -757,6 +757,7 @@ export const resolvers = {
           subtotal: number
           note: string
           decline: boolean
+          expirationDate: string
         }
       },
       ctx: Context
@@ -879,6 +880,7 @@ export const resolvers = {
           lastUpdate,
           updateHistory,
           status,
+          expirationDate: expirationDate ?? existingQuote.expirationDate,
         } as Quote
 
         const data = await masterdata

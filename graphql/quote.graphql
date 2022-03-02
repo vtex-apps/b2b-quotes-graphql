@@ -26,6 +26,7 @@ input QuoteUpdateInput {
   subtotal: Float
   note: String
   decline: Boolean
+  expirationDate: String
 }
 
 type Quotes {
