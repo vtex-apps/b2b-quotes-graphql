@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Scheduler running twice a day changing the quotes status to expired when it needs
+
 ## [1.3.0] - 2022-03-10
 
 ### Added
 
 - backend support to B2BQUOTES-28 updating the expirationDate field
-
 
 ## [1.2.0] - 2022-02-18
 

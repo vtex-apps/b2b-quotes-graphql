@@ -6,10 +6,15 @@ import templates from '../templates'
 import { toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
 import message from '../utils/message'
+import { processQueue } from '../utils/Queue'
 
-const SCHEMA_VERSION = 'v1.2'
-const QUOTE_DATA_ENTITY = 'quotes'
-const QUOTE_FIELDS = [
+export const SCHEMA_VERSION = 'v1.2'
+
+export const QUOTE_DATA_ENTITY = 'quotes'
+
+const CRON_EXPRESSION = '0 */12 * * *'
+
+export const QUOTE_FIELDS = [
   'id',
   'referenceName',
   'creatorEmail',
@@ -63,6 +68,10 @@ const routes = {
     }`,
   addPriceToItems: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/update`,
+}
+
+const getAppId = (): string => {
+  return process.env.VTEX_APP_ID ?? ''
 }
 
 const schema = {
@@ -155,6 +164,8 @@ interface Settings {
   adminSetup: {
     cartLifeSpan: number
     allowManualPrice: boolean
+    hasCron?: boolean
+    cronExpression?: string
   }
   schemaVersion: string
   templateHash: string | null
@@ -259,8 +270,8 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
 
 const checkConfig = async (ctx: Context) => {
   const {
-    vtex: { account, authToken, logger },
-    clients: { hub, apps, mail, masterdata },
+    vtex: { account, authToken, logger, workspace },
+    clients: { hub, apps, mail, masterdata, scheduler },
   } = ctx
 
   const appId = 'vtex.b2b-quotes@0.x'
@@ -278,6 +289,68 @@ const checkConfig = async (ctx: Context) => {
     })
 
     return null
+  }
+
+  if (
+    !settings?.adminSetup.hasCron ||
+    settings?.adminSetup.cronExpression !== CRON_EXPRESSION
+  ) {
+    const cronQueue = await scheduler
+      .getQueue()
+      .then((data: any) => {
+        return data
+      })
+      .catch(() => {
+        return null
+      })
+
+    if (!cronQueue || cronQueue.expression !== CRON_EXPRESSION) {
+      try {
+        const time = new Date().getTime()
+        const QueueSchedule = {
+          id: 'b2b-quotes-graphql-queue-schedule',
+          scheduler: {
+            expression: CRON_EXPRESSION,
+            endDate: '2031-12-30T23:29:00',
+          },
+          request: {
+            uri: `https://${workspace}--${account}.myvtex.com/b2b-quotes-graphql/_v/0/process-queue?v=${time}`,
+            method: 'GET',
+            headers: {
+              'cache-control': 'no-cache',
+              pragma: 'no-cache',
+            },
+            body: null,
+          },
+        }
+
+        await scheduler
+          .createOrUpdate(QueueSchedule)
+          .then(() => {
+            if (settings) {
+              settings.adminSetup.hasCron = true
+              settings.adminSetup.cronExpression = CRON_EXPRESSION
+            }
+          })
+          .catch((e: any) => {
+            if (settings) {
+              settings.adminSetup.hasCron = false
+              // eslint-disable-next-line vtex/prefer-early-return
+              if (e.response.status === 304) {
+                settings.adminSetup.hasCron = true
+                settings.adminSetup.cronExpression = CRON_EXPRESSION
+              }
+            }
+          })
+      } catch (e) {
+        console.error('Error saving cron =>', e)
+        if (settings) {
+          settings.adminSetup.hasCron = false
+        }
+      }
+
+      changed = true
+    }
   }
 
   if (!settings?.adminSetup?.cartLifeSpan) {
@@ -364,6 +437,17 @@ const checkConfig = async (ctx: Context) => {
 }
 
 export const resolvers = {
+  Routes: {
+    queueHandler: async (ctx: Context) => {
+      const date = new Date().toISOString()
+
+      processQueue(ctx)
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+      ctx.response.body = { date, appId: getAppId() }
+      ctx.response.status = 200
+    },
+  },
   Query: {
     getSetupConfig: async (_: any, __: any, ___: Context) => {
       // deprecated
@@ -532,7 +616,7 @@ export const resolvers = {
         !permissions.includes('access-quotes-all') &&
         !permissions.includes('access-quotes-organization')
       ) {
-        whereArray.push(`costCenter=${userCostCenterId}`)
+        whereArray.push(` =${userCostCenterId}`)
       } else if (costCenter?.length) {
         // if user is filtering by cost center name, look up cost center ID
         const ccArray = [] as string[]
