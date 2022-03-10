@@ -1,3 +1,43 @@
+interface Quote {
+  id: string
+  referenceName: string
+  creatorEmail: string
+  creatorRole: string
+  creationDate: string
+  expirationDate: string
+  lastUpdate: string
+  updateHistory: QuoteUpdate[]
+  items: QuoteItem[]
+  subtotal: number
+  status: string
+  organization: string
+  costCenter: string
+  viewedBySales: boolean
+  viewedByCustomer: boolean
+}
+
+interface QuoteUpdate {
+  email: string
+  role: string
+  date: string
+  status: string
+  note: string
+}
+
+interface QuoteItem {
+  name: string
+  skuName: string
+  refId: string
+  id: string
+  productId: string
+  imageUrl: string
+  listPrice: number
+  price: number
+  quantity: number
+  sellingPrice: number
+  seller: string
+}
+
 interface ReqContext {
   account: string
   workspace: string

@@ -53,6 +53,7 @@ export interface JsonData {
       status: string
       note?: string
     }
+    expired?: boolean
   }
 }
 

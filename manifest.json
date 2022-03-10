@@ -12,9 +12,7 @@
   "dependencies": {
     "vtex.storefront-permissions": "1.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "vbase-read-write"
@@ -81,6 +79,20 @@
       "attrs": {
         "host": "{{account}}.vtexcommercestable.com.br",
         "path": "/api/checkout/pvt/configuration/orderForm"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "portal.vtexcommercestable.com.br",
+        "path": "/api/scheduler/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "{{account}}.vtexcommercestable.com.br",
+        "path": "/api/scheduler/master/vtex.gmc-keep-alive"
       }
     },
     {

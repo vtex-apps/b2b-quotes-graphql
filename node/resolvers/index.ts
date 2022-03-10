@@ -6,10 +6,15 @@ import templates from '../templates'
 import { toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
 import message from '../utils/message'
+import { processQueue } from '../utils/Queue'
 
-const SCHEMA_VERSION = 'v1.2'
-const QUOTE_DATA_ENTITY = 'quotes'
-const QUOTE_FIELDS = [
+export const SCHEMA_VERSION = 'v1.2'
+
+export const QUOTE_DATA_ENTITY = 'quotes'
+
+const CRON_EXPRESSION = '0 */12 * * *'
+
+export const QUOTE_FIELDS = [
   'id',
   'referenceName',
   'creatorEmail',
@@ -63,6 +68,10 @@ const routes = {
     }`,
   addPriceToItems: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/update`,
+}
+
+const getAppId = (): string => {
+  return process.env.VTEX_APP_ID ?? ''
 }
 
 const schema = {
@@ -155,6 +164,9 @@ interface Settings {
   adminSetup: {
     cartLifeSpan: number
     allowManualPrice: boolean
+    hasCron?: boolean
+    cronExpression?: string
+    cronWorkspace?: string
   }
   schemaVersion: string
   templateHash: string | null
@@ -250,7 +262,7 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
         await saveQuotesConfig(true)
       }
 
-      logger.info('the orderFom configuration has been completed')
+      logger.info('setOrderFormConfiguration-success')
     } else {
       saveQuotesConfig(true)
     }
@@ -259,8 +271,8 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
 
 const checkConfig = async (ctx: Context) => {
   const {
-    vtex: { account, authToken, logger },
-    clients: { hub, apps, mail, masterdata },
+    vtex: { account, authToken, logger, workspace },
+    clients: { hub, apps, mail, masterdata, scheduler },
   } = ctx
 
   const appId = 'vtex.b2b-quotes@0.x'
@@ -278,6 +290,67 @@ const checkConfig = async (ctx: Context) => {
     })
 
     return null
+  }
+
+  if (
+    !settings?.adminSetup.hasCron ||
+    settings?.adminSetup.cronExpression !== CRON_EXPRESSION ||
+    settings?.adminSetup.cronWorkspace !== workspace
+  ) {
+    const cronQueue = await scheduler
+      .getQueue()
+      .then((data: any) => {
+        return data
+      })
+      .catch(() => {
+        return null
+      })
+
+    if (!cronQueue || cronQueue.expression !== CRON_EXPRESSION) {
+      try {
+        const time = new Date().getTime()
+        const QueueSchedule = {
+          id: 'b2b-quotes-graphql-queue-schedule',
+          scheduler: {
+            expression: CRON_EXPRESSION,
+            endDate: '2031-12-30T23:29:00',
+          },
+          request: {
+            uri: `https://${workspace}--${account}.myvtex.com/b2b-quotes-graphql/_v/0/process-queue?v=${time}`,
+            method: 'GET',
+            headers: {
+              'cache-control': 'no-cache',
+              pragma: 'no-cache',
+            },
+            body: null,
+          },
+        }
+
+        await scheduler
+          .createOrUpdate(QueueSchedule)
+          .then(() => {
+            if (!settings) return
+            settings.adminSetup.hasCron = true
+            settings.adminSetup.cronExpression = CRON_EXPRESSION
+            settings.adminSetup.cronWorkspace = workspace
+            changed = true
+          })
+          .catch((e: any) => {
+            if (!settings) return
+            if (e.response.status !== 304) {
+              settings.adminSetup.hasCron = false
+            } else {
+              settings.adminSetup.hasCron = true
+              settings.adminSetup.cronExpression = CRON_EXPRESSION
+              settings.adminSetup.cronWorkspace = workspace
+            }
+          })
+      } catch (e) {
+        if (settings) {
+          settings.adminSetup.hasCron = false
+        }
+      }
+    }
   }
 
   if (!settings?.adminSetup?.cartLifeSpan) {
@@ -332,8 +405,6 @@ const checkConfig = async (ctx: Context) => {
   if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
     const updates: Array<Promise<any>> = []
 
-    changed = true
-
     templates.forEach(async (template) => {
       const existingData = await mail.getTemplate(template.Name)
 
@@ -346,6 +417,7 @@ const checkConfig = async (ctx: Context) => {
       .then(() => {
         if (settings) {
           settings.templateHash = currTemplateHash
+          changed = true
         }
       })
       .catch((e) => {
@@ -364,6 +436,17 @@ const checkConfig = async (ctx: Context) => {
 }
 
 export const resolvers = {
+  Routes: {
+    queueHandler: async (ctx: Context) => {
+      const date = new Date().toISOString()
+
+      processQueue(ctx)
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+      ctx.response.body = { date, appId: getAppId() }
+      ctx.response.status = 200
+    },
+  },
   Query: {
     getSetupConfig: async (_: any, __: any, ___: Context) => {
       // deprecated
@@ -532,7 +615,7 @@ export const resolvers = {
         !permissions.includes('access-quotes-all') &&
         !permissions.includes('access-quotes-organization')
       ) {
-        whereArray.push(`costCenter=${userCostCenterId}`)
+        whereArray.push(` =${userCostCenterId}`)
       } else if (costCenter?.length) {
         // if user is filtering by cost center name, look up cost center ID
         const ccArray = [] as string[]
@@ -1085,44 +1168,4 @@ export const resolvers = {
       }
     },
   },
-}
-
-interface Quote {
-  id: string
-  referenceName: string
-  creatorEmail: string
-  creatorRole: string
-  creationDate: string
-  expirationDate: string
-  lastUpdate: string
-  updateHistory: QuoteUpdate[]
-  items: QuoteItem[]
-  subtotal: number
-  status: string
-  organization: string
-  costCenter: string
-  viewedBySales: boolean
-  viewedByCustomer: boolean
-}
-
-interface QuoteUpdate {
-  email: string
-  role: string
-  date: string
-  status: string
-  note: string
-}
-
-interface QuoteItem {
-  name: string
-  skuName: string
-  refId: string
-  id: string
-  productId: string
-  imageUrl: string
-  listPrice: number
-  price: number
-  quantity: number
-  sellingPrice: number
-  seller: string
 }
