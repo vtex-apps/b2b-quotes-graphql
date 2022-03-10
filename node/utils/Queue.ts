@@ -65,8 +65,6 @@ export const processQueue = (ctx: Context) => {
   } = ctx
 
   const now = new Date()
-
-  now.setDate(now.getDate() + 1)
   const nowISO = now.toISOString()
 
   masterdata
