@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Scheduler running twice a day changing the quotes status to expired when it needs
+- Send email to users who have interacted with a quote when it expires
 
 ## [1.3.0] - 2022-03-10
 

@@ -168,6 +168,7 @@ const message = (ctx: Context) => {
               organization: organizationName,
               costCenter: costCenterName,
               lastUpdate,
+              expired: lastUpdate.status === 'expired',
             },
           },
         })

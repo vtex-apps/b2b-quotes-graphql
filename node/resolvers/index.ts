@@ -166,6 +166,7 @@ interface Settings {
     allowManualPrice: boolean
     hasCron?: boolean
     cronExpression?: string
+    cronWorkspace?: string
   }
   schemaVersion: string
   templateHash: string | null
@@ -261,7 +262,7 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
         await saveQuotesConfig(true)
       }
 
-      logger.info('the orderFom configuration has been completed')
+      logger.info('setOrderFormConfiguration-success')
     } else {
       saveQuotesConfig(true)
     }
@@ -293,7 +294,8 @@ const checkConfig = async (ctx: Context) => {
 
   if (
     !settings?.adminSetup.hasCron ||
-    settings?.adminSetup.cronExpression !== CRON_EXPRESSION
+    settings?.adminSetup.cronExpression !== CRON_EXPRESSION ||
+    settings?.adminSetup.cronWorkspace !== workspace
   ) {
     const cronQueue = await scheduler
       .getQueue()
@@ -327,29 +329,27 @@ const checkConfig = async (ctx: Context) => {
         await scheduler
           .createOrUpdate(QueueSchedule)
           .then(() => {
-            if (settings) {
-              settings.adminSetup.hasCron = true
-              settings.adminSetup.cronExpression = CRON_EXPRESSION
-            }
+            if (!settings) return
+            settings.adminSetup.hasCron = true
+            settings.adminSetup.cronExpression = CRON_EXPRESSION
+            settings.adminSetup.cronWorkspace = workspace
+            changed = true
           })
           .catch((e: any) => {
-            if (settings) {
+            if (!settings) return
+            if (e.response.status !== 304) {
               settings.adminSetup.hasCron = false
-              // eslint-disable-next-line vtex/prefer-early-return
-              if (e.response.status === 304) {
-                settings.adminSetup.hasCron = true
-                settings.adminSetup.cronExpression = CRON_EXPRESSION
-              }
+            } else {
+              settings.adminSetup.hasCron = true
+              settings.adminSetup.cronExpression = CRON_EXPRESSION
+              settings.adminSetup.cronWorkspace = workspace
             }
           })
       } catch (e) {
-        console.error('Error saving cron =>', e)
         if (settings) {
           settings.adminSetup.hasCron = false
         }
       }
-
-      changed = true
     }
   }
 
@@ -405,8 +405,6 @@ const checkConfig = async (ctx: Context) => {
   if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
     const updates: Array<Promise<any>> = []
 
-    changed = true
-
     templates.forEach(async (template) => {
       const existingData = await mail.getTemplate(template.Name)
 
@@ -419,6 +417,7 @@ const checkConfig = async (ctx: Context) => {
       .then(() => {
         if (settings) {
           settings.templateHash = currTemplateHash
+          changed = true
         }
       })
       .catch((e) => {
@@ -1169,44 +1168,4 @@ export const resolvers = {
       }
     },
   },
-}
-
-interface Quote {
-  id: string
-  referenceName: string
-  creatorEmail: string
-  creatorRole: string
-  creationDate: string
-  expirationDate: string
-  lastUpdate: string
-  updateHistory: QuoteUpdate[]
-  items: QuoteItem[]
-  subtotal: number
-  status: string
-  organization: string
-  costCenter: string
-  viewedBySales: boolean
-  viewedByCustomer: boolean
-}
-
-interface QuoteUpdate {
-  email: string
-  role: string
-  date: string
-  status: string
-  note: string
-}
-
-interface QuoteItem {
-  name: string
-  skuName: string
-  refId: string
-  id: string
-  productId: string
-  imageUrl: string
-  listPrice: number
-  price: number
-  quantity: number
-  sellingPrice: number
-  seller: string
 }

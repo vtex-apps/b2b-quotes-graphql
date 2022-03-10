@@ -18,7 +18,8 @@ export const quoteUpdatedMessage = {
       To: '{{message.to}}',
       // CC: null,
       // BCC: null,
-      Subject: '[{{quote.organization}}] Quote Updated',
+      Subject:
+        '[{{quote.organization}}] Quote {{#if quote.expired}}Expired{{else}}Updated{{/if}}',
       Message: MESSAGE_BODY,
       Type: 'E',
       ProviderId: '00000000-0000-0000-0000-000000000000',
