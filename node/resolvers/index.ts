@@ -784,17 +784,18 @@ export const resolvers = {
         role: { slug },
       } = storefrontPermissions
 
-      const isCustomer = slug.indexOf('customer') >= 0
-      const isSales = slug.indexOf('sales') >= 0
+      const isCustomer = slug.includes('customer')
+      const isSales = slug.includes('sales')
+      const itemsChanged = items?.length > 0
 
       if (
-        (items?.length &&
-          !permissions.some(
-            (permission: string) => permission.indexOf('edit-quotes') >= 0
+        (itemsChanged &&
+          !permissions.some((permission: string) =>
+            permission.includes('edit-quotes')
           )) ||
-        (!items?.length &&
-          !permissions.some(
-            (permission: string) => permission.indexOf('access-quotes') >= 0
+        (!itemsChanged &&
+          !permissions.some((permission: string) =>
+            permission.includes('access-quotes')
           )) ||
         (decline && !permissions.includes('decline-quotes'))
       ) {
@@ -824,12 +825,25 @@ export const resolvers = {
           throw new GraphQLError('quote-cannot-be-updated')
         }
 
+        const expirationChanged =
+          expirationDate !== existingQuote.expirationDate
+
+        if (
+          expirationChanged &&
+          !permissions.some((permission: string) =>
+            permission.includes('edit-quotes')
+          )
+        ) {
+          throw new GraphQLError('operation-not-permitted')
+        }
+
         // if user only has permission to edit their organization's quotes, check that the org matches
         if (
-          (items?.length &&
+          ((itemsChanged || expirationChanged) &&
             !permissions.includes('edit-quotes-all') &&
             permissions.includes('edit-quotes-organization')) ||
-          (!items?.length &&
+          (!itemsChanged &&
+            !expirationChanged &&
             !permissions.includes('access-quotes-all') &&
             permissions.includes('access-quotes-organization'))
         ) {
@@ -840,10 +854,11 @@ export const resolvers = {
 
         // if user only has permission to edit their cost center's quotes, check that the cost center matches
         if (
-          (items?.length &&
+          ((itemsChanged || expirationChanged) &&
             !permissions.includes('edit-quotes-all') &&
             !permissions.includes('edit-quotes-organization')) ||
-          (!items?.length &&
+          (!itemsChanged &&
+            !expirationChanged &&
             !permissions.includes('access-quotes-all') &&
             !permissions.includes('access-quotes-organization'))
         ) {
@@ -852,11 +867,7 @@ export const resolvers = {
           }
         }
 
-        const status = decline
-          ? 'declined'
-          : items?.length
-          ? 'ready'
-          : 'revised'
+        const status = decline ? 'declined' : itemsChanged ? 'ready' : 'revised'
 
         const lastUpdate = nowISO
         const update = {
@@ -875,12 +886,14 @@ export const resolvers = {
           ...existingQuote,
           viewedByCustomer: decline || isCustomer,
           viewedBySales: decline || isSales,
-          items: items?.length ? items : existingQuote.items,
+          items: itemsChanged ? items : existingQuote.items,
           subtotal: subtotal ?? existingQuote.subtotal,
           lastUpdate,
           updateHistory,
           status,
-          expirationDate: expirationDate ?? existingQuote.expirationDate,
+          expirationDate: expirationChanged
+            ? expirationDate
+            : existingQuote.expirationDate,
         } as Quote
 
         const data = await masterdata
