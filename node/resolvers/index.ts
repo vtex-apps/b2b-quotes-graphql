@@ -615,14 +615,19 @@ export const resolvers = {
         !permissions.includes('access-quotes-all') &&
         !permissions.includes('access-quotes-organization')
       ) {
-        whereArray.push(` =${userCostCenterId}`)
+        whereArray.push(`costCenter=${userCostCenterId}`)
       } else if (costCenter?.length) {
         // if user is filtering by cost center name, look up cost center ID
         const ccArray = [] as string[]
+        const promises = [] as Array<Promise<unknown>>
 
-        costCenter.forEach(async (cc) => {
-          const costCenterResult = await organizations.getCostCenterIDs(cc)
+        costCenter.forEach((cc) => {
+          promises.push(organizations.getCostCenterIDs(cc))
+        })
 
+        const results = await Promise.all(promises)
+
+        results.forEach((costCenterResult: any) => {
           if (costCenterResult?.data?.getCostCenters?.data?.length > 0) {
             costCenterResult.data.getCostCenters.data.forEach(
               (element: any) => {
@@ -647,6 +652,16 @@ export const resolvers = {
         whereArray.push(statuses)
       }
 
+      if (search) {
+        const searchArray = [] as string[]
+
+        searchArray.push(`referenceName="*${search}*"`)
+        searchArray.push(`creatorEmail="*${search}*"`)
+        const searches = `(${searchArray.join(' OR ')})`
+
+        whereArray.push(searches)
+      }
+
       const where = whereArray.join(' AND ')
 
       try {
@@ -657,7 +672,6 @@ export const resolvers = {
           pagination: { page, pageSize },
           sort: `${sortedBy} ${sortOrder}`,
           ...(where && { where }),
-          ...(search && { keyword: search }),
         })
 
         return quotes
