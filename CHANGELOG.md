@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+### Fixed
+
+adminSetup object creation when it tries to save the hasCron flag
+
 ## [1.4.1] - 2022-03-14
 
 ### Fixed
