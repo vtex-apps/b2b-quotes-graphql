@@ -176,6 +176,7 @@ const defaultSettings: Settings = {
   adminSetup: {
     cartLifeSpan: 30,
     allowManualPrice: false,
+    hasCron: false,
   },
   schemaVersion: '',
   templateHash: null,
@@ -293,10 +294,16 @@ const checkConfig = async (ctx: Context) => {
   }
 
   if (
-    !settings?.adminSetup.hasCron ||
-    settings?.adminSetup.cronExpression !== CRON_EXPRESSION ||
-    settings?.adminSetup.cronWorkspace !== workspace
+    !settings?.adminSetup?.hasCron ||
+    settings?.adminSetup?.cronExpression !== CRON_EXPRESSION ||
+    settings?.adminSetup?.cronWorkspace !== workspace
   ) {
+    if (settings && settings.adminSetup === undefined) {
+      settings.adminSetup = {
+        ...defaultSettings.adminSetup,
+      }
+    }
+
     const cronQueue = await scheduler
       .getQueue()
       .then((data: any) => {
