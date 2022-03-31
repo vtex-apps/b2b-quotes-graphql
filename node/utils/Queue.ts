@@ -9,6 +9,10 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
 
   const { id, referenceName, organization, costCenter, updateHistory } = item
 
+  if (item.status === 'placed' || item.status === 'declined') {
+    return
+  }
+
   const status = 'expired'
   const now = new Date()
   const nowISO = now.toISOString()
@@ -20,9 +24,9 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
   const update = {
     date: nowISO,
     email: 'noreply@vtexcommerce.com.br',
+    note: '',
     role: 'expiration-system',
     status,
-    note: '',
   }
 
   updateHistory.push(update)
@@ -30,22 +34,22 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
   masterdata
     .updateEntireDocument({
       dataEntity: QUOTE_DATA_ENTITY,
-      id,
       fields: { ...item, lastUpdate, updateHistory, status },
+      id,
     })
     .then(() => {
       message(ctx)
         .quoteUpdated({
-          users: uniqueUsers,
-          name: referenceName,
-          id,
-          organization,
           costCenter,
+          id,
           lastUpdate: {
             email: 'expiration-system',
             note: '',
             status: status.toUpperCase(),
           },
+          name: referenceName,
+          organization,
+          users: uniqueUsers,
         })
         .catch((error) => {
           logger.error({ message: 'quoteExpired-emailError', error })
@@ -71,19 +75,19 @@ export const processQueue = (ctx: Context) => {
     .searchDocuments({
       dataEntity: QUOTE_DATA_ENTITY,
       fields: QUOTE_FIELDS,
-      where: `status <> 'expired' AND expirationDate < ${nowISO}`,
-      sort: 'creationDate ASC',
-      schema: SCHEMA_VERSION,
       pagination: {
         page: 1,
         pageSize: 500,
       },
+      schema: SCHEMA_VERSION,
+      sort: 'creationDate ASC',
+      where: `status <> 'expired' AND expirationDate < ${nowISO}`,
     })
     .then((data: any) => {
       if (Array.isArray(data)) {
         logger.info({
-          message: `expirationQueue-foundItems`,
           itemsToBeProcessed: data.length,
+          message: `expirationQueue-foundItems`,
         })
 
         data.forEach((item) => {

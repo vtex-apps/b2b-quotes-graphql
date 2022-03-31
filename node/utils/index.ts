@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as crypto from 'crypto'
 
-import type { AxiosError } from 'axios'
 import type { RequestTracingConfig } from '@vtex/api'
 import { AuthenticationError, ForbiddenError, UserInputError } from '@vtex/api'
+import type { AxiosError } from 'axios'
 
 export const toHash = (obj: any) => {
   return crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex')
@@ -32,6 +32,10 @@ export function statusToError(e: any) {
 
   throw e
 }
+
+export const isEmail = new RegExp(
+  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+)
 
 export const createTracing = (
   metric: string,

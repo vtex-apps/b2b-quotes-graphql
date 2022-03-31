@@ -1,12 +1,12 @@
 import { indexBy, map, prop } from 'ramda'
 
 import { CHECKOUT_APP } from '../clients/checkout'
-import { organizationName, costCenterName } from './fieldResolvers'
 import templates from '../templates'
-import { toHash } from '../utils'
+import { isEmail, toHash } from '../utils'
 import GraphQLError from '../utils/GraphQLError'
 import message from '../utils/message'
 import { processQueue } from '../utils/Queue'
+import { costCenterName, organizationName } from './fieldResolvers'
 
 export const SCHEMA_VERSION = 'v1.2'
 
@@ -33,29 +33,6 @@ export const QUOTE_FIELDS = [
 ]
 
 const routes = {
-  baseUrl: (account: string) =>
-    `http://${account}.vtexcommercestable.com.br/api`,
-  orderForm: (account: string) =>
-    `${routes.baseUrl(account)}/checkout/pub/orderForm`,
-  checkoutConfig: (account: string) =>
-    `${routes.baseUrl(account)}/checkout/pvt/configuration/orderForm`,
-  quoteEntity: (account: string) =>
-    `${routes.baseUrl(account)}/dataentities/quote`,
-  listQuotes: (account: string, email: string) =>
-    `${routes.quoteEntity(
-      account
-    )}/search?email=${email}&_schema=${SCHEMA_VERSION}&_fields=id,email,cartName,status,description,items,creationDate,subtotal,discounts,taxes,shipping,total,customData,address&_sort=creationDate DESC`,
-  getQuote: (account: string, id: string) =>
-    `${routes.quoteEntity(
-      account
-    )}/documents/${id}?_fields=id,email,cartName,status,description,items,creationDate,subtotal,discounts,shipping,taxes,total,customData,address`,
-
-  saveSchema: (account: string) =>
-    `${routes.quoteEntity(account)}/schemas/${SCHEMA_VERSION}`,
-  clearCart: (account: string, id: string) =>
-    `${routes.orderForm(account)}/${id}/items/removeAll`,
-  addToCart: (account: string, orderFormId: string) =>
-    `${routes.orderForm(account)}/${orderFormId}/items/`,
   addCustomData: (
     account: string,
     orderFormId: string,
@@ -68,6 +45,28 @@ const routes = {
     }`,
   addPriceToItems: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/update`,
+  addToCart: (account: string, orderFormId: string) =>
+    `${routes.orderForm(account)}/${orderFormId}/items/`,
+  baseUrl: (account: string) =>
+    `http://${account}.vtexcommercestable.com.br/api`,
+  checkoutConfig: (account: string) =>
+    `${routes.baseUrl(account)}/checkout/pvt/configuration/orderForm`,
+  clearCart: (account: string, id: string) =>
+    `${routes.orderForm(account)}/${id}/items/removeAll`,
+  getQuote: (account: string, id: string) =>
+    `${routes.quoteEntity(
+      account
+    )}/documents/${id}?_fields=id,email,cartName,status,description,items,creationDate,subtotal,discounts,shipping,taxes,total,customData,address`,
+  listQuotes: (account: string, email: string) =>
+    `${routes.quoteEntity(
+      account
+    )}/search?email=${email}&_schema=${SCHEMA_VERSION}&_fields=id,email,cartName,status,description,items,creationDate,subtotal,discounts,taxes,shipping,total,customData,address&_sort=creationDate DESC`,
+  orderForm: (account: string) =>
+    `${routes.baseUrl(account)}/checkout/pub/orderForm`,
+  quoteEntity: (account: string) =>
+    `${routes.baseUrl(account)}/dataentities/quote`,
+  saveSchema: (account: string) =>
+    `${routes.quoteEntity(account)}/schemas/${SCHEMA_VERSION}`,
 }
 
 const getAppId = (): string => {
@@ -76,76 +75,67 @@ const getAppId = (): string => {
 
 const schema = {
   properties: {
-    referenceName: {
-      type: 'string',
-      title: 'Reference Name',
-    },
-    creatorEmail: {
-      type: 'string',
-      title: 'Creator Email',
-    },
-    creatorRole: {
-      type: 'string',
-      title: 'Creator Role',
+    costCenter: {
+      title: 'Cost Center',
+      type: ['null', 'string'],
     },
     creationDate: {
-      type: 'string',
-      title: 'Creation Date',
       format: 'date-time',
+      title: 'Creation Date',
+      type: 'string',
+    },
+    creatorEmail: {
+      title: 'Creator Email',
+      type: 'string',
+    },
+    creatorRole: {
+      title: 'Creator Role',
+      type: 'string',
     },
     expirationDate: {
-      type: 'string',
+      format: 'date-time',
       title: 'Expiration Date',
-      format: 'date-time',
-    },
-    lastUpdate: {
       type: 'string',
-      title: 'Last Update',
-      format: 'date-time',
-    },
-    updateHistory: {
-      type: 'array',
-      title: 'Update History',
     },
     items: {
-      type: 'array',
       title: 'Cart',
+      type: 'array',
     },
-    subtotal: {
-      type: 'number',
-      title: 'Subtotal',
-    },
-    status: {
+    lastUpdate: {
+      format: 'date-time',
+      title: 'Last Update',
       type: 'string',
-      title: 'Status',
     },
     organization: {
-      type: ['null', 'string'],
       title: 'Organization',
-    },
-    costCenter: {
       type: ['null', 'string'],
-      title: 'Cost Center',
     },
-    viewedBySales: {
-      type: 'boolean',
-      title: 'Viewed by Sales',
+    referenceName: {
+      title: 'Reference Name',
+      type: 'string',
+    },
+    status: {
+      title: 'Status',
+      type: 'string',
+    },
+    subtotal: {
+      title: 'Subtotal',
+      type: 'number',
+    },
+    updateHistory: {
+      title: 'Update History',
+      type: 'array',
     },
     viewedByCustomer: {
-      type: 'boolean',
       title: 'Viewed by Customer',
+      type: 'boolean',
+    },
+    viewedBySales: {
+      title: 'Viewed by Sales',
+      type: 'boolean',
     },
   },
-  'v-indexed': [
-    'creatorEmail',
-    'creationDate',
-    'expirationDate',
-    'lastUpdate',
-    'referenceName',
-    'status',
-    'organization',
-    'costCenter',
-  ],
+  'v-cache': false,
   'v-default-fields': [
     'referenceName',
     'creatorEmail',
@@ -157,7 +147,16 @@ const schema = {
     'status',
   ],
   'v-immediate-indexing': true,
-  'v-cache': false,
+  'v-indexed': [
+    'creatorEmail',
+    'creationDate',
+    'expirationDate',
+    'lastUpdate',
+    'referenceName',
+    'status',
+    'organization',
+    'costCenter',
+  ],
 }
 
 interface Settings {
@@ -174,8 +173,8 @@ interface Settings {
 
 const defaultSettings: Settings = {
   adminSetup: {
-    cartLifeSpan: 30,
     allowManualPrice: false,
+    cartLifeSpan: 30,
     hasCron: false,
   },
   schemaVersion: '',
@@ -183,10 +182,10 @@ const defaultSettings: Settings = {
 }
 
 const defaultHeaders = (authToken: string) => ({
-  'Content-Type': 'application/json',
   Accept: 'application/vnd.vtex.ds.v10+json',
-  VtexIdclientAutCookie: authToken,
+  'Content-Type': 'application/json',
   'Proxy-Authorization': authToken,
+  VtexIdclientAutCookie: authToken,
 })
 
 // checks and configure the OrderForm based on quoteId
@@ -204,8 +203,8 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
       .then(() => true)
       .catch((e) =>
         logger.error({
-          message: 'vBaseSaveJson-error',
           e,
+          message: 'vBaseSaveJson-error',
         })
       )
   }
@@ -221,8 +220,8 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
       await saveQuotesConfig(false)
     } else {
       logger.error({
-        message: 'vBaseSaveGet-error',
         error,
+        message: 'vBaseSaveGet-error',
       })
     }
   }
@@ -232,8 +231,8 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
       .getOrderFormConfiguration()
       .catch((error) => {
         logger.error({
-          message: 'getOrderFormConfiguration-error',
           error,
+          message: 'getOrderFormConfiguration-error',
         })
       })
 
@@ -243,17 +242,17 @@ const checkAndCreateQuotesConfig = async (ctx: Context): Promise<any> => {
       ) === -1
     ) {
       checkoutConfig.apps.push({
-        major: 1,
-        id: CHECKOUT_APP,
         fields: ['quoteId'],
+        id: CHECKOUT_APP,
+        major: 1,
       })
       const setCheckoutConfig: any = await checkout
         .setOrderFormConfiguration(checkoutConfig, authToken)
         .then(() => true)
         .catch((error) => {
           logger.error({
-            message: 'setOrderFormConfiguration-error',
             error,
+            message: 'setOrderFormConfiguration-error',
           })
 
           return false
@@ -286,8 +285,8 @@ const checkConfig = async (ctx: Context) => {
     settings = await apps.getAppSettings(appId)
   } catch (error) {
     logger.error({
-      message: 'checkConfig-getAppSettingsError',
       error,
+      message: 'checkConfig-getAppSettingsError',
     })
 
     return null
@@ -318,32 +317,38 @@ const checkConfig = async (ctx: Context) => {
         const time = new Date().getTime()
         const QueueSchedule = {
           id: 'b2b-quotes-graphql-queue-schedule',
-          scheduler: {
-            expression: CRON_EXPRESSION,
-            endDate: '2031-12-30T23:29:00',
-          },
           request: {
-            uri: `https://${workspace}--${account}.myvtex.com/b2b-quotes-graphql/_v/0/process-queue?v=${time}`,
-            method: 'GET',
+            body: null,
             headers: {
               'cache-control': 'no-cache',
               pragma: 'no-cache',
             },
-            body: null,
+            method: 'GET',
+            uri: `https://${workspace}--${account}.myvtex.com/b2b-quotes-graphql/_v/0/process-queue?v=${time}`,
+          },
+          scheduler: {
+            endDate: '2031-12-30T23:29:00',
+            expression: CRON_EXPRESSION,
           },
         }
 
         await scheduler
           .createOrUpdate(QueueSchedule)
           .then(() => {
-            if (!settings) return
+            if (!settings) {
+              return
+            }
+
             settings.adminSetup.hasCron = true
             settings.adminSetup.cronExpression = CRON_EXPRESSION
             settings.adminSetup.cronWorkspace = workspace
             changed = true
           })
           .catch((e: any) => {
-            if (!settings) return
+            if (!settings) {
+              return
+            }
+
             if (e.response.status !== 304) {
               settings.adminSetup.hasCron = false
             } else {
@@ -369,8 +374,8 @@ const checkConfig = async (ctx: Context) => {
     try {
       await masterdata.createOrUpdateSchema({
         dataEntity: QUOTE_DATA_ENTITY,
-        schemaName: SCHEMA_VERSION,
         schemaBody: schema,
+        schemaName: SCHEMA_VERSION,
       })
 
       changed = true
@@ -412,12 +417,8 @@ const checkConfig = async (ctx: Context) => {
   if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
     const updates: Array<Promise<any>> = []
 
-    templates.forEach(async (template) => {
-      const existingData = await mail.getTemplate(template.Name)
-
-      if (!existingData) {
-        updates.push(mail.publishTemplate(template))
-      }
+    templates.forEach((template) => {
+      updates.push(mail.publishTemplate(template))
     })
 
     await Promise.all(updates)
@@ -429,36 +430,531 @@ const checkConfig = async (ctx: Context) => {
       })
       .catch((e) => {
         logger.error({
-          message: 'checkConfig-publishTemplateError',
           error: e,
+          message: 'checkConfig-publishTemplateError',
         })
         throw new Error(e)
       })
   }
 
-  if (changed) await apps.saveAppSettings(appId, settings)
+  if (changed) {
+    await apps.saveAppSettings(appId, settings)
+  }
+
   await checkAndCreateQuotesConfig(ctx)
 
   return settings
 }
 
 export const resolvers = {
-  Routes: {
-    queueHandler: async (ctx: Context) => {
-      const date = new Date().toISOString()
+  Mutation: {
+    clearCart: async (_: any, params: any, ctx: Context) => {
+      const {
+        vtex: { account, logger },
+        clients: { hub },
+      } = ctx
 
-      processQueue(ctx)
-      ctx.set('Content-Type', 'application/json')
-      ctx.set('Cache-Control', 'no-cache, no-store')
-      ctx.response.body = { date, appId: getAppId() }
-      ctx.response.status = 200
+      try {
+        // CLEAR CURRENT CART
+        await hub.post(routes.clearCart(account, params.orderFormId), {
+          expectedOrderFormSections: ['items'],
+        })
+      } catch (e) {
+        logger.error({
+          e,
+          message: 'clearCart-error',
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    createQuote: async (
+      _: any,
+      {
+        input: { referenceName, items, subtotal, note, sendToSalesRep },
+      }: {
+        input: {
+          referenceName: string
+          items: QuoteItem[]
+          subtotal: number
+          note: string
+          sendToSalesRep: boolean
+        }
+      },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
+        vtex,
+        vtex: { logger },
+      } = ctx
+
+      const { sessionData, storefrontPermissions } = vtex as any
+
+      const settings = await checkConfig(ctx)
+
+      if (!sessionData?.namespaces['storefront-permissions']?.organization) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      if (!sessionData?.namespaces?.profile?.email?.value) {
+        throw new GraphQLError('email-not-found')
+      }
+
+      if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+
+      const email = sessionData.namespaces.profile.email.value
+      const {
+        role: { slug },
+      } = storefrontPermissions
+
+      const {
+        organization: { value: organizationId },
+        costcenter: { value: costCenterId },
+      } = sessionData.namespaces['storefront-permissions']
+
+      const now = new Date()
+      const nowISO = now.toISOString()
+      const expirationDate = new Date()
+
+      expirationDate.setDate(
+        expirationDate.getDate() + (settings?.adminSetup?.cartLifeSpan ?? 30)
+      )
+      const expirationDateISO = expirationDate.toISOString()
+
+      const status = sendToSalesRep ? 'pending' : 'ready'
+      const lastUpdate = nowISO
+      const updateHistory = [
+        {
+          date: nowISO,
+          email,
+          note,
+          role: slug,
+          status,
+        },
+      ]
+
+      const quote = {
+        costCenter: costCenterId,
+        creationDate: nowISO,
+        creatorEmail: email,
+        creatorRole: slug,
+        expirationDate: expirationDateISO,
+        items,
+        lastUpdate,
+        organization: organizationId,
+        referenceName,
+        status,
+        subtotal,
+        updateHistory,
+        viewedByCustomer: sendToSalesRep,
+        viewedBySales: !sendToSalesRep,
+      }
+
+      try {
+        const data = await masterdata
+          .createDocument({
+            dataEntity: QUOTE_DATA_ENTITY,
+            fields: quote,
+            schema: SCHEMA_VERSION,
+          })
+          .then((res: any) => res)
+
+        if (sendToSalesRep) {
+          message(ctx)
+            .quoteCreated({
+              costCenter: costCenterId,
+              id: data.DocumentId,
+              lastUpdate: {
+                email,
+                note,
+                status: status.toUpperCase(),
+              },
+              name: referenceName,
+              organization: organizationId,
+            })
+            .then(() => {
+              logger.info({
+                message: `[Quote created] E-mail sent to sales reps}`,
+              })
+            })
+        }
+
+        return data.DocumentId
+      } catch (e) {
+        logger.error({
+          e,
+          message: 'createQuote-error',
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    updateQuote: async (
+      _: any,
+      {
+        input: { id, items, subtotal, note, decline, expirationDate },
+      }: {
+        input: {
+          id: string
+          items: QuoteItem[]
+          subtotal: number
+          note: string
+          decline: boolean
+          expirationDate: string
+        }
+      },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata },
+        vtex,
+        vtex: { logger },
+      } = ctx
+
+      const { sessionData, storefrontPermissions } = vtex as any
+
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      if (!sessionData?.namespaces?.profile?.email?.value) {
+        throw new GraphQLError('email-not-found')
+      }
+
+      const email = sessionData.namespaces.profile.email.value
+      const {
+        permissions,
+        role: { slug },
+      } = storefrontPermissions
+
+      const isCustomer = slug.includes('customer')
+      const isSales = slug.includes('sales')
+      const itemsChanged = items?.length > 0
+
+      if (
+        (itemsChanged &&
+          !permissions.some((permission: string) =>
+            permission.includes('edit-quotes')
+          )) ||
+        (!itemsChanged &&
+          !permissions.some((permission: string) =>
+            permission.includes('access-quotes')
+          )) ||
+        (decline && !permissions.includes('decline-quotes'))
+      ) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+
+      const {
+        organization: { value: userOrganizationId },
+        costcenter: { value: userCostCenterId },
+      } = sessionData.namespaces['storefront-permissions']
+
+      const now = new Date()
+      const nowISO = now.toISOString()
+
+      try {
+        const existingQuote = (await masterdata.getDocument({
+          dataEntity: QUOTE_DATA_ENTITY,
+          fields: QUOTE_FIELDS,
+          id,
+        })) as Quote
+
+        if (!existingQuote) {
+          throw new GraphQLError('quote-not-found')
+        }
+
+        if (
+          existingQuote.status === 'expired' ||
+          existingQuote.status === 'declined'
+        ) {
+          throw new GraphQLError('quote-cannot-be-updated')
+        }
+
+        const expirationChanged =
+          expirationDate !== existingQuote.expirationDate
+
+        if (
+          expirationChanged &&
+          !permissions.some((permission: string) =>
+            permission.includes('edit-quotes')
+          )
+        ) {
+          throw new GraphQLError('operation-not-permitted')
+        }
+
+        // if user only has permission to edit their organization's quotes, check that the org matches
+        if (
+          ((itemsChanged || expirationChanged) &&
+            !permissions.includes('edit-quotes-all') &&
+            permissions.includes('edit-quotes-organization')) ||
+          (!itemsChanged &&
+            !expirationChanged &&
+            !permissions.includes('access-quotes-all') &&
+            permissions.includes('access-quotes-organization'))
+        ) {
+          if (userOrganizationId !== existingQuote.organization) {
+            throw new GraphQLError('operation-not-permitted')
+          }
+        }
+
+        // if user only has permission to edit their cost center's quotes, check that the cost center matches
+        if (
+          ((itemsChanged || expirationChanged) &&
+            !permissions.includes('edit-quotes-all') &&
+            !permissions.includes('edit-quotes-organization')) ||
+          (!itemsChanged &&
+            !expirationChanged &&
+            !permissions.includes('access-quotes-all') &&
+            !permissions.includes('access-quotes-organization'))
+        ) {
+          if (userCostCenterId !== existingQuote.costCenter) {
+            throw new GraphQLError('operation-not-permitted')
+          }
+        }
+
+        const status = decline ? 'declined' : itemsChanged ? 'ready' : 'revised'
+
+        const lastUpdate = nowISO
+        const update = {
+          date: nowISO,
+          email,
+          note,
+          role: slug,
+          status,
+        }
+
+        const { updateHistory } = existingQuote
+
+        updateHistory.push(update)
+
+        const updatedQuote = {
+          ...existingQuote,
+          expirationDate: expirationChanged
+            ? expirationDate
+            : existingQuote.expirationDate,
+          items: itemsChanged ? items : existingQuote.items,
+          lastUpdate,
+          status,
+          subtotal: subtotal ?? existingQuote.subtotal,
+          updateHistory,
+          viewedByCustomer: decline || isCustomer,
+          viewedBySales: decline || isSales,
+        } as Quote
+
+        const data = await masterdata
+          .updateEntireDocument({
+            dataEntity: QUOTE_DATA_ENTITY,
+            fields: updatedQuote,
+            id,
+          })
+          .then((res: any) => res)
+
+        const users = updateHistory.map((anUpdate) => anUpdate.email)
+        const uniqueUsers = [
+          ...new Set(
+            users.filter((userEmail: string) => isEmail.test(userEmail))
+          ),
+        ]
+
+        message(ctx)
+          .quoteUpdated({
+            costCenter: existingQuote.costCenter,
+            id: existingQuote.id,
+            lastUpdate: {
+              email,
+              note,
+              status: status.toUpperCase(),
+            },
+            name: existingQuote.referenceName,
+            organization: existingQuote.organization,
+            users: uniqueUsers,
+          })
+          .then(() => {
+            logger.info({
+              message: `[Quote updated] E-mail sent ${uniqueUsers.join(', ')}`,
+            })
+          })
+
+        return data.id
+      } catch (e) {
+        logger.warn({
+          e,
+          message: 'updateQuote-warning',
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
+    },
+    useQuote: async (
+      _: any,
+      { id, orderFormId }: { id: string; orderFormId: string },
+      ctx: Context
+    ) => {
+      const {
+        clients: { masterdata, hub },
+        vtex,
+        vtex: { account, logger },
+      } = ctx
+
+      const { sessionData, storefrontPermissions } = vtex as any
+
+      if (!sessionData?.namespaces['storefront-permissions']) {
+        throw new GraphQLError('organization-data-not-found')
+      }
+
+      if (!sessionData?.namespaces?.profile?.email?.value) {
+        throw new GraphQLError('email-not-found')
+      }
+
+      // const email = sessionData.namespaces.profile.email.value
+      const { permissions } = storefrontPermissions
+
+      if (!permissions.includes('use-quotes')) {
+        throw new GraphQLError('operation-not-permitted')
+      }
+
+      const token = ctx.cookies.get(`VtexIdclientAutCookie`)
+
+      const useHeaders = {
+        'Content-Type': 'application/json',
+        Cookie: `VtexIdclientAutCookie=${token};`,
+      }
+
+      try {
+        // GET QUOTE DATA
+        const quote = (await masterdata.getDocument({
+          dataEntity: QUOTE_DATA_ENTITY,
+          fields: QUOTE_FIELDS,
+          id,
+        })) as Quote
+
+        if (quote.status === 'declined' || quote.status === 'expired') {
+          throw new GraphQLError('quote-cannot-be-used')
+        }
+
+        const { items } = quote
+
+        // CLEAR CURRENT CART
+        if (orderFormId !== 'default-order-form') {
+          await hub.post(
+            routes.clearCart(account, orderFormId),
+            {
+              expectedOrderFormSections: ['items'],
+            },
+            useHeaders
+          )
+        }
+
+        // CREATE CART IF IT DOESN'T EXIST YET
+        if (orderFormId === 'default-order-form') {
+          const newOrderForm = await hub.get(
+            routes.orderForm(account),
+            useHeaders
+          )
+
+          orderFormId = (newOrderForm.data as any).orderFormId
+        }
+
+        await checkAndCreateQuotesConfig(ctx)
+        await hub
+          .put(
+            routes.addCustomData(account, orderFormId, CHECKOUT_APP, 'quoteId'),
+            {
+              value: id,
+            },
+            useHeaders
+          )
+          .then((res: any) => {
+            return res.data
+          })
+          .catch((e) =>
+            logger.error({
+              e,
+              message: 'useQuote-addCustomDataError',
+            })
+          )
+
+        // ADD ITEMS TO CART
+        const data = await hub
+          .post(routes.addToCart(account, orderFormId), {
+            expectedOrderFormSections: ['items'],
+            orderItems: items.map((item) => {
+              return {
+                id: item.id,
+                quantity: item.quantity,
+                seller: item.seller || '1',
+              }
+            }),
+          })
+          .then((res: any) => {
+            return res.data
+          })
+
+        const { items: itemsAdded } = data
+
+        const sellingPriceMap = indexBy(
+          prop('id'),
+          map(
+            (item: any) => ({
+              id: item.id,
+              price: item.sellingPrice,
+            }),
+            items
+          )
+        )
+
+        const orderItems: any[] = []
+
+        itemsAdded.forEach((item: any, key: number) => {
+          orderItems.push({
+            index: key,
+            price: prop(item.id, sellingPriceMap).price,
+            quantity: null,
+          })
+        })
+
+        await hub.post(
+          routes.addPriceToItems(account, orderFormId),
+          {
+            orderItems,
+          },
+          useHeaders
+        )
+      } catch (e) {
+        logger.error({
+          e,
+          message: 'useQuote-error',
+        })
+        if (e.message) {
+          throw new GraphQLError(e.message)
+        } else if (e.response?.data?.message) {
+          throw new GraphQLError(e.response.data.message)
+        } else {
+          throw new GraphQLError(e)
+        }
+      }
     },
   },
   Query: {
-    getSetupConfig: async (_: any, __: any, ___: Context) => {
-      // deprecated
-      return null
-    },
     getQuote: async (_: any, { id }: { id: string }, ctx: Context) => {
       const {
         clients: { masterdata },
@@ -497,8 +993,8 @@ export const resolvers = {
       try {
         const quote = (await masterdata.getDocument({
           dataEntity: QUOTE_DATA_ENTITY,
-          id,
           fields: QUOTE_FIELDS,
+          id,
         })) as Quote
 
         // if user only has permission to view their organization's quotes, check that the org matches
@@ -522,8 +1018,8 @@ export const resolvers = {
         return quote
       } catch (e) {
         logger.error({
-          message: 'getQuote-error',
           e,
+          message: 'getQuote-error',
         })
         if (e.message) {
           throw new GraphQLError(e.message)
@@ -675,8 +1171,8 @@ export const resolvers = {
         const quotes = await masterdata.searchDocumentsWithPaginationInfo({
           dataEntity: QUOTE_DATA_ENTITY,
           fields: QUOTE_FIELDS,
-          schema: SCHEMA_VERSION,
           pagination: { page, pageSize },
+          schema: SCHEMA_VERSION,
           sort: `${sortedBy} ${sortOrder}`,
           ...(where && { where }),
         })
@@ -684,8 +1180,8 @@ export const resolvers = {
         return quotes
       } catch (e) {
         logger.error({
-          message: 'getQuotes-error',
           e,
+          message: 'getQuotes-error',
         })
         if (e.message) {
           throw new GraphQLError(e.message)
@@ -695,498 +1191,32 @@ export const resolvers = {
           throw new GraphQLError(e)
         }
       }
+    },
+    getSetupConfig: async (_: any, __: any, ___: Context) => {
+      // deprecated
+      return null
     },
   },
   Quote: {
-    organizationName,
     costCenterName,
+    organizationName,
   },
-  Mutation: {
-    clearCart: async (_: any, params: any, ctx: Context) => {
-      const {
-        vtex: { account, logger },
-        clients: { hub },
-      } = ctx
-
-      try {
-        // CLEAR CURRENT CART
-        await hub.post(routes.clearCart(account, params.orderFormId), {
-          expectedOrderFormSections: ['items'],
-        })
-      } catch (e) {
-        logger.error({
-          message: 'clearCart-error',
-          e,
-        })
-        if (e.message) {
-          throw new GraphQLError(e.message)
-        } else if (e.response?.data?.message) {
-          throw new GraphQLError(e.response.data.message)
-        } else {
-          throw new GraphQLError(e)
-        }
+  Routes: {
+    host: async (ctx: Context) => {
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+      ctx.response.body = {
+        host: ctx.vtex.host,
       }
     },
-    createQuote: async (
-      _: any,
-      {
-        input: { referenceName, items, subtotal, note, sendToSalesRep },
-      }: {
-        input: {
-          referenceName: string
-          items: QuoteItem[]
-          subtotal: number
-          note: string
-          sendToSalesRep: boolean
-        }
-      },
-      ctx: Context
-    ) => {
-      const {
-        clients: { masterdata },
-        vtex,
-        vtex: { logger },
-      } = ctx
+    queueHandler: async (ctx: Context) => {
+      const date = new Date().toISOString()
 
-      const { sessionData, storefrontPermissions } = vtex as any
-
-      const settings = await checkConfig(ctx)
-
-      if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-        throw new GraphQLError('organization-data-not-found')
-      }
-
-      if (!sessionData?.namespaces?.profile?.email?.value) {
-        throw new GraphQLError('email-not-found')
-      }
-
-      if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
-        throw new GraphQLError('operation-not-permitted')
-      }
-
-      const email = sessionData.namespaces.profile.email.value
-      const {
-        role: { slug },
-      } = storefrontPermissions
-
-      const {
-        organization: { value: organizationId },
-        costcenter: { value: costCenterId },
-      } = sessionData.namespaces['storefront-permissions']
-
-      const now = new Date()
-      const nowISO = now.toISOString()
-      const expirationDate = new Date()
-
-      expirationDate.setDate(
-        expirationDate.getDate() + (settings?.adminSetup?.cartLifeSpan ?? 30)
-      )
-      const expirationDateISO = expirationDate.toISOString()
-
-      const status = sendToSalesRep ? 'pending' : 'ready'
-      const lastUpdate = nowISO
-      const updateHistory = [
-        {
-          date: nowISO,
-          email,
-          role: slug,
-          status,
-          note,
-        },
-      ]
-
-      const quote = {
-        referenceName,
-        creatorEmail: email,
-        creationDate: nowISO,
-        creatorRole: slug,
-        expirationDate: expirationDateISO,
-        items,
-        subtotal,
-        status,
-        organization: organizationId,
-        costCenter: costCenterId,
-        lastUpdate,
-        updateHistory,
-        viewedByCustomer: sendToSalesRep,
-        viewedBySales: !sendToSalesRep,
-      }
-
-      try {
-        const data = await masterdata
-          .createDocument({
-            dataEntity: QUOTE_DATA_ENTITY,
-            fields: quote,
-            schema: SCHEMA_VERSION,
-          })
-          .then((res: any) => res)
-
-        if (sendToSalesRep) {
-          message(ctx).quoteCreated({
-            name: referenceName,
-            id: data.DocumentId,
-            organization: organizationId,
-            costCenter: costCenterId,
-            lastUpdate: {
-              email,
-              note,
-              status: status.toUpperCase(),
-            },
-          })
-        }
-
-        return data.DocumentId
-      } catch (e) {
-        logger.error({
-          message: 'createQuote-error',
-          e,
-        })
-        if (e.message) {
-          throw new GraphQLError(e.message)
-        } else if (e.response?.data?.message) {
-          throw new GraphQLError(e.response.data.message)
-        } else {
-          throw new GraphQLError(e)
-        }
-      }
-    },
-    updateQuote: async (
-      _: any,
-      {
-        input: { id, items, subtotal, note, decline, expirationDate },
-      }: {
-        input: {
-          id: string
-          items: QuoteItem[]
-          subtotal: number
-          note: string
-          decline: boolean
-          expirationDate: string
-        }
-      },
-      ctx: Context
-    ) => {
-      const {
-        clients: { masterdata },
-        vtex,
-        vtex: { logger },
-      } = ctx
-
-      const { sessionData, storefrontPermissions } = vtex as any
-
-      if (!sessionData?.namespaces['storefront-permissions']) {
-        throw new GraphQLError('organization-data-not-found')
-      }
-
-      if (!sessionData?.namespaces?.profile?.email?.value) {
-        throw new GraphQLError('email-not-found')
-      }
-
-      const email = sessionData.namespaces.profile.email.value
-      const {
-        permissions,
-        role: { slug },
-      } = storefrontPermissions
-
-      const isCustomer = slug.includes('customer')
-      const isSales = slug.includes('sales')
-      const itemsChanged = items?.length > 0
-
-      if (
-        (itemsChanged &&
-          !permissions.some((permission: string) =>
-            permission.includes('edit-quotes')
-          )) ||
-        (!itemsChanged &&
-          !permissions.some((permission: string) =>
-            permission.includes('access-quotes')
-          )) ||
-        (decline && !permissions.includes('decline-quotes'))
-      ) {
-        throw new GraphQLError('operation-not-permitted')
-      }
-
-      const {
-        organization: { value: userOrganizationId },
-        costcenter: { value: userCostCenterId },
-      } = sessionData.namespaces['storefront-permissions']
-
-      const now = new Date()
-      const nowISO = now.toISOString()
-
-      try {
-        const existingQuote = (await masterdata.getDocument({
-          dataEntity: QUOTE_DATA_ENTITY,
-          id,
-          fields: QUOTE_FIELDS,
-        })) as Quote
-
-        if (!existingQuote) throw new GraphQLError('quote-not-found')
-        if (
-          existingQuote.status === 'expired' ||
-          existingQuote.status === 'declined'
-        ) {
-          throw new GraphQLError('quote-cannot-be-updated')
-        }
-
-        const expirationChanged =
-          expirationDate !== existingQuote.expirationDate
-
-        if (
-          expirationChanged &&
-          !permissions.some((permission: string) =>
-            permission.includes('edit-quotes')
-          )
-        ) {
-          throw new GraphQLError('operation-not-permitted')
-        }
-
-        // if user only has permission to edit their organization's quotes, check that the org matches
-        if (
-          ((itemsChanged || expirationChanged) &&
-            !permissions.includes('edit-quotes-all') &&
-            permissions.includes('edit-quotes-organization')) ||
-          (!itemsChanged &&
-            !expirationChanged &&
-            !permissions.includes('access-quotes-all') &&
-            permissions.includes('access-quotes-organization'))
-        ) {
-          if (userOrganizationId !== existingQuote.organization) {
-            throw new GraphQLError('operation-not-permitted')
-          }
-        }
-
-        // if user only has permission to edit their cost center's quotes, check that the cost center matches
-        if (
-          ((itemsChanged || expirationChanged) &&
-            !permissions.includes('edit-quotes-all') &&
-            !permissions.includes('edit-quotes-organization')) ||
-          (!itemsChanged &&
-            !expirationChanged &&
-            !permissions.includes('access-quotes-all') &&
-            !permissions.includes('access-quotes-organization'))
-        ) {
-          if (userCostCenterId !== existingQuote.costCenter) {
-            throw new GraphQLError('operation-not-permitted')
-          }
-        }
-
-        const status = decline ? 'declined' : itemsChanged ? 'ready' : 'revised'
-
-        const lastUpdate = nowISO
-        const update = {
-          date: nowISO,
-          email,
-          role: slug,
-          status,
-          note,
-        }
-
-        const { updateHistory } = existingQuote
-
-        updateHistory.push(update)
-
-        const updatedQuote = {
-          ...existingQuote,
-          viewedByCustomer: decline || isCustomer,
-          viewedBySales: decline || isSales,
-          items: itemsChanged ? items : existingQuote.items,
-          subtotal: subtotal ?? existingQuote.subtotal,
-          lastUpdate,
-          updateHistory,
-          status,
-          expirationDate: expirationChanged
-            ? expirationDate
-            : existingQuote.expirationDate,
-        } as Quote
-
-        const data = await masterdata
-          .updateEntireDocument({
-            dataEntity: QUOTE_DATA_ENTITY,
-            id,
-            fields: updatedQuote,
-          })
-          .then((res: any) => res)
-
-        const users = updateHistory.map((anUpdate) => anUpdate.email)
-        const uniqueUsers = [...new Set(users)]
-
-        message(ctx).quoteUpdated({
-          users: uniqueUsers,
-          name: existingQuote.referenceName,
-          id: existingQuote.id,
-          organization: existingQuote.organization,
-          costCenter: existingQuote.costCenter,
-          lastUpdate: {
-            email,
-            note,
-            status: status.toUpperCase(),
-          },
-        })
-
-        return data.id
-      } catch (e) {
-        logger.warn({
-          message: 'updateQuote-warning',
-          e,
-        })
-        if (e.message) {
-          throw new GraphQLError(e.message)
-        } else if (e.response?.data?.message) {
-          throw new GraphQLError(e.response.data.message)
-        } else {
-          throw new GraphQLError(e)
-        }
-      }
-    },
-    useQuote: async (
-      _: any,
-      { id, orderFormId }: { id: string; orderFormId: string },
-      ctx: Context
-    ) => {
-      const {
-        clients: { masterdata, hub },
-        vtex,
-        vtex: { account, logger },
-      } = ctx
-
-      const { sessionData, storefrontPermissions } = vtex as any
-
-      if (!sessionData?.namespaces['storefront-permissions']) {
-        throw new GraphQLError('organization-data-not-found')
-      }
-
-      if (!sessionData?.namespaces?.profile?.email?.value) {
-        throw new GraphQLError('email-not-found')
-      }
-
-      // const email = sessionData.namespaces.profile.email.value
-      const { permissions } = storefrontPermissions
-
-      if (!permissions.includes('use-quotes')) {
-        throw new GraphQLError('operation-not-permitted')
-      }
-
-      const token = ctx.cookies.get(`VtexIdclientAutCookie`)
-
-      const useHeaders = {
-        'Content-Type': 'application/json',
-        Cookie: `VtexIdclientAutCookie=${token};`,
-      }
-
-      try {
-        // GET QUOTE DATA
-        const quote = (await masterdata.getDocument({
-          dataEntity: QUOTE_DATA_ENTITY,
-          id,
-          fields: QUOTE_FIELDS,
-        })) as Quote
-
-        if (quote.status === 'declined' || quote.status === 'expired') {
-          throw new GraphQLError('quote-cannot-be-used')
-        }
-
-        const { items } = quote
-
-        // CLEAR CURRENT CART
-        if (orderFormId !== 'default-order-form') {
-          await hub.post(
-            routes.clearCart(account, orderFormId),
-            {
-              expectedOrderFormSections: ['items'],
-            },
-            useHeaders
-          )
-        }
-
-        // CREATE CART IF IT DOESN'T EXIST YET
-        if (orderFormId === 'default-order-form') {
-          const newOrderForm = await hub.get(
-            routes.orderForm(account),
-            useHeaders
-          )
-
-          orderFormId = (newOrderForm.data as any).orderFormId
-        }
-
-        await checkAndCreateQuotesConfig(ctx)
-        await hub
-          .put(
-            routes.addCustomData(account, orderFormId, CHECKOUT_APP, 'quoteId'),
-            {
-              value: id,
-            },
-            useHeaders
-          )
-          .then((res: any) => {
-            return res.data
-          })
-          .catch((e) =>
-            logger.error({
-              message: 'useQuote-addCustomDataError',
-              e,
-            })
-          )
-
-        // ADD ITEMS TO CART
-        const data = await hub
-          .post(routes.addToCart(account, orderFormId), {
-            expectedOrderFormSections: ['items'],
-            orderItems: items.map((item) => {
-              return {
-                id: item.id,
-                quantity: item.quantity,
-                seller: item.seller || '1',
-              }
-            }),
-          })
-          .then((res: any) => {
-            return res.data
-          })
-
-        const { items: itemsAdded } = data
-
-        const sellingPriceMap = indexBy(
-          prop('id'),
-          map(
-            (item: any) => ({
-              id: item.id,
-              price: item.sellingPrice,
-            }),
-            items
-          )
-        )
-
-        const orderItems: any[] = []
-
-        itemsAdded.forEach((item: any, key: number) => {
-          orderItems.push({
-            index: key,
-            quantity: null,
-            price: prop(item.id, sellingPriceMap).price,
-          })
-        })
-
-        await hub.post(
-          routes.addPriceToItems(account, orderFormId),
-          {
-            orderItems,
-          },
-          useHeaders
-        )
-      } catch (e) {
-        logger.error({
-          message: 'useQuote-error',
-          e,
-        })
-        if (e.message) {
-          throw new GraphQLError(e.message)
-        } else if (e.response?.data?.message) {
-          throw new GraphQLError(e.response.data.message)
-        } else {
-          throw new GraphQLError(e)
-        }
-      }
+      processQueue(ctx)
+      ctx.set('Content-Type', 'application/json')
+      ctx.set('Cache-Control', 'no-cache, no-store')
+      ctx.response.body = { date, appId: getAppId() }
+      ctx.response.status = 200
     },
   },
 }

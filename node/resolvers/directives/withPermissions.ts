@@ -21,8 +21,8 @@ export class WithPermissions extends SchemaDirectiveVisitor {
         })
         .catch((error: any) => {
           logger.error({
-            message: 'getPermissionsError',
             error,
+            message: 'getPermissionsError',
           })
         })
 

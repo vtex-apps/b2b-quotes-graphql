@@ -10,14 +10,21 @@
     "docs": "0.x"
   },
   "dependencies": {
-    "vtex.storefront-permissions": "1.x"
+    "vtex.storefront-permissions": "1.x",
+    "vtex.orders-broadcast": "0.x",
+    "vtex.broadcaster": "0.x",
+    "vtex.broadcaster-worker": "0.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "vbase-read-write"
+    },
+    {
+      "name": "OMSViewer"
+    },
+    {
+      "name": "vtex.broadcaster-worker:index-routes"
     },
     {
       "name": "read-workspace-apps"
@@ -86,6 +93,13 @@
     {
       "name": "outbound-access",
       "attrs": {
+        "host": "{{account}}.vtexcommercestable.com.br",
+        "path": "/api/oms/pvt/admin/orders/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
         "host": "portal.vtexcommercestable.com.br",
         "path": "/api/scheduler/*"
       }
@@ -102,6 +116,20 @@
       "attrs": {
         "host": "{{account}}.vtexcommercestable.com.br",
         "path": "/api/dataentities/cart/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "app.io.vtex.com",
+        "path": "/vtex.broadcaster-worker/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "{{workspace}}--{{account}}.myvtex.com",
+        "path": "/b2b-quotes-graphql/_v/0/  *"
       }
     }
   ],

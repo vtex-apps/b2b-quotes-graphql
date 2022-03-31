@@ -3,37 +3,37 @@ import readFile from '../utils/readFile'
 const MESSAGE_BODY = readFile('../assets/quoteUpdated.html')
 
 export const quoteUpdatedMessage = {
-  Name: 'quote-updated',
   FriendlyName: 'Quote Updated',
-  // Description: null,
   IsDefaultTemplate: false,
+  IsPersisted: true,
+  IsRemoved: false,
+  Name: 'quote-updated',
+  // Description: null,
   // AccountId: null,
   // AccountName: null,
   // ApplicationId: null,
-  IsPersisted: true,
-  IsRemoved: false,
-  Type: '',
   Templates: {
     email: {
-      To: '{{message.to}}',
       // CC: null,
       // BCC: null,
+      IsActive: true,
+      Message: MESSAGE_BODY,
+      ProviderId: '00000000-0000-0000-0000-000000000000',
       Subject:
         '[{{quote.organization}}] Quote {{#if quote.expired}}Expired{{else}}Updated{{/if}}',
-      Message: MESSAGE_BODY,
+      To: '{{message.to}}',
       Type: 'E',
-      ProviderId: '00000000-0000-0000-0000-000000000000',
       // ProviderName: null,
-      IsActive: true,
       withError: false,
     },
     sms: {
+      IsActive: false,
+      Parameters: [],
       Type: 'S',
       // ProviderId: null,
       // ProviderName: null,
-      IsActive: false,
       withError: false,
-      Parameters: [],
     },
   },
+  Type: '',
 }
