@@ -119,7 +119,9 @@ const message = (ctx: Context | EventBroadcastContext) => {
     let users = []
 
     try {
-      users = await getUsers(storefrontPermissions, 'sales-admin')
+      users = (await getUsers(storefrontPermissions, 'sales-admin')).map(
+        (user: any) => user.email
+      )
     } catch (error) {
       logger.error({
         error,

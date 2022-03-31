@@ -582,7 +582,7 @@ export const resolvers = {
             })
             .then(() => {
               logger.info({
-                message: `[Quote created] E-mail sent to sales reps}`,
+                message: `[Quote created] E-mail sent to sales reps`,
               })
             })
         }

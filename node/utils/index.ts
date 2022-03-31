@@ -33,9 +33,7 @@ export function statusToError(e: any) {
   throw e
 }
 
-export const isEmail = new RegExp(
-  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-)
+export const isEmail = new RegExp(/[a-z0-9]+@[a-z]+.[a-z]{2,3}/)
 
 export const createTracing = (
   metric: string,
