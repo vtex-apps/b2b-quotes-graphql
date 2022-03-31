@@ -10,10 +10,7 @@
     "docs": "0.x"
   },
   "dependencies": {
-    "vtex.storefront-permissions": "1.x",
-    "vtex.orders-broadcast": "0.x",
-    "vtex.broadcaster": "0.x",
-    "vtex.broadcaster-worker": "0.x"
+    "vtex.storefront-permissions": "1.x"
   },
   "registries": ["smartcheckout"],
   "policies": [
@@ -22,9 +19,6 @@
     },
     {
       "name": "OMSViewer"
-    },
-    {
-      "name": "vtex.broadcaster-worker:index-routes"
     },
     {
       "name": "read-workspace-apps"
@@ -116,13 +110,6 @@
       "attrs": {
         "host": "{{account}}.vtexcommercestable.com.br",
         "path": "/api/dataentities/cart/*"
-      }
-    },
-    {
-      "name": "outbound-access",
-      "attrs": {
-        "host": "app.io.vtex.com",
-        "path": "/vtex.broadcaster-worker/*"
       }
     },
     {

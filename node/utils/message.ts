@@ -65,7 +65,7 @@ const getOrgAndCostCenterNames = async (
   }
 }
 
-const sendQuoteMail = async (
+const sendMailNotificationToUsers = async (
   { quote, mail: sender, users }: any,
   templateName: string
 ) => {
@@ -149,7 +149,7 @@ const message = (ctx: Context | EventBroadcastContext) => {
       organization: organizationName,
     }
 
-    return sendQuoteMail({ quote, mail, users }, 'quote-created')
+    return sendMailNotificationToUsers({ quote, mail, users }, 'quote-created')
   }
 
   const quoteUpdated = async ({
@@ -192,7 +192,7 @@ const message = (ctx: Context | EventBroadcastContext) => {
       organization: organizationName,
     }
 
-    return sendQuoteMail({ quote, mail, users }, templateName)
+    return sendMailNotificationToUsers({ quote, mail, users }, templateName)
   }
 
   return {
