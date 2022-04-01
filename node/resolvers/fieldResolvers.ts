@@ -16,8 +16,8 @@ export const organizationName = async (
     return organizationData?.data?.getOrganizationById?.name ?? null
   } catch (e) {
     logger.warn({
-      message: 'getOrganizationName-error',
       e,
+      message: 'getOrganizationName-error',
     })
   }
 }
@@ -38,8 +38,8 @@ export const costCenterName = async (
     return costCenterData?.data?.getCostCenterById?.name ?? null
   } catch (e) {
     logger.warn({
-      message: 'getCostCenterName-error',
       e,
+      message: 'getCostCenterName-error',
     })
   }
 }

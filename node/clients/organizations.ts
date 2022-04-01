@@ -20,15 +20,15 @@ export default class Organizations extends AppClient {
 
     return this.graphql.query(
       {
-        query: graphQLQuery,
-        variables: {
-          search,
-        },
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
             sender: 'vtex.b2b-quotes-graphql@1.x',
           },
+        },
+        query: graphQLQuery,
+        variables: {
+          search,
         },
       },
       { url: '/graphql' }
@@ -45,15 +45,15 @@ export default class Organizations extends AppClient {
 
     return this.graphql.query(
       {
-        query: graphQLQuery,
-        variables: {
-          id,
-        },
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
             sender: 'vtex.b2b-quotes-graphql@1.x',
           },
+        },
+        query: graphQLQuery,
+        variables: {
+          id,
         },
       },
       { url: '/graphql' }
@@ -71,15 +71,15 @@ export default class Organizations extends AppClient {
 
     return this.graphql.query(
       {
-        query: graphQLQuery,
-        variables: {
-          search,
-        },
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
             sender: 'vtex.b2b-quotes-graphql@1.x',
           },
+        },
+        query: graphQLQuery,
+        variables: {
+          search,
         },
       },
       { url: '/graphql' }
@@ -96,15 +96,15 @@ export default class Organizations extends AppClient {
 
     return this.graphql.query(
       {
-        query: graphQLQuery,
-        variables: {
-          id,
-        },
         extensions: {
           persistedQuery: {
             provider: 'vtex.b2b-organizations-graphql@0.x',
             sender: 'vtex.b2b-quotes-graphql@1.x',
           },
+        },
+        query: graphQLQuery,
+        variables: {
+          id,
         },
       },
       { url: '/graphql' }

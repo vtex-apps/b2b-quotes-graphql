@@ -1,12 +1,14 @@
 import { IOClients } from '@vtex/api'
 
 import RequestHub from '../utils/Hub'
-import StorefrontPermissions from './storefrontPermissions'
-import VtexId from './vtexId'
-import Organizations from './organizations'
+import { Scheduler } from '../utils/Scheduler'
 import Checkout from './checkout'
 import MailClient from './email'
-import { Scheduler } from '../utils/Scheduler'
+import HostClient from './HostClient'
+import OrdersClient from './OrdersClient'
+import Organizations from './organizations'
+import StorefrontPermissions from './storefrontPermissions'
+import VtexId from './vtexId'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
@@ -36,5 +38,13 @@ export class Clients extends IOClients {
 
   public get scheduler() {
     return this.getOrSet('scheduler', Scheduler)
+  }
+
+  public get orders() {
+    return this.getOrSet('orders', OrdersClient)
+  }
+
+  public get host() {
+    return this.getOrSet('host', HostClient)
   }
 }

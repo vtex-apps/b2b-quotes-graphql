@@ -17,7 +17,9 @@ const getUsers = async (
 
   const role = listRoles.find((r: any) => r.slug === roleSlug)
 
-  if (!role) return []
+  if (!role) {
+    return []
+  }
 
   const {
     data: { listUsers },
@@ -30,7 +32,7 @@ const getUsers = async (
 }
 
 const getOrgAndCostCenterNames = async (
-  ctx: Context,
+  ctx: Context | EventBroadcastContext,
   organizationId: string,
   costCenterId: string
 ) => {
@@ -55,21 +57,42 @@ const getOrgAndCostCenterNames = async (
     return { organizationName, costCenterName }
   } catch (error) {
     logger.error({
-      message: 'quoteUpdatedMessage-getOrgNamesError',
       error,
+      message: 'quoteUpdatedMessage-getOrgNamesError',
     })
 
     return { organizationName: null, costCenterName: null }
   }
 }
 
-const message = (ctx: Context) => {
+const sendMailNotificationToUsers = async (
+  { quote, mail: sender, users }: any,
+  templateName: string
+) => {
+  const promises = []
+
+  for (const user of users) {
+    promises.push(
+      sender.sendMail({
+        jsonData: {
+          message: { to: user },
+          quote,
+        },
+        templateName,
+      })
+    )
+  }
+
+  return Promise.all(promises)
+}
+
+const message = (ctx: Context | EventBroadcastContext) => {
   const {
     clients: { mail, storefrontPermissions },
     vtex: { logger, host },
   } = ctx
 
-  let rootPath = ctx.get('x-vtex-root-path')
+  let rootPath = 'get' in ctx ? ctx.get('x-vtex-root-path') : '/'
 
   // Defend against malformed root path. It should always start with `/`.
   if (rootPath && !rootPath.startsWith('/')) {
@@ -96,11 +119,13 @@ const message = (ctx: Context) => {
     let users = []
 
     try {
-      users = await getUsers(storefrontPermissions, 'sales-admin')
+      users = (await getUsers(storefrontPermissions, 'sales-admin')).map(
+        (user: any) => user.email
+      )
     } catch (error) {
       logger.error({
-        message: 'quoteCreatedMessage-getUsersError',
         error,
+        message: 'quoteCreatedMessage-getUsersError',
       })
     }
 
@@ -110,26 +135,21 @@ const message = (ctx: Context) => {
       costCenter
     )
 
-    const link = `https://${host}${rootPath}/b2b-quotes/${id}`
-
-    if (organizationName && costCenterName) {
-      for (const user of users) {
-        mail.sendMail({
-          templateName: 'quote-created',
-          jsonData: {
-            message: { to: user.email },
-            quote: {
-              name,
-              id,
-              link,
-              organization: organizationName,
-              costCenter: costCenterName,
-              lastUpdate,
-            },
-          },
-        })
-      }
+    if (!organizationName || !costCenterName || users.length === 0) {
+      return
     }
+
+    const link = `https://${host}${rootPath}/b2b-quotes/${id}`
+    const quote = {
+      costCenter: costCenterName,
+      id,
+      lastUpdate,
+      link,
+      name,
+      organization: organizationName,
+    }
+
+    return sendMailNotificationToUsers({ quote, mail, users }, 'quote-created')
   }
 
   const quoteUpdated = async ({
@@ -139,6 +159,8 @@ const message = (ctx: Context) => {
     organization,
     costCenter,
     lastUpdate,
+    templateName = 'quote-updated',
+    orderId = '',
   }: {
     users: string[]
     name: string
@@ -146,6 +168,8 @@ const message = (ctx: Context) => {
     organization: string
     costCenter: string
     lastUpdate: QuoteUpdate
+    templateName?: string
+    orderId?: string
   }) => {
     const { organizationName, costCenterName } = await getOrgAndCostCenterNames(
       ctx,
@@ -153,27 +177,22 @@ const message = (ctx: Context) => {
       costCenter
     )
 
-    const link = `https://${host}${rootPath}/b2b-quotes/${id}`
-
-    if (organizationName && costCenterName) {
-      for (const user of users) {
-        mail.sendMail({
-          templateName: 'quote-updated',
-          jsonData: {
-            message: { to: user },
-            quote: {
-              name,
-              id,
-              link,
-              organization: organizationName,
-              costCenter: costCenterName,
-              lastUpdate,
-              expired: lastUpdate.status === 'expired',
-            },
-          },
-        })
-      }
+    if (!organizationName || !costCenterName) {
+      return
     }
+
+    const link = `https://${host}${rootPath}/b2b-quotes/${id}`
+    const quote = {
+      costCenter: costCenterName,
+      id,
+      lastUpdate,
+      link,
+      name,
+      orderId,
+      organization: organizationName,
+    }
+
+    return sendMailNotificationToUsers({ quote, mail, users }, templateName)
   }
 
   return {

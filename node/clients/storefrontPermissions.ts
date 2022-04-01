@@ -12,21 +12,8 @@ export const QUERIES = {
       permissions
     }
   }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) {
-      id
-      roleId
-      userId
-      clId
-      orgId
-      costId
-      name
-      email
-      canImpersonate
-    }
-  }`,
-  listRoles: `query roles {
-    listRoles {
+  getRole: `query role($id: ID!) {
+    getRole(id: $id) {
       id
       name
       slug
@@ -45,11 +32,24 @@ export const QUERIES = {
       canImpersonate
     }
   }`,
-  getRole: `query role($id: ID!) {
-    getRole(id: $id) {
+  listRoles: `query roles {
+    listRoles {
       id
       name
       slug
+    }
+  }`,
+  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
+    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) {
+      id
+      roleId
+      userId
+      clId
+      orgId
+      costId
+      name
+      email
+      canImpersonate
     }
   }`,
 }
@@ -62,14 +62,14 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   public checkUserPermission = async (): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.getPermission,
-        variables: {},
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-quotes@0.x',
           },
         },
+        query: QUERIES.getPermission,
+        variables: {},
       },
       {}
     )
@@ -78,14 +78,14 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   public listRoles = async (): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.listRoles,
-        variables: {},
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-quotes@0.x',
           },
         },
+        query: QUERIES.listRoles,
+        variables: {},
       },
       {}
     )
@@ -100,16 +100,16 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.graphql.query(
       {
-        query: QUERIES.listUsers,
-        variables: {
-          roleId,
-          ...(organizationId && { organizationId }),
-        },
         extensions: {
           persistedQuery: {
             provider: 'vtex.storefront-permissions@1.x',
             sender: 'vtex.b2b-quotes@0.x',
           },
+        },
+        query: QUERIES.listUsers,
+        variables: {
+          roleId,
+          ...(organizationId && { organizationId }),
         },
       },
       {}

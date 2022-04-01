@@ -20,8 +20,8 @@ export default class RequestHub extends ExternalClient {
 
   public get(url: string, headers: any, data?: any) {
     return this.http.getRaw(url, {
-      headers,
       data,
+      headers,
     })
   }
 

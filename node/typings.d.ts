@@ -75,7 +75,9 @@ type ProcessPaymentStep = (
 
 type LogLevel = 'info' | 'error' | 'warning'
 
-type Timings = { [middleware: string]: [number, number] }
+interface Timings {
+  [middleware: string]: [number, number]
+}
 
 declare module '*.json' {
   const value: any

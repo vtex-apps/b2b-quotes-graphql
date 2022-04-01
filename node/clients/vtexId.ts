@@ -14,8 +14,8 @@ export default class VtexId extends ExternalClient {
     authToken: string
   ): Promise<AuthenticatedUser> {
     return this.http.get('vtexid/pub/authenticated/user/', {
-      params: { authToken },
       metric: 'authenticated-user-get',
+      params: { authToken },
     })
   }
 }

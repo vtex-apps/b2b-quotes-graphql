@@ -1,12 +1,14 @@
 import type {
   ClientsConfig,
-  ServiceContext,
+  EventContext,
   ParamsContext,
   RecorderState,
+  ServiceContext,
 } from '@vtex/api'
 import { LRUCache, Service } from '@vtex/api'
 
 import { Clients } from './clients'
+import { orderHandler } from './middlewares/order'
 import { resolvers } from './resolvers'
 import { schemaDirectives } from './resolvers/directives'
 
@@ -43,14 +45,18 @@ declare global {
   interface State {
     code: number
   }
+  type EventBroadcastContext = EventContext<Clients, RecorderState>
 }
 // Export a service that defines route handlers and client options.
 export default new Service<Clients, RecorderState, ParamsContext>({
   clients,
+  events: {
+    broadcasterOrder: [orderHandler],
+  },
   graphql: {
     resolvers: {
-      Query: resolvers.Query,
       Mutation: resolvers.Mutation,
+      Query: resolvers.Query,
       Quote: resolvers.Quote,
     },
     schemaDirectives,

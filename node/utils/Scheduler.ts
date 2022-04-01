@@ -4,12 +4,12 @@ import type { InstanceOptions, IOContext } from '@vtex/api'
 const VERSION = 4
 
 const routes = {
-  scheduler: (workspace: string, account: string) =>
-    `/api/scheduler/${workspace}/${account}?version=${VERSION}`,
   getQueueSchedule: (workspace: string, account: string) =>
     `/api/scheduler/${workspace}/${account}/b2b-quotes-queue-schedule?version=${VERSION}`,
   getSyncSchedule: (workspace: string, account: string) =>
     `/api/scheduler/${workspace}/${account}/b2b-quotes-sync-schedule?version=${VERSION}`,
+  scheduler: (workspace: string, account: string) =>
+    `/api/scheduler/${workspace}/${account}?version=${VERSION}`,
 }
 
 export class Scheduler extends JanusClient {
