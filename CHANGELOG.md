@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2022-04-01
+
 ### Added
 
 - Added a EventHandler to handle the events from order, changing the quote status to placed when the order has been created
