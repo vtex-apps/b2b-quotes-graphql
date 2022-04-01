@@ -10,6 +10,8 @@ export const toHash = (obj: any) => {
   return crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex')
 }
 
+export const NO_REPLY_EMAIL = 'noreply@vtexcommerce.com.br'
+
 export function statusToError(e: any) {
   if (!e.response) {
     throw e

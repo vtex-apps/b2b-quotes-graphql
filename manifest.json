@@ -10,7 +10,8 @@
     "docs": "0.x"
   },
   "dependencies": {
-    "vtex.storefront-permissions": "1.x"
+    "vtex.storefront-permissions": "1.x",
+    "vtex.orders-broadcast": "0.x"
   },
   "registries": ["smartcheckout"],
   "policies": [

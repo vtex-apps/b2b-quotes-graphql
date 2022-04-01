@@ -1,5 +1,5 @@
 import { QUOTE_DATA_ENTITY, QUOTE_FIELDS } from '../resolvers'
-import { isEmail } from '../utils'
+import { isEmail, NO_REPLY_EMAIL } from '../utils'
 import message from '../utils/message'
 
 export async function orderHandler(
@@ -60,8 +60,9 @@ export async function orderHandler(
             ...item.updateHistory,
             {
               date: new Date().toISOString(),
-              email: order.followUpEmail ?? '',
-              note: `Order placed orderId: ${body.orderId}`,
+              email: NO_REPLY_EMAIL,
+              note: `Order ID: ${body.orderId}`,
+              role: 'order-notification-system',
               status: 'placed',
             },
           ],
@@ -74,6 +75,13 @@ export async function orderHandler(
             id: quoteId,
           })
           .then((res: any) => res)
+          .catch((error: any) => {
+            logger.error({
+              error,
+              fields: quote,
+              message: 'OrderHandler-updateEntireDocumentError',
+            })
+          })
 
         const users = quote.updateHistory.map((anUpdate) => anUpdate.email)
 
@@ -87,9 +95,11 @@ export async function orderHandler(
           .quoteUpdated({
             costCenter: quote.costCenter,
             id: quoteId,
-            lastUpdate: quote.updateHistory[
-              quote.updateHistory.length - 1
-            ] as QuoteUpdate,
+            lastUpdate: {
+              email: 'order-notification-system',
+              note: `Order ID: ${body.orderId}`,
+              status: 'PLACED',
+            },
             name: quote.referenceName,
             orderId: body.orderId,
             organization: quote.organization,

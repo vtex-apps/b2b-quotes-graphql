@@ -1,4 +1,5 @@
 import { QUOTE_DATA_ENTITY, QUOTE_FIELDS, SCHEMA_VERSION } from '../resolvers'
+import { NO_REPLY_EMAIL } from './index'
 import message from './message'
 
 const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
@@ -23,7 +24,7 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
   const lastUpdate = nowISO
   const update = {
     date: nowISO,
-    email: 'noreply@vtexcommerce.com.br',
+    email: NO_REPLY_EMAIL,
     note: '',
     role: 'expiration-system',
     status,
