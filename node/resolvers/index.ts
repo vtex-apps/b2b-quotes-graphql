@@ -585,6 +585,12 @@ export const resolvers = {
                 message: `[Quote created] E-mail sent to sales reps`,
               })
             })
+            .catch((e) => {
+              logger.error({
+                error: e,
+                message: `[Quote updated] E-mail not sent`,
+              })
+            })
         }
 
         return data.DocumentId
@@ -786,6 +792,12 @@ export const resolvers = {
           .then(() => {
             logger.info({
               message: `[Quote updated] E-mail sent ${uniqueUsers.join(', ')}`,
+            })
+          })
+          .catch((e) => {
+            logger.error({
+              error: e,
+              message: `[Quote updated] E-mail not sent`,
             })
           })
 
