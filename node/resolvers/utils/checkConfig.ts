@@ -109,10 +109,222 @@ export const checkAndCreateQuotesConfig = async (
   }
 }
 
+const initializeCron = async (settings: Settings, ctx: Context) => {
+  const {
+    vtex: { account, workspace },
+    clients: { scheduler },
+  } = ctx
+
+  const cronQueue = await scheduler
+    .getQueue()
+    .then((data: any) => {
+      return data
+    })
+    .catch(() => {
+      return null
+    })
+
+  if (cronQueue?.expression === CRON_EXPRESSION) return settings
+
+  const time = new Date().getTime()
+  const QueueSchedule = {
+    id: 'b2b-quotes-graphql-queue-schedule',
+    request: {
+      body: null,
+      headers: {
+        'cache-control': 'no-cache',
+        pragma: 'no-cache',
+      },
+      method: 'GET',
+      uri: `https://${workspace}--${account}.myvtex.com/b2b-quotes-graphql/_v/0/process-queue?v=${time}`,
+    },
+    scheduler: {
+      endDate: '2031-12-30T23:29:00',
+      expression: CRON_EXPRESSION,
+    },
+  }
+
+  await scheduler
+    .createOrUpdate(QueueSchedule)
+    .then(() => {
+      if (!settings) {
+        return
+      }
+
+      settings.adminSetup.hasCron = true
+      settings.adminSetup.cronExpression = CRON_EXPRESSION
+      settings.adminSetup.cronWorkspace = workspace
+    })
+    .catch((e) => {
+      if (e.response.status !== 304) {
+        settings.adminSetup.hasCron = false
+      } else {
+        settings.adminSetup.hasCron = true
+        settings.adminSetup.cronExpression = CRON_EXPRESSION
+        settings.adminSetup.cronWorkspace = workspace
+      }
+    })
+
+  return settings
+}
+
+const initializeSchema = async (settings: Settings, ctx: Context) => {
+  const {
+    clients: { masterdata },
+  } = ctx
+
+  try {
+    await masterdata.createOrUpdateSchema({
+      dataEntity: QUOTE_DATA_ENTITY,
+      schemaBody: schema,
+      schemaName: SCHEMA_VERSION,
+    })
+
+    settings.schemaVersion = SCHEMA_VERSION
+  } catch (e) {
+    if (e.response.status >= 400) {
+      settings.schemaVersion = ''
+    } else {
+      settings.schemaVersion = SCHEMA_VERSION
+    }
+  }
+
+  return settings
+}
+
+const initializeManualPrice = async (settings: Settings, ctx: Context) => {
+  const {
+    vtex: { account, authToken },
+    clients: { hub },
+  } = ctx
+
+  try {
+    const url = routes.checkoutConfig(account)
+    const headers = defaultHeaders(authToken)
+
+    const { data: checkoutConfig } = await hub.get(url, headers, schema)
+
+    if (checkoutConfig.allowManualPrice !== true) {
+      await hub.post(
+        url,
+        JSON.stringify({
+          ...checkoutConfig,
+          allowManualPrice: true,
+        }),
+        headers
+      )
+      settings.adminSetup.allowManualPrice = true
+    }
+  } catch (e) {
+    settings.adminSetup.allowManualPrice = false
+  }
+
+  return settings
+}
+
+const initializeTemplates = async (
+  settings: Settings,
+  currTemplateHash: string,
+  ctx: Context
+) => {
+  const {
+    vtex: { logger },
+    clients: { mail },
+  } = ctx
+
+  const updates: Array<Promise<any>> = []
+
+  templates.forEach((template) => {
+    updates.push(mail.publishTemplate(template))
+  })
+
+  await Promise.all(updates)
+    .then(() => {
+      settings.templateHash = currTemplateHash
+    })
+    .catch((e) => {
+      logger.error({
+        error: e,
+        message: 'checkConfig-publishTemplateError',
+      })
+      throw new Error(e)
+    })
+
+  return settings
+}
+
+const checkInitializations = async ({
+  settings,
+  currTemplateHash,
+  changed,
+  ctx,
+}: {
+  settings: Settings
+  currTemplateHash: string
+  changed: boolean
+  ctx: Context
+}) => {
+  const {
+    vtex: { workspace },
+  } = ctx
+
+  if (
+    !settings?.adminSetup?.hasCron ||
+    settings?.adminSetup?.cronExpression !== CRON_EXPRESSION ||
+    settings?.adminSetup?.cronWorkspace !== workspace
+  ) {
+    if (!settings?.adminSetup?.hasCron) {
+      settings.adminSetup = {
+        ...defaultSettings.adminSetup,
+      }
+    }
+
+    const oldCronSetting = settings.adminSetup.hasCron
+
+    settings = await initializeCron(settings, ctx)
+
+    if (settings.adminSetup.hasCron !== oldCronSetting) {
+      changed = true
+    }
+  }
+
+  if (settings?.schemaVersion !== SCHEMA_VERSION) {
+    const oldSchemaVersion = settings?.schemaVersion
+
+    settings = await initializeSchema(settings, ctx)
+
+    if (settings.schemaVersion !== oldSchemaVersion) {
+      changed = true
+    }
+  }
+
+  if (!settings?.adminSetup?.allowManualPrice) {
+    const oldManualPriceSetting = settings?.adminSetup?.allowManualPrice
+
+    settings = await initializeManualPrice(settings, ctx)
+
+    if (settings.adminSetup.allowManualPrice !== oldManualPriceSetting) {
+      changed = true
+    }
+  }
+
+  if (settings?.templateHash !== currTemplateHash) {
+    const oldTemplateHash = settings?.templateHash
+
+    settings = await initializeTemplates(settings, currTemplateHash, ctx)
+
+    if (settings.templateHash !== oldTemplateHash) {
+      changed = true
+    }
+  }
+
+  return { settings, changed }
+}
+
 export const checkConfig = async (ctx: Context) => {
   const {
-    vtex: { account, authToken, logger, workspace },
-    clients: { hub, mail, masterdata, scheduler, vbase },
+    vtex: { logger },
+    clients: { vbase },
   } = ctx
 
   let settings: Settings | null = null
@@ -131,150 +343,20 @@ export const checkConfig = async (ctx: Context) => {
     return null
   }
 
-  if (
-    !settings?.adminSetup?.hasCron ||
-    settings?.adminSetup?.cronExpression !== CRON_EXPRESSION ||
-    settings?.adminSetup?.cronWorkspace !== workspace
-  ) {
-    if (settings && settings.adminSetup === undefined) {
-      settings.adminSetup = {
-        ...defaultSettings.adminSetup,
-      }
-    }
-
-    const cronQueue = await scheduler
-      .getQueue()
-      .then((data: any) => {
-        return data
-      })
-      .catch(() => {
-        return null
-      })
-
-    if (!cronQueue || cronQueue.expression !== CRON_EXPRESSION) {
-      try {
-        const time = new Date().getTime()
-        const QueueSchedule = {
-          id: 'b2b-quotes-graphql-queue-schedule',
-          request: {
-            body: null,
-            headers: {
-              'cache-control': 'no-cache',
-              pragma: 'no-cache',
-            },
-            method: 'GET',
-            uri: `https://${workspace}--${account}.myvtex.com/b2b-quotes-graphql/_v/0/process-queue?v=${time}`,
-          },
-          scheduler: {
-            endDate: '2031-12-30T23:29:00',
-            expression: CRON_EXPRESSION,
-          },
-        }
-
-        await scheduler
-          .createOrUpdate(QueueSchedule)
-          .then(() => {
-            if (!settings) {
-              return
-            }
-
-            settings.adminSetup.hasCron = true
-            settings.adminSetup.cronExpression = CRON_EXPRESSION
-            settings.adminSetup.cronWorkspace = workspace
-            changed = true
-          })
-          .catch((e: any) => {
-            if (!settings) {
-              return
-            }
-
-            if (e.response.status !== 304) {
-              settings.adminSetup.hasCron = false
-            } else {
-              settings.adminSetup.hasCron = true
-              settings.adminSetup.cronExpression = CRON_EXPRESSION
-              settings.adminSetup.cronWorkspace = workspace
-            }
-          })
-      } catch (e) {
-        if (settings) {
-          settings.adminSetup.hasCron = false
-        }
-      }
-    }
-  }
-
   if (!settings?.adminSetup?.cartLifeSpan) {
     settings = defaultSettings
     changed = true
   }
 
-  if (settings?.schemaVersion !== SCHEMA_VERSION) {
-    try {
-      await masterdata.createOrUpdateSchema({
-        dataEntity: QUOTE_DATA_ENTITY,
-        schemaBody: schema,
-        schemaName: SCHEMA_VERSION,
-      })
+  const initializationResult = await checkInitializations({
+    settings,
+    currTemplateHash,
+    changed,
+    ctx,
+  })
 
-      changed = true
-      settings.schemaVersion = SCHEMA_VERSION
-    } catch (e) {
-      if (e.response.status >= 400) {
-        settings.schemaVersion = ''
-      } else {
-        settings.schemaVersion = SCHEMA_VERSION
-        changed = true
-      }
-    }
-  }
-
-  if (!settings?.adminSetup?.allowManualPrice) {
-    try {
-      const url = routes.checkoutConfig(account)
-      const headers = defaultHeaders(authToken)
-
-      const { data: checkoutConfig } = await hub.get(url, headers, schema)
-
-      if (checkoutConfig.allowManualPrice !== true) {
-        await hub.post(
-          url,
-          JSON.stringify({
-            ...checkoutConfig,
-            allowManualPrice: true,
-          }),
-          headers
-        )
-        changed = true
-        settings.adminSetup.allowManualPrice = true
-      }
-    } catch (e) {
-      settings.adminSetup.allowManualPrice = false
-    }
-  }
-
-  if (!settings?.templateHash || settings.templateHash !== currTemplateHash) {
-    const updates: Array<Promise<any>> = []
-
-    templates.forEach((template) => {
-      updates.push(mail.publishTemplate(template))
-    })
-
-    await Promise.all(updates)
-      .then(() => {
-        if (settings) {
-          settings.templateHash = currTemplateHash
-          changed = true
-        }
-      })
-      .catch((e) => {
-        logger.error({
-          error: e,
-          message: 'checkConfig-publishTemplateError',
-        })
-        throw new Error(e)
-      })
-  }
+  settings = initializationResult.settings
+  changed = initializationResult.changed
 
   if (changed) {
     await vbase.saveJSON(APP_NAME, 'settings', settings)

@@ -7,6 +7,109 @@ import {
   SCHEMA_VERSION,
 } from '../../constants'
 
+const buildWhereStatement = async ({
+  permissions,
+  organization,
+  costCenter,
+  status,
+  search,
+  userOrganizationId,
+  userCostCenterId,
+  ctx,
+}: {
+  permissions: string[]
+  organization?: string[]
+  costCenter?: string[]
+  status?: string[]
+  search?: string
+  userOrganizationId: string
+  userCostCenterId: string
+  ctx: Context
+}) => {
+  const {
+    clients: { organizations },
+  } = ctx
+
+  const whereArray = []
+
+  // if user only has permission to access their organization's quotes,
+  // hard-code that organization into the masterdata search
+  if (!permissions.includes('access-quotes-all')) {
+    whereArray.push(`organization=${userOrganizationId}`)
+  } else if (organization?.length) {
+    // if user is filtering by organization name, look up organization ID
+    const orgArray = [] as string[]
+
+    organization.forEach(async (org) => {
+      const organizationResult = await organizations.getOrganizationIDs(org)
+
+      if (organizationResult?.data?.getOrganizations?.data?.length > 0) {
+        organizationResult.data.getOrganizations.data.forEach(
+          (element: any) => {
+            orgArray.push(`organization=${element.id}`)
+          }
+        )
+      }
+    })
+    const organizationsStatement = `(${orgArray.join(' OR ')})`
+
+    whereArray.push(organizationsStatement)
+  }
+
+  // similarly, if user only has permission to see their cost center's quotes,
+  // hard-code its ID into the search
+  if (
+    !permissions.includes('access-quotes-all') &&
+    !permissions.includes('access-quotes-organization')
+  ) {
+    whereArray.push(`costCenter=${userCostCenterId}`)
+  } else if (costCenter?.length) {
+    // if user is filtering by cost center name, look up cost center ID
+    const ccArray = [] as string[]
+    const promises = [] as Array<Promise<unknown>>
+
+    costCenter.forEach((cc) => {
+      promises.push(organizations.getCostCenterIDs(cc))
+    })
+
+    const results = await Promise.all(promises)
+
+    results.forEach((costCenterResult: any) => {
+      if (costCenterResult?.data?.getCostCenters?.data?.length > 0) {
+        costCenterResult.data.getCostCenters.data.forEach((element: any) => {
+          ccArray.push(`costCenter=${element.id}`)
+        })
+      }
+    })
+    const costCenters = `(${ccArray.join(' OR ')})`
+
+    whereArray.push(costCenters)
+  }
+
+  if (status?.length) {
+    const statusArray = [] as string[]
+
+    status.forEach((stat) => {
+      statusArray.push(`status=${stat}`)
+    })
+    const statuses = `(${statusArray.join(' OR ')})`
+
+    whereArray.push(statuses)
+  }
+
+  if (search) {
+    const searchArray = [] as string[]
+
+    searchArray.push(`referenceName="*${search}*"`)
+    searchArray.push(`creatorEmail="*${search}*"`)
+    const searches = `(${searchArray.join(' OR ')})`
+
+    whereArray.push(searches)
+  }
+
+  return whereArray.join(' AND ')
+}
+
 export const Query = {
   getQuote: async (_: any, { id }: { id: string }, ctx: Context) => {
     const {
@@ -43,11 +146,11 @@ export const Query = {
     await checkConfig(ctx)
 
     try {
-      const quote = (await masterdata.getDocument({
+      const quote: Quote = await masterdata.getDocument({
         dataEntity: QUOTE_DATA_ENTITY,
         fields: QUOTE_FIELDS,
         id,
-      })) as Quote
+      })
 
       // if user only has permission to view their organization's quotes, check that the org matches
       if (
@@ -106,7 +209,7 @@ export const Query = {
     ctx: Context
   ) => {
     const {
-      clients: { masterdata, organizations },
+      clients: { masterdata },
       vtex,
       vtex: { logger },
     } = ctx
@@ -137,87 +240,20 @@ export const Query = {
     }
 
     await checkConfig(ctx)
-    const whereArray = []
 
-    // if user only has permission to access their organization's quotes,
-    // hard-code that organization into the masterdata search
-    if (!permissions.includes('access-quotes-all')) {
-      whereArray.push(`organization=${userOrganizationId}`)
-    } else if (organization?.length) {
-      // if user is filtering by organization name, look up organization ID
-      const orgArray = [] as string[]
-
-      organization.forEach(async (org) => {
-        const organizationResult = await organizations.getOrganizationIDs(org)
-
-        if (organizationResult?.data?.getOrganizations?.data?.length > 0) {
-          organizationResult.data.getOrganizations.data.forEach(
-            (element: any) => {
-              orgArray.push(`organization=${element.id}`)
-            }
-          )
-        }
-      })
-      const organizationsStatement = `(${orgArray.join(' OR ')})`
-
-      whereArray.push(organizationsStatement)
-    }
-
-    // similarly, if user only has permission to see their cost center's quotes,
-    // hard-code its ID into the search
-    if (
-      !permissions.includes('access-quotes-all') &&
-      !permissions.includes('access-quotes-organization')
-    ) {
-      whereArray.push(`costCenter=${userCostCenterId}`)
-    } else if (costCenter?.length) {
-      // if user is filtering by cost center name, look up cost center ID
-      const ccArray = [] as string[]
-      const promises = [] as Array<Promise<unknown>>
-
-      costCenter.forEach((cc) => {
-        promises.push(organizations.getCostCenterIDs(cc))
-      })
-
-      const results = await Promise.all(promises)
-
-      results.forEach((costCenterResult: any) => {
-        if (costCenterResult?.data?.getCostCenters?.data?.length > 0) {
-          costCenterResult.data.getCostCenters.data.forEach((element: any) => {
-            ccArray.push(`costCenter=${element.id}`)
-          })
-        }
-      })
-      const costCenters = `(${ccArray.join(' OR ')})`
-
-      whereArray.push(costCenters)
-    }
-
-    if (status?.length) {
-      const statusArray = [] as string[]
-
-      status.forEach((stat) => {
-        statusArray.push(`status=${stat}`)
-      })
-      const statuses = `(${statusArray.join(' OR ')})`
-
-      whereArray.push(statuses)
-    }
-
-    if (search) {
-      const searchArray = [] as string[]
-
-      searchArray.push(`referenceName="*${search}*"`)
-      searchArray.push(`creatorEmail="*${search}*"`)
-      const searches = `(${searchArray.join(' OR ')})`
-
-      whereArray.push(searches)
-    }
-
-    const where = whereArray.join(' AND ')
+    const where = await buildWhereStatement({
+      permissions,
+      organization,
+      costCenter,
+      status,
+      search,
+      userOrganizationId,
+      userCostCenterId,
+      ctx,
+    })
 
     try {
-      const quotes = await masterdata.searchDocumentsWithPaginationInfo({
+      return await masterdata.searchDocumentsWithPaginationInfo({
         dataEntity: QUOTE_DATA_ENTITY,
         fields: QUOTE_FIELDS,
         pagination: { page, pageSize },
@@ -225,20 +261,12 @@ export const Query = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
-
-      return quotes
     } catch (e) {
       logger.error({
         e,
         message: 'getQuotes-error',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(e)
     }
   },
   getAppSettings: async (_: void, __: void, ctx: Context) => {

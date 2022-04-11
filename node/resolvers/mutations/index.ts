@@ -5,6 +5,12 @@ import {
   checkAndCreateQuotesConfig,
   defaultSettings,
 } from '../utils/checkConfig'
+import {
+  checkSession,
+  checkPermissionsForUpdateQuote,
+  checkQuoteStatus,
+  checkOperationsForUpdateQuote,
+} from '../utils/checkPermissions'
 import { isEmail } from '../../utils'
 import GraphQLError from '../../utils/GraphQLError'
 import message from '../../utils/message'
@@ -67,13 +73,7 @@ export const Mutation = {
 
     const settings = await checkConfig(ctx)
 
-    if (!sessionData?.namespaces['storefront-permissions']?.organization) {
-      throw new GraphQLError('organization-data-not-found')
-    }
-
-    if (!sessionData?.namespaces?.profile?.email?.value) {
-      throw new GraphQLError('email-not-found')
-    }
+    checkSession(sessionData)
 
     if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
       throw new GraphQLError('operation-not-permitted')
@@ -201,13 +201,7 @@ export const Mutation = {
 
     const { sessionData, storefrontPermissions } = vtex as any
 
-    if (!sessionData?.namespaces['storefront-permissions']) {
-      throw new GraphQLError('organization-data-not-found')
-    }
-
-    if (!sessionData?.namespaces?.profile?.email?.value) {
-      throw new GraphQLError('email-not-found')
-    }
+    checkSession(sessionData)
 
     const email = sessionData.namespaces.profile.email.value
     const {
@@ -219,19 +213,11 @@ export const Mutation = {
     const isSales = slug.includes('sales')
     const itemsChanged = items?.length > 0
 
-    if (
-      (itemsChanged &&
-        !permissions.some((permission: string) =>
-          permission.includes('edit-quotes')
-        )) ||
-      (!itemsChanged &&
-        !permissions.some((permission: string) =>
-          permission.includes('access-quotes')
-        )) ||
-      (decline && !permissions.includes('decline-quotes'))
-    ) {
-      throw new GraphQLError('operation-not-permitted')
-    }
+    checkPermissionsForUpdateQuote({
+      permissions,
+      itemsChanged,
+      decline,
+    })
 
     const {
       organization: { value: userOrganizationId },
@@ -242,65 +228,27 @@ export const Mutation = {
     const nowISO = now.toISOString()
 
     try {
-      const existingQuote = (await masterdata.getDocument({
+      const existingQuote: Quote = await masterdata.getDocument({
         dataEntity: QUOTE_DATA_ENTITY,
         fields: QUOTE_FIELDS,
         id,
-      })) as Quote
+      })
 
-      if (!existingQuote) {
-        throw new GraphQLError('quote-not-found')
-      }
-
-      if (
-        existingQuote.status === 'expired' ||
-        existingQuote.status === 'declined'
-      ) {
-        throw new GraphQLError('quote-cannot-be-updated')
-      }
+      checkQuoteStatus(existingQuote)
 
       const expirationChanged = expirationDate !== existingQuote.expirationDate
 
-      if (
-        expirationChanged &&
-        !permissions.some((permission: string) =>
-          permission.includes('edit-quotes')
-        )
-      ) {
-        throw new GraphQLError('operation-not-permitted')
-      }
+      checkOperationsForUpdateQuote({
+        permissions,
+        expirationChanged,
+        itemsChanged,
+        existingQuote,
+        userCostCenterId,
+        userOrganizationId,
+      })
 
-      // if user only has permission to edit their organization's quotes, check that the org matches
-      if (
-        ((itemsChanged || expirationChanged) &&
-          !permissions.includes('edit-quotes-all') &&
-          permissions.includes('edit-quotes-organization')) ||
-        (!itemsChanged &&
-          !expirationChanged &&
-          !permissions.includes('access-quotes-all') &&
-          permissions.includes('access-quotes-organization'))
-      ) {
-        if (userOrganizationId !== existingQuote.organization) {
-          throw new GraphQLError('operation-not-permitted')
-        }
-      }
-
-      // if user only has permission to edit their cost center's quotes, check that the cost center matches
-      if (
-        ((itemsChanged || expirationChanged) &&
-          !permissions.includes('edit-quotes-all') &&
-          !permissions.includes('edit-quotes-organization')) ||
-        (!itemsChanged &&
-          !expirationChanged &&
-          !permissions.includes('access-quotes-all') &&
-          !permissions.includes('access-quotes-organization'))
-      ) {
-        if (userCostCenterId !== existingQuote.costCenter) {
-          throw new GraphQLError('operation-not-permitted')
-        }
-      }
-
-      const status = decline ? 'declined' : itemsChanged ? 'ready' : 'revised'
+      const readyOrRevised = itemsChanged ? 'ready' : 'revised'
+      const status = decline ? 'declined' : readyOrRevised
 
       const lastUpdate = nowISO
       const update = {
@@ -315,7 +263,7 @@ export const Mutation = {
 
       updateHistory.push(update)
 
-      const updatedQuote = {
+      const updatedQuote: Quote = {
         ...existingQuote,
         expirationDate: expirationChanged
           ? expirationDate
@@ -327,7 +275,7 @@ export const Mutation = {
         updateHistory,
         viewedByCustomer: decline || isCustomer,
         viewedBySales: decline || isSales,
-      } as Quote
+      }
 
       const data = await masterdata
         .updateEntireDocument({
@@ -375,13 +323,7 @@ export const Mutation = {
         e,
         message: 'updateQuote-warning',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
-      } else {
-        throw new GraphQLError(e)
-      }
+      throw new GraphQLError(e)
     }
   },
   useQuote: async (
@@ -397,15 +339,8 @@ export const Mutation = {
 
     const { sessionData, storefrontPermissions } = vtex as any
 
-    if (!sessionData?.namespaces['storefront-permissions']) {
-      throw new GraphQLError('organization-data-not-found')
-    }
+    checkSession(sessionData)
 
-    if (!sessionData?.namespaces?.profile?.email?.value) {
-      throw new GraphQLError('email-not-found')
-    }
-
-    // const email = sessionData.namespaces.profile.email.value
     const { permissions } = storefrontPermissions
 
     if (!permissions.includes('use-quotes')) {
@@ -421,15 +356,13 @@ export const Mutation = {
 
     try {
       // GET QUOTE DATA
-      const quote = (await masterdata.getDocument({
+      const quote: Quote = await masterdata.getDocument({
         dataEntity: QUOTE_DATA_ENTITY,
         fields: QUOTE_FIELDS,
         id,
-      })) as Quote
+      })
 
-      if (quote.status === 'declined' || quote.status === 'expired') {
-        throw new GraphQLError('quote-cannot-be-used')
-      }
+      checkQuoteStatus(quote)
 
       const { items } = quote
 
