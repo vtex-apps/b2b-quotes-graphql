@@ -1,4 +1,4 @@
-import { QUOTE_DATA_ENTITY, QUOTE_FIELDS } from '../resolvers'
+import { QUOTE_DATA_ENTITY, QUOTE_FIELDS } from '../constants'
 import { isEmail, NO_REPLY_EMAIL } from '../utils'
 import message from '../utils/message'
 

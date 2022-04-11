@@ -1,9 +1,0 @@
-type GetSetupConfigResponse {
-  adminSetup: AdminSetupResponse
-}
-type AdminSetupResponse {
-  cartLifeSpan: Int
-  storeLogoUrl: String
-  hasSchema: Boolean
-  allowManualPrice: Boolean
-}
