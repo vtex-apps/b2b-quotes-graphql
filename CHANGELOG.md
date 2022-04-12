@@ -7,17 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Store app settings in vbase to allow `vtex.b2b-quotes` to function as dependency app
+- Reorganize `node/resolvers` folder structure
+
 ## [1.5.0] - 2022-04-01
 
 ### Added
 
 - Added a EventHandler to handle the events from order, changing the quote status to placed when the order has been created
 - Improved the async calls to the mail service
-- Added a handler to send an email when the quote is placed 
+- Added a handler to send an email when the quote is placed
 - eslint sorted alphabetically
 
 ## [1.4.2] - 2022-03-22
-
 
 ### Fixed
 

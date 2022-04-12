@@ -1,0 +1,9 @@
+type AppSettings {
+  adminSetup: AdminSetup
+}
+type AdminSetup {
+  cartLifeSpan: Int
+}
+input AppSettingsInput {
+  cartLifeSpan: Int
+}

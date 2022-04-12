@@ -97,3 +97,15 @@ interface OrderFormConfiguration {
   maskFirstPurchaseData?: boolean
   recaptchaValidation?: boolean
 }
+
+interface Settings {
+  adminSetup: {
+    cartLifeSpan: number
+    allowManualPrice: boolean
+    hasCron?: boolean
+    cronExpression?: string
+    cronWorkspace?: string
+  }
+  schemaVersion: string
+  templateHash: string | null
+}

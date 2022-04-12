@@ -1,0 +1,6 @@
+{
+  "sonarlint.connectedMode.project": {
+    "connectionId": "vtex-apps",
+    "projectKey": "b2b-quotes-graphql"
+  }
+}

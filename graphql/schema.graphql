@@ -1,6 +1,5 @@
 type Query {
-  getSetupConfig: GetSetupConfigResponse
-    @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  getAppSettings: AppSettings @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getQuote(id: String): Quote
     @withPermissions
     @withSession
@@ -27,4 +26,5 @@ type Mutation {
     @withPermissions
     @withSession
   clearCart(orderFormId: String): String
+  saveAppSettings(input: AppSettingsInput!): AppSettings
 }
