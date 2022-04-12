@@ -1,6 +1,6 @@
 {
   "name": "vtex.b2b-quotes-graphql",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "dependencies": {
     "co-body": "^6.0.0",
     "graphql": "^14.0.0",
