@@ -31,12 +31,7 @@ const buildWhereStatement = async ({
   if (!permissions.includes('access-quotes-all')) {
     whereArray.push(`organization=${userOrganizationId}`)
   } else if (organization?.length) {
-    // if user is filtering by organization name, look up organization ID
-    const orgArray = [] as string[]
-
-    organization.forEach(async (org) => {
-      orgArray.push(`organization=${org}`)
-    })
+    const orgArray = organization.map((org) => `organization=${org}`)
     const organizationsStatement = `(${orgArray.join(' OR ')})`
 
     whereArray.push(organizationsStatement)
@@ -50,23 +45,14 @@ const buildWhereStatement = async ({
   ) {
     whereArray.push(`costCenter=${userCostCenterId}`)
   } else if (costCenter?.length) {
-    // if user is filtering by cost center name, look up cost center ID
-    const ccArray = [] as string[]
-
-    costCenter.forEach((cc) => {
-      ccArray.push(`costCenter=${cc}`)
-    })
+    const ccArray = costCenter.map((cc) => `costCenter=${cc}`)
     const costCenters = `(${ccArray.join(' OR ')})`
 
     whereArray.push(costCenters)
   }
 
   if (status?.length) {
-    const statusArray = [] as string[]
-
-    status.forEach((stat) => {
-      statusArray.push(`status=${stat}`)
-    })
+    const statusArray = status.map((stat) => `status=${stat}`)
     const statuses = `(${statusArray.join(' OR ')})`
 
     whereArray.push(statuses)
