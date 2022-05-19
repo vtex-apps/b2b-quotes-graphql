@@ -15,7 +15,6 @@ const buildWhereStatement = async ({
   search,
   userOrganizationId,
   userCostCenterId,
-  ctx,
 }: {
   permissions: string[]
   organization?: string[]
@@ -24,12 +23,7 @@ const buildWhereStatement = async ({
   search?: string
   userOrganizationId: string
   userCostCenterId: string
-  ctx: Context
 }) => {
-  const {
-    clients: { organizations },
-  } = ctx
-
   const whereArray = []
 
   // if user only has permission to access their organization's quotes,
@@ -37,20 +31,7 @@ const buildWhereStatement = async ({
   if (!permissions.includes('access-quotes-all')) {
     whereArray.push(`organization=${userOrganizationId}`)
   } else if (organization?.length) {
-    // if user is filtering by organization name, look up organization ID
-    const orgArray = [] as string[]
-
-    organization.forEach(async (org) => {
-      const organizationResult = await organizations.getOrganizationIDs(org)
-
-      if (organizationResult?.data?.getOrganizations?.data?.length > 0) {
-        organizationResult.data.getOrganizations.data.forEach(
-          (element: any) => {
-            orgArray.push(`organization=${element.id}`)
-          }
-        )
-      }
-    })
+    const orgArray = organization.map((org) => `organization=${org}`)
     const organizationsStatement = `(${orgArray.join(' OR ')})`
 
     whereArray.push(organizationsStatement)
@@ -64,34 +45,14 @@ const buildWhereStatement = async ({
   ) {
     whereArray.push(`costCenter=${userCostCenterId}`)
   } else if (costCenter?.length) {
-    // if user is filtering by cost center name, look up cost center ID
-    const ccArray = [] as string[]
-    const promises = [] as Array<Promise<unknown>>
-
-    costCenter.forEach((cc) => {
-      promises.push(organizations.getCostCenterIDs(cc))
-    })
-
-    const results = await Promise.all(promises)
-
-    results.forEach((costCenterResult: any) => {
-      if (costCenterResult?.data?.getCostCenters?.data?.length > 0) {
-        costCenterResult.data.getCostCenters.data.forEach((element: any) => {
-          ccArray.push(`costCenter=${element.id}`)
-        })
-      }
-    })
+    const ccArray = costCenter.map((cc) => `costCenter=${cc}`)
     const costCenters = `(${ccArray.join(' OR ')})`
 
     whereArray.push(costCenters)
   }
 
   if (status?.length) {
-    const statusArray = [] as string[]
-
-    status.forEach((stat) => {
-      statusArray.push(`status=${stat}`)
-    })
+    const statusArray = status.map((stat) => `status=${stat}`)
     const statuses = `(${statusArray.join(' OR ')})`
 
     whereArray.push(statuses)
@@ -249,7 +210,6 @@ export const Query = {
       search,
       userOrganizationId,
       userCostCenterId,
-      ctx,
     })
 
     try {

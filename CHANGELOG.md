@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `getQuotes` now expects `organization` and `costCenter` variables to be arrays of IDs rather than names
+
 ## [2.0.0] - 2022-04-12
 
 ### Changed
