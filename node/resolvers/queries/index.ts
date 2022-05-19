@@ -15,7 +15,6 @@ const buildWhereStatement = async ({
   search,
   userOrganizationId,
   userCostCenterId,
-  ctx,
 }: {
   permissions: string[]
   organization?: string[]
@@ -24,12 +23,7 @@ const buildWhereStatement = async ({
   search?: string
   userOrganizationId: string
   userCostCenterId: string
-  ctx: Context
 }) => {
-  const {
-    clients: { organizations },
-  } = ctx
-
   const whereArray = []
 
   // if user only has permission to access their organization's quotes,
@@ -41,15 +35,7 @@ const buildWhereStatement = async ({
     const orgArray = [] as string[]
 
     organization.forEach(async (org) => {
-      const organizationResult = await organizations.getOrganizationIDs(org)
-
-      if (organizationResult?.data?.getOrganizations?.data?.length > 0) {
-        organizationResult.data.getOrganizations.data.forEach(
-          (element: any) => {
-            orgArray.push(`organization=${element.id}`)
-          }
-        )
-      }
+      orgArray.push(`organization=${org}`)
     })
     const organizationsStatement = `(${orgArray.join(' OR ')})`
 
@@ -66,20 +52,9 @@ const buildWhereStatement = async ({
   } else if (costCenter?.length) {
     // if user is filtering by cost center name, look up cost center ID
     const ccArray = [] as string[]
-    const promises = [] as Array<Promise<unknown>>
 
     costCenter.forEach((cc) => {
-      promises.push(organizations.getCostCenterIDs(cc))
-    })
-
-    const results = await Promise.all(promises)
-
-    results.forEach((costCenterResult: any) => {
-      if (costCenterResult?.data?.getCostCenters?.data?.length > 0) {
-        costCenterResult.data.getCostCenters.data.forEach((element: any) => {
-          ccArray.push(`costCenter=${element.id}`)
-        })
-      }
+      ccArray.push(`costCenter=${cc}`)
     })
     const costCenters = `(${ccArray.join(' OR ')})`
 
@@ -249,7 +224,6 @@ export const Query = {
       search,
       userOrganizationId,
       userCostCenterId,
-      ctx,
     })
 
     try {
