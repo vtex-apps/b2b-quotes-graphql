@@ -245,6 +245,7 @@ export const Mutation = {
         existingQuote,
         userCostCenterId,
         userOrganizationId,
+        declineQuote: decline,
       })
 
       const readyOrRevised = itemsChanged ? 'ready' : 'revised'

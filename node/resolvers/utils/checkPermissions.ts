@@ -112,6 +112,7 @@ export const checkOperationsForUpdateQuote = ({
   existingQuote,
   userOrganizationId,
   userCostCenterId,
+  declineQuote,
 }: {
   permissions: string[]
   expirationChanged: boolean
@@ -119,12 +120,14 @@ export const checkOperationsForUpdateQuote = ({
   existingQuote: Quote
   userOrganizationId: string
   userCostCenterId: string
+  declineQuote: boolean
 }) => {
   const itemsOrExpirationChanged = itemsChanged || expirationChanged
   const neitherItemsNorExpirationChanged = !itemsChanged && !expirationChanged
 
   if (
     expirationChanged &&
+    !declineQuote &&
     !permissions.some((permission: string) =>
       permission.includes('edit-quotes')
     )
