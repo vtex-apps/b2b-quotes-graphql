@@ -30,6 +30,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/atob@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@types/atob/-/atob-2.1.2.tgz#157eb0cc46264a8c55f2273a836c7a1a644fb820"
+  integrity sha512-8GAYQ1jDRUQkSpHzJUqXwAkYFOxuWAOGLhIR4aPd/Y/yL12Q/9m7LsKpHKlfKdNE/362Hc9wPI1Yh6opDfxVJg==
+
 "@types/bluebird@^3.5.25":
   version "3.5.36"
   resolved "https://registry.yarnpkg.com/@types/bluebird/-/bluebird-3.5.36.tgz#00d9301d4dc35c2f6465a8aec634bb533674c652"
@@ -339,6 +344,11 @@ async@^2.6.3:
   integrity sha512-zflvls11DCy+dQWzTW2dzuilv8Z5X/pjfmZOWba6TNIVDm+2UDaJmXSOXlasHKfNBs8oo3M0aT50fDEWfKZjXg==
   dependencies:
     lodash "^4.17.14"
+
+atob@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
+  integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
 
 axios-retry@^3.1.2:
   version "3.1.9"
@@ -1473,7 +1483,7 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
 
-"stats-lite@github:vtex/node-stats-lite#dist":
+stats-lite@vtex/node-stats-lite#dist:
   version "2.2.0"
   resolved "https://codeload.github.com/vtex/node-stats-lite/tar.gz/1b0d39cc41ef7aaecfd541191f877887a2044797"
   dependencies:
@@ -1688,17 +1698,17 @@ vary@^1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-"vtex.b2b-quotes-graphql@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-quotes-graphql@1.4.2/public/@types/vtex.b2b-quotes-graphql":
-  version "1.4.2"
-  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-quotes-graphql@1.4.2/public/@types/vtex.b2b-quotes-graphql#4425bef327a3e08724db9434b58dc39d6f650ef7"
+"vtex.b2b-quotes-graphql@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-quotes-graphql@2.0.2/public/@types/vtex.b2b-quotes-graphql":
+  version "2.0.2"
+  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.b2b-quotes-graphql@2.0.2/public/@types/vtex.b2b-quotes-graphql#cae630894931ecbaf90b464e70af64fe69f51575"
 
-"vtex.orders-broadcast@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.orders-broadcast@0.2.2/public/_types/react":
+"vtex.orders-broadcast@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.orders-broadcast@0.3.0/public/_types/react":
   version "0.0.0"
-  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.orders-broadcast@0.2.2/public/_types/react#fa7a0347e046eab3dd768998fc9252b2c0dd5aef"
+  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.orders-broadcast@0.3.0/public/_types/react#fa7a0347e046eab3dd768998fc9252b2c0dd5aef"
 
-"vtex.storefront-permissions@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.14.3/public/@types/vtex.storefront-permissions":
-  version "1.14.3"
-  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.14.3/public/@types/vtex.storefront-permissions#4e5ca034baa0d86ce8ead33c87a9a018520c983d"
+"vtex.storefront-permissions@http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.23.0/public/@types/vtex.storefront-permissions":
+  version "1.23.0"
+  resolved "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.storefront-permissions@1.23.0/public/@types/vtex.storefront-permissions#2a12e48a1b630d6d9cd64115572bcae55a7aa756"
 
 wrappy@1:
   version "1.0.2"
