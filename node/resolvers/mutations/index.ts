@@ -69,7 +69,7 @@ export const Mutation = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions } = vtex as any
+    const { sessionData, storefrontPermissions, segmentData } = vtex as any
 
     const settings = await checkConfig(ctx)
 
@@ -110,6 +110,8 @@ export const Mutation = {
       },
     ]
 
+    const salesChannel: string = segmentData?.channel
+
     const quote = {
       costCenter: costCenterId,
       creationDate: nowISO,
@@ -125,6 +127,7 @@ export const Mutation = {
       updateHistory,
       viewedByCustomer: sendToSalesRep,
       viewedBySales: !sendToSalesRep,
+      salesChannel,
     }
 
     try {
@@ -365,7 +368,7 @@ export const Mutation = {
 
       checkQuoteStatus(quote)
 
-      const { items } = quote
+      const { items, salesChannel } = quote
 
       // CLEAR CURRENT CART
       if (orderFormId !== 'default-order-form') {
@@ -412,9 +415,11 @@ export const Mutation = {
           })
         )
 
+      const salesChannelQueryString = salesChannel ? `?sc=${salesChannel}` : ''
+
       // ADD ITEMS TO CART
       const data = await hub
-        .post(routes.addToCart(account, orderFormId), {
+        .post(`${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`, {
           expectedOrderFormSections: ['items'],
           orderItems: items.map((item) => {
             return {

@@ -58,6 +58,7 @@ type Quote {
   costCenterName: String
   viewedBySales: Boolean
   viewedByCustomer: Boolean
+  salesChannel: String
 }
 
 type QuoteUpdate {

@@ -19,6 +19,7 @@ export const QUOTE_FIELDS = [
   'costCenter',
   'viewedBySales',
   'viewedByCustomer',
+  'salesChannel',
 ]
 
 export const routes = {
@@ -107,6 +108,10 @@ export const schema = {
       title: 'Reference Name',
       type: 'string',
     },
+    salesChannel: {
+      title: 'Sales Channel',
+      type: ['null', 'string'],
+    },
     status: {
       title: 'Status',
       type: 'string',
@@ -149,5 +154,6 @@ export const schema = {
     'status',
     'organization',
     'costCenter',
+    'salesChannel',
   ],
 }
