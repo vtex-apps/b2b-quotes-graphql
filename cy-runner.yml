@@ -71,10 +71,10 @@ workspace:
     # Theme
     - vtex.wish-list
     - vtex.location-availability
-    - vtex.shopper-location
+    - vtex.shopper-location@0.x
     - vtex.wordpress-integration
     - vtex.storefront-permissions-ui
-    - vtex.reviews-and-ratings
+    - vtex.reviews-and-ratings@2.x
     - vtex.b2bstore
   removeApps:
     - vtex.bitcot-qa-theme
