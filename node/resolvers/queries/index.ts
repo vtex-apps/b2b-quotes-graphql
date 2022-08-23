@@ -55,12 +55,13 @@ const buildWhereStatement = async ({
 
   // similarly, if user only has permission to see their quotes from their sales channel,
   // hard-code its value into the search
+  // allow all users to view quotes without a sales channel
   if (
     !permissions.includes('access-quotes-all') && 
     !permissions.includes('access-quotes-all-saleschannel') && 
     userSalesChannel
   ) {
-    whereArray.push(`salesChannel="${userSalesChannel}"`)
+    whereArray.push(`((salesChannel is null) OR salesChannel="${userSalesChannel}")`)
   }
 
   if (status?.length) {
@@ -145,10 +146,11 @@ export const Query = {
         return null
       }
 
-      // if user only has permission to view quotes from their sales channel, check that the sales channel matches
+      // if user only has permission to view quotes from their sales channel, check that the sales channel matches or is null
       if (
         !permissions.includes('access-quotes-all') &&
         !permissions.includes('access-quotes-all-saleschannel') &&
+        quote.salesChannel && 
         userSalesChannel !== quote.salesChannel
       ) {
         return null
