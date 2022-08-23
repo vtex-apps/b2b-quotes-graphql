@@ -419,16 +419,19 @@ export const Mutation = {
 
       // ADD ITEMS TO CART
       const data = await hub
-        .post(`${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`, {
-          expectedOrderFormSections: ['items'],
-          orderItems: items.map((item) => {
-            return {
-              id: item.id,
-              quantity: item.quantity,
-              seller: item.seller || '1',
-            }
-          }),
-        })
+        .post(
+          `${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`,
+          {
+            expectedOrderFormSections: ['items'],
+            orderItems: items.map((item) => {
+              return {
+                id: item.id,
+                quantity: item.quantity,
+                seller: item.seller || '1',
+              }
+            }),
+          }
+        )
         .then((res: any) => {
           return res.data
         })
