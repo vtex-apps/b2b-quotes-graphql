@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Store sales channel information in Quotes
+- Apply stored sales channel in cart when using Quotes
+- Consider permission to view Quotes according to stored sales channel
+
 ## [2.0.2] - 2022-08-03
 
 ### Fixed
