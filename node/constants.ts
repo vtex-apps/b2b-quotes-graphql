@@ -1,5 +1,5 @@
 export const APP_NAME = 'b2b-quotes-graphql'
-export const SCHEMA_VERSION = 'v1.2'
+export const SCHEMA_VERSION = 'v1.3'
 export const QUOTE_DATA_ENTITY = 'quotes'
 export const CRON_EXPRESSION = '0 */12 * * *'
 
@@ -19,6 +19,7 @@ export const QUOTE_FIELDS = [
   'costCenter',
   'viewedBySales',
   'viewedByCustomer',
+  'salesChannel',
 ]
 
 export const routes = {
@@ -107,6 +108,10 @@ export const schema = {
       title: 'Reference Name',
       type: 'string',
     },
+    salesChannel: {
+      title: 'Sales Channel',
+      type: ['null', 'string'],
+    },
     status: {
       title: 'Status',
       type: 'string',
@@ -149,5 +154,6 @@ export const schema = {
     'status',
     'organization',
     'costCenter',
+    'salesChannel',
   ],
 }

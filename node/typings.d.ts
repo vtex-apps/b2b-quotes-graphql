@@ -14,6 +14,7 @@ interface Quote {
   costCenter: string
   viewedBySales: boolean
   viewedByCustomer: boolean
+  salesChannel: string | null
 }
 
 interface QuoteUpdate {

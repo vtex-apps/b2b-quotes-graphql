@@ -3,6 +3,7 @@ type Query {
   getQuote(id: String): Quote
     @withPermissions
     @withSession
+    @withSegment
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getQuotes(
     organization: [String]
@@ -16,11 +17,12 @@ type Query {
   ): Quotes
     @withPermissions
     @withSession
+    @withSegment
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
 }
 
 type Mutation {
-  createQuote(input: QuoteInput!): String @withPermissions @withSession
+  createQuote(input: QuoteInput!): String @withPermissions @withSession @withSegment
   updateQuote(input: QuoteUpdateInput!): String @withPermissions @withSession
   useQuote(id: String, orderFormId: String): String
     @withPermissions

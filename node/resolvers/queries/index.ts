@@ -15,6 +15,7 @@ const buildWhereStatement = async ({
   search,
   userOrganizationId,
   userCostCenterId,
+  userSalesChannel,
 }: {
   permissions: string[]
   organization?: string[]
@@ -23,6 +24,7 @@ const buildWhereStatement = async ({
   search?: string
   userOrganizationId: string
   userCostCenterId: string
+  userSalesChannel?: string
 }) => {
   const whereArray = []
 
@@ -49,6 +51,19 @@ const buildWhereStatement = async ({
     const costCenters = `(${ccArray.join(' OR ')})`
 
     whereArray.push(costCenters)
+  }
+
+  // similarly, if user only has permission to see their quotes from their sales channel,
+  // hard-code its value into the search
+  // allow all users to view quotes without a sales channel
+  if (
+    !permissions.includes('access-quotes-all') &&
+    !permissions.includes('access-quotes-all-saleschannel') &&
+    userSalesChannel
+  ) {
+    whereArray.push(
+      `((salesChannel is null) OR salesChannel="${userSalesChannel}")`
+    )
   }
 
   if (status?.length) {
@@ -79,7 +94,7 @@ export const Query = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions } = vtex as any
+    const { sessionData, storefrontPermissions, segmentData } = vtex as any
 
     if (
       !storefrontPermissions?.permissions?.length ||
@@ -95,6 +110,8 @@ export const Query = {
 
     const userCostCenterId =
       sessionData.namespaces['storefront-permissions'].costcenter.value
+
+    const userSalesChannel = segmentData?.channel
 
     if (
       !permissions.some(
@@ -127,6 +144,16 @@ export const Query = {
         !permissions.includes('access-quotes-all') &&
         !permissions.includes('access-quotes-organization') &&
         userCostCenterId !== quote.costCenter
+      ) {
+        return null
+      }
+
+      // if user only has permission to view quotes from their sales channel, check that the sales channel matches or is null
+      if (
+        !permissions.includes('access-quotes-all') &&
+        !permissions.includes('access-quotes-all-saleschannel') &&
+        quote.salesChannel &&
+        userSalesChannel !== quote.salesChannel
       ) {
         return null
       }
@@ -175,7 +202,7 @@ export const Query = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions } = vtex as any
+    const { sessionData, storefrontPermissions, segmentData } = vtex as any
 
     if (
       !storefrontPermissions?.permissions?.length ||
@@ -200,6 +227,8 @@ export const Query = {
       return null
     }
 
+    const userSalesChannel = segmentData?.channel
+
     await checkConfig(ctx)
 
     const where = await buildWhereStatement({
@@ -210,6 +239,7 @@ export const Query = {
       search,
       userOrganizationId,
       userCostCenterId,
+      userSalesChannel,
     })
 
     try {
