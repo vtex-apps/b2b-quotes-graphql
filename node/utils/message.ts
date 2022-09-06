@@ -66,24 +66,37 @@ const getOrgAndCostCenterNames = async (
 }
 
 const sendMailNotificationToUsers = async (
+  ctx: Context | EventBroadcastContext,
   { quote, mail: sender, users }: any,
   templateName: string
 ) => {
-  const promises = []
+  const {
+    vtex: { logger },
+  } = ctx
+  try {
+    const promises = []
 
-  for (const user of users) {
-    promises.push(
-      sender.sendMail({
-        jsonData: {
-          message: { to: user },
-          quote,
-        },
-        templateName,
-      })
-    )
+    for (const user of users) {
+      promises.push(
+        sender.sendMail({
+          jsonData: {
+            message: { to: user },
+            quote,
+          },
+          templateName,
+        })
+      )
+    }
+
+    return Promise.all(promises)
+  } catch (error) {
+    logger.error({
+      error,
+      message: 'sendMailNotificationToUsers-Error',
+    })
   }
 
-  return Promise.all(promises)
+  return false
 }
 
 const message = (ctx: Context | EventBroadcastContext) => {
@@ -149,7 +162,11 @@ const message = (ctx: Context | EventBroadcastContext) => {
       organization: organizationName,
     }
 
-    return sendMailNotificationToUsers({ quote, mail, users }, 'quote-created')
+    return sendMailNotificationToUsers(
+      ctx,
+      { quote, mail, users },
+      'quote-created'
+    )
   }
 
   const quoteUpdated = async ({
@@ -192,7 +209,11 @@ const message = (ctx: Context | EventBroadcastContext) => {
       organization: organizationName,
     }
 
-    return sendMailNotificationToUsers({ quote, mail, users }, templateName)
+    return sendMailNotificationToUsers(
+      ctx,
+      { quote, mail, users, ctx },
+      templateName
+    )
   }
 
   return {

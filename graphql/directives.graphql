@@ -1,3 +1,4 @@
 directive @withSession on FIELD | FIELD_DEFINITION
 directive @withPermissions on FIELD | FIELD_DEFINITION
 directive @withSegment on FIELD | FIELD_DEFINITION
+directive @checkAdminAccess on FIELD | FIELD_DEFINITION

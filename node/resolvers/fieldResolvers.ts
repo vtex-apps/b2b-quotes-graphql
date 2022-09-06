@@ -14,9 +14,9 @@ export const organizationName = async (
     )
 
     return organizationData?.data?.getOrganizationById?.name ?? null
-  } catch (e) {
+  } catch (error) {
     logger.warn({
-      e,
+      error,
       message: 'getOrganizationName-error',
     })
   }
@@ -36,9 +36,9 @@ export const costCenterName = async (
     const costCenterData = await organizations.getCostCenterById(costCenter)
 
     return costCenterData?.data?.getCostCenterById?.name ?? null
-  } catch (e) {
+  } catch (error) {
     logger.warn({
-      e,
+      error,
       message: 'getCostCenterName-error',
     })
   }

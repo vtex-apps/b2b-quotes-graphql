@@ -30,21 +30,20 @@ export const Mutation = {
     } = ctx
 
     try {
-      // CLEAR CURRENT CART
       await hub.post(routes.clearCart(account, params.orderFormId), {
         expectedOrderFormSections: ['items'],
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        e,
+        error,
         message: 'clearCart-error',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
+      if (error.message) {
+        throw new GraphQLError(error.message)
+      } else if (error.response?.data?.message) {
+        throw new GraphQLError(error.response.data.message)
       } else {
-        throw new GraphQLError(e)
+        throw new GraphQLError(error)
       }
     }
   },
@@ -157,26 +156,19 @@ export const Mutation = {
               message: `[Quote created] E-mail sent to sales reps`,
             })
           })
-          .catch((e) => {
-            logger.error({
-              error: e,
-              message: `[Quote updated] E-mail not sent`,
-            })
-          })
       }
-
       return data.DocumentId
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        e,
-        message: 'createQuote-error',
+        error,
+        message: 'createQuote-error ',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
+      if (error.message) {
+        throw new GraphQLError(error.message)
+      } else if (error.response?.data?.message) {
+        throw new GraphQLError(error.response.data.message)
       } else {
-        throw new GraphQLError(e)
+        throw new GraphQLError(error)
       }
     }
   },
@@ -314,20 +306,13 @@ export const Mutation = {
             message: `[Quote updated] E-mail sent ${uniqueUsers.join(', ')}`,
           })
         })
-        .catch((e) => {
-          logger.error({
-            error: e,
-            message: `[Quote updated] E-mail not sent`,
-          })
-        })
-
       return data.id
-    } catch (e) {
+    } catch (error) {
       logger.warn({
-        e,
+        error,
         message: 'updateQuote-warning',
       })
-      throw new GraphQLError(e)
+      throw new GraphQLError(error)
     }
   },
   useQuote: async (
@@ -408,9 +393,9 @@ export const Mutation = {
         .then((res: any) => {
           return res.data
         })
-        .catch((e) =>
+        .catch((error) =>
           logger.error({
-            e,
+            error,
             message: 'useQuote-addCustomDataError',
           })
         )
@@ -466,17 +451,17 @@ export const Mutation = {
         },
         useHeaders
       )
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        e,
+        error,
         message: 'useQuote-error',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
+      if (error.message) {
+        throw new GraphQLError(error.message)
+      } else if (error.response?.data?.message) {
+        throw new GraphQLError(error.response.data.message)
       } else {
-        throw new GraphQLError(e)
+        throw new GraphQLError(error)
       }
     }
   },

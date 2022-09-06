@@ -21,32 +21,24 @@ export async function orderHandler(
   const { host } = await hostClient.getHost()
 
   ctx.vtex.host = host
+  let id
   try {
     order = await orders.getOrder(body.orderId)
-
     if (!order || !order.status || !order.items) {
       return
     }
-  } catch (error) {
-    logger.error({
-      data: ctx.body,
-      error,
-      message: 'OrderHandler-getOrderError',
-    })
-  }
 
-  // update to placed order
-  const { customData } = order
+    // update to placed order
+    const { customData } = order
+    const index = customData?.customApps?.findIndex(
+      (item) => item.id === 'b2b-quotes-graphql'
+    )
 
-  const index = customData?.customApps?.findIndex(
-    (item) => item.id === 'b2b-quotes-graphql'
-  )
+    if (index !== -1 && customData && customData.customApps) {
+      const { quoteId } = customData?.customApps[index].fields
+      id = quoteId
 
-  if (index !== -1 && customData && customData.customApps) {
-    const { quoteId } = customData?.customApps[index].fields
-
-    if (quoteId && quoteId.length > 1) {
-      try {
+      if (quoteId && quoteId.length > 1) {
         const item = (await masterdata.getDocument({
           dataEntity: QUOTE_DATA_ENTITY,
           fields: QUOTE_FIELDS,
@@ -68,20 +60,13 @@ export async function orderHandler(
           ],
         }
 
-        const data = await masterdata
+        await masterdata
           .updateEntireDocument({
             dataEntity: QUOTE_DATA_ENTITY,
             fields: quote,
             id: quoteId,
           })
           .then((res: any) => res)
-          .catch((error: any) => {
-            logger.error({
-              error,
-              fields: quote,
-              message: 'OrderHandler-updateEntireDocumentError',
-            })
-          })
 
         const users = quote.updateHistory.map((anUpdate) => anUpdate.email)
 
@@ -111,27 +96,15 @@ export async function orderHandler(
               message: `[Quote placed] E-mail sent ${uniqueUsers.join(', ')}`,
             })
           })
-          .catch((error) => {
-            logger.error({
-              data: ctx.body,
-              error,
-              message: 'OrderHandler-quoteUpdatedError',
-            })
-          })
-
-        logger.info({
-          data,
-          message: 'OrderHandler-updateQuoteStatus',
-        })
-      } catch (e) {
-        logger.error({
-          data: ctx.body,
-          error: e,
-          message: 'OrderHandler-updateQuoteStatusError',
-          quoteId,
-        })
       }
     }
+  } catch (error) {
+    logger.error({
+      data: ctx.body,
+      error,
+      message: 'OrderHandler-updateQuoteStatusError',
+      id,
+    })
   }
 
   return next()

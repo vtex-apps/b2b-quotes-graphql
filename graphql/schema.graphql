@@ -28,5 +28,7 @@ type Mutation {
     @withPermissions
     @withSession
   clearCart(orderFormId: String): String
-  saveAppSettings(input: AppSettingsInput!): AppSettings
+  saveAppSettings(input: AppSettingsInput!): AppSettings 
+    @cacheControl(scope: PRIVATE) 
+    @checkAdminAccess
 }

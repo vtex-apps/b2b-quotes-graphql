@@ -41,9 +41,9 @@ export const checkAndCreateQuotesConfig = async (
     return vbase
       .saveJSON(APP_NAME, 'quotes', { quote: flag })
       .then(() => true)
-      .catch((e) =>
+      .catch((error) =>
         logger.error({
-          e,
+          error,
           message: 'vBaseSaveJson-error',
         })
       )
@@ -101,8 +101,6 @@ export const checkAndCreateQuotesConfig = async (
       if (setCheckoutConfig) {
         await saveQuotesConfig(true)
       }
-
-      logger.info('setOrderFormConfiguration-success')
     } else {
       saveQuotesConfig(true)
     }
@@ -155,8 +153,8 @@ const initializeCron = async (settings: Settings, ctx: Context) => {
       settings.adminSetup.cronExpression = CRON_EXPRESSION
       settings.adminSetup.cronWorkspace = workspace
     })
-    .catch((e) => {
-      if (e.response.status !== 304) {
+    .catch((error) => {
+      if (error.response.status !== 304) {
         settings.adminSetup.hasCron = false
       } else {
         settings.adminSetup.hasCron = true
@@ -181,8 +179,8 @@ const initializeSchema = async (settings: Settings, ctx: Context) => {
     })
 
     settings.schemaVersion = SCHEMA_VERSION
-  } catch (e) {
-    if (e.response.status >= 400) {
+  } catch (error) {
+    if (error.response.status >= 400) {
       settings.schemaVersion = ''
     } else {
       settings.schemaVersion = SCHEMA_VERSION
@@ -194,7 +192,7 @@ const initializeSchema = async (settings: Settings, ctx: Context) => {
 
 const initializeManualPrice = async (settings: Settings, ctx: Context) => {
   const {
-    vtex: { account, authToken },
+    vtex: { account, authToken, logger },
     clients: { hub },
   } = ctx
 
@@ -215,8 +213,12 @@ const initializeManualPrice = async (settings: Settings, ctx: Context) => {
       )
       settings.adminSetup.allowManualPrice = true
     }
-  } catch (e) {
+  } catch (error) {
     settings.adminSetup.allowManualPrice = false
+    logger.warn({
+      error,
+      message: 'initializeManualPrice-error',
+    })
   }
 
   return settings
@@ -242,12 +244,12 @@ const initializeTemplates = async (
     .then(() => {
       settings.templateHash = currTemplateHash
     })
-    .catch((e) => {
+    .catch((error) => {
       logger.error({
-        error: e,
+        error,
         message: 'checkConfig-publishTemplateError',
       })
-      throw new Error(e)
+      throw new Error(error)
     })
 
   return settings
