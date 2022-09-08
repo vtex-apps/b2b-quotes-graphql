@@ -39,27 +39,21 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
       id,
     })
     .then(() => {
-      message(ctx)
-        .quoteUpdated({
-          costCenter,
-          id,
-          lastUpdate: {
-            email: 'expiration-system',
-            note: '',
-            status: status.toUpperCase(),
-          },
-          name: referenceName,
-          organization,
-          users: uniqueUsers,
-        })
-        .catch((error) => {
-          logger.error({ message: 'quoteExpired-emailError', error })
-        })
-
-      logger.info({ message: `quoteExpired`, quoteId: id })
+      message(ctx).quoteUpdated({
+        costCenter,
+        id,
+        lastUpdate: {
+          email: 'expiration-system',
+          note: '',
+          status: status.toUpperCase(),
+        },
+        name: referenceName,
+        organization,
+        users: uniqueUsers,
+      })
     })
     .catch((error) => {
-      logger.error({ message: 'quoteExpired-mdError', error })
+      logger.error({ message: 'quoteExpired-Error', error })
     })
 }
 

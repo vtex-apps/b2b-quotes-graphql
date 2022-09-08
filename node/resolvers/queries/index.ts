@@ -159,17 +159,17 @@ export const Query = {
       }
 
       return quote
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        e,
+        error,
         message: 'getQuote-error',
       })
-      if (e.message) {
-        throw new GraphQLError(e.message)
-      } else if (e.response?.data?.message) {
-        throw new GraphQLError(e.response.data.message)
+      if (error.message) {
+        throw new GraphQLError(error.message)
+      } else if (error.response?.data?.message) {
+        throw new GraphQLError(error.response.data.message)
       } else {
-        throw new GraphQLError(e)
+        throw new GraphQLError(error)
       }
     }
   },
@@ -251,12 +251,12 @@ export const Query = {
         sort: `${sortedBy} ${sortOrder}`,
         ...(where && { where }),
       })
-    } catch (e) {
+    } catch (error) {
       logger.error({
-        e,
+        error,
         message: 'getQuotes-error',
       })
-      throw new GraphQLError(e)
+      throw new GraphQLError(error)
     }
   },
   getAppSettings: async (_: void, __: void, ctx: Context) => {
