@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Updated
+
+- Update GitHub reusable workflow to version 2
+
 ## [2.2.0] - 2022-09-08
 
 ### Added
