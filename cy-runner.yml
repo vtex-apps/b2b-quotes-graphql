@@ -27,7 +27,7 @@ base:
     maxJobs: 3
     quiet: true
     projectId: zihec5
-    video: false
+    video: true
     videoCompression: false
     videoUploadOnPasses: false
     screenshotOnRunFailure: true
