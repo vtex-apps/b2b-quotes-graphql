@@ -27,7 +27,7 @@ base:
     maxJobs: 3
     quiet: true
     projectId: zihec5
-    video: true
+    video: false
     videoCompression: false
     videoUploadOnPasses: false
     screenshotOnRunFailure: true
@@ -75,7 +75,6 @@ workspace:
       - cypress-shared/integration/b2b/wipe.spec.js
   teardown:
     enabled: true
-
 
 strategy:
   # The strategies must be in order, with dependent tests last
