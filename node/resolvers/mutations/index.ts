@@ -276,6 +276,7 @@ export const Mutation = {
       const data = await masterdata
         .updateEntireDocument({
           dataEntity: QUOTE_DATA_ENTITY,
+          schema: SCHEMA_VERSION,
           fields: updatedQuote,
           id,
         })

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed updateQuote graphql about declining a quote
+
 ## [2.2.1] - 2022-11-11
 
 ### Changed
