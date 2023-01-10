@@ -37,6 +37,7 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
       dataEntity: QUOTE_DATA_ENTITY,
       fields: { ...item, lastUpdate, updateHistory, status },
       id,
+      schema: SCHEMA_VERSION,
     })
     .then(() => {
       message(ctx).quoteUpdated({
