@@ -1,4 +1,4 @@
-import { QUOTE_DATA_ENTITY, QUOTE_FIELDS } from '../constants'
+import { QUOTE_DATA_ENTITY, QUOTE_FIELDS, SCHEMA_VERSION } from '../constants'
 import { isEmail, NO_REPLY_EMAIL } from '../utils'
 import message from '../utils/message'
 
@@ -22,6 +22,7 @@ export async function orderHandler(
 
   ctx.vtex.host = host
   let id
+
   try {
     order = await orders.getOrder(body.orderId)
     if (!order || !order.status || !order.items) {
@@ -36,6 +37,7 @@ export async function orderHandler(
 
     if (index !== -1 && customData && customData.customApps) {
       const { quoteId } = customData?.customApps[index].fields
+
       id = quoteId
 
       if (quoteId && quoteId.length > 1) {
@@ -65,6 +67,7 @@ export async function orderHandler(
             dataEntity: QUOTE_DATA_ENTITY,
             fields: quote,
             id: quoteId,
+            schema: SCHEMA_VERSION,
           })
           .then((res: any) => res)
 

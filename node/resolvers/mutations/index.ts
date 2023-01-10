@@ -157,6 +157,7 @@ export const Mutation = {
             })
           })
       }
+
       return data.DocumentId
     } catch (error) {
       logger.error({
@@ -278,6 +279,7 @@ export const Mutation = {
           dataEntity: QUOTE_DATA_ENTITY,
           fields: updatedQuote,
           id,
+          schema: SCHEMA_VERSION,
         })
         .then((res: any) => res)
 
@@ -306,6 +308,7 @@ export const Mutation = {
             message: `[Quote updated] E-mail sent ${uniqueUsers.join(', ')}`,
           })
         })
+
       return data.id
     } catch (error) {
       logger.warn({
