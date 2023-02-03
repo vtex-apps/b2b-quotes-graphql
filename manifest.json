@@ -13,15 +13,16 @@
     "vtex.storefront-permissions": "1.x",
     "vtex.orders-broadcast": "0.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "vbase-read-write"
     },
     {
       "name": "OMSViewer"
+    },
+    {
+      "name": "ListOrders"
     },
     {
       "name": "read-workspace-apps"
