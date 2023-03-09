@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Crowdin configuration file, as this app has no translatable messages.
+
 ## [2.2.3] - 2023-02-03
 
 ### Added
