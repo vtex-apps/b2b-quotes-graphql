@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Run schedule job only on saturday
 
+## [2.2.4] - 2023-03-20
+
+### Removed
+
+- Crowdin configuration file, as this app has no translatable messages.
+
 ## [2.2.3] - 2023-02-03
 
 ### Added
