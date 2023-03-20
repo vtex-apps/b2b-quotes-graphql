@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Run schedule job only on saturday
+
 ## [2.2.3] - 2023-02-03
 
 ### Added
