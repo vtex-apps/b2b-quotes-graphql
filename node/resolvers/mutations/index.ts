@@ -21,6 +21,7 @@ import {
   SCHEMA_VERSION,
   routes,
 } from '../../constants'
+import { sendMetric } from '../../utils/metrics'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -157,6 +158,23 @@ export const Mutation = {
             })
           })
       }
+
+      const metricsParam = {
+        sessionData,
+        userData: {
+          orgId: organizationId,
+          costId: costCenterId,
+          roleId: slug,
+        },
+        costCenterName: 'costCenterData?.getCostCenterById?.name',
+        buyOrgName: 'organizationData?.getOrganizationById?.name',
+        quoteId: data.DocumentId,
+        quoteReferenceName: referenceName,
+        sendToSalesRep,
+        creationDate: nowISO,
+      }
+
+      sendMetric(metricsParam, ctx)
 
       return data.DocumentId
     } catch (error) {
