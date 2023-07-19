@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Send metrics to Analytics (Create Quote and Send Message events)
+
 ### Removed
 - [ENGINEERS-1247] - Disable cypress tests in PR level
 
