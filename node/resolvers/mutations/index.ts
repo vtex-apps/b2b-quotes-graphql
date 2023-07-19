@@ -21,7 +21,7 @@ import {
   SCHEMA_VERSION,
   routes,
 } from '../../constants'
-import { sendMetric } from '../../utils/metrics'
+import { sendCreateQuoteMetric } from '../../metrics/createQuote'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -174,7 +174,7 @@ export const Mutation = {
         creationDate: nowISO,
       }
 
-      sendMetric(metricsParam, ctx)
+      sendCreateQuoteMetric(metricsParam, ctx)
 
       return data.DocumentId
     } catch (error) {

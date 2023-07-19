@@ -1,6 +1,5 @@
-import axios from 'axios'
-
-const ANALYTICS_URL = 'https://rc.vtex.com/api/analytics/schemaless-events'
+import type { Metric } from './metrics'
+import { sendMetric } from './metrics'
 
 type UserData = {
   orgId: string
@@ -20,20 +19,13 @@ type SessionData = {
   }
 }
 
-type MetricsParam = {
+type CreateQuoteMetricParam = {
   sessionData: SessionData
   sendToSalesRep: boolean
   userData: UserData
   quoteId: string
   quoteReferenceName: string
   creationDate: string
-}
-
-type Metric = {
-  name: 'b2b-suite-buyerorg-data'
-  kind: 'create-quote-graphql-event'
-  description: 'Create Quotation Action - Graphql'
-  account: string
 }
 
 type QuoteFieldsMetric = {
@@ -65,7 +57,7 @@ const getOrganizationById = async (id: string, ctx: Context) => {
 }
 
 const buildQuoteMetric = async (
-  metricsParam: MetricsParam,
+  metricsParam: CreateQuoteMetricParam,
   ctx: Context
 ): Promise<QuoteMetric> => {
   const { namespaces } = metricsParam.sessionData
@@ -100,12 +92,15 @@ const buildQuoteMetric = async (
   return metric
 }
 
-export const sendMetric = async (metricsParam: MetricsParam, ctx: Context) => {
+export const sendCreateQuoteMetric = async (
+  metricsParam: CreateQuoteMetricParam,
+  ctx: Context
+) => {
   try {
     const metric = await buildQuoteMetric(metricsParam, ctx)
 
-    await axios.post(ANALYTICS_URL, metric)
+    await sendMetric(metric)
   } catch (error) {
-    console.warn('Unable to log metrics', error)
+    console.warn('Unable to log Create Quote Metrics', error)
   }
 }

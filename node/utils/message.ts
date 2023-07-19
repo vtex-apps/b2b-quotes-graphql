@@ -1,4 +1,5 @@
 import type StorefrontPermissions from '../clients/storefrontPermissions'
+import { sendMessageMetric } from '../metrics/sendMessage'
 
 interface QuoteUpdate {
   email: string
@@ -73,6 +74,7 @@ const sendMailNotificationToUsers = async (
   const {
     vtex: { logger },
   } = ctx
+
   try {
     const promises = []
 
@@ -86,6 +88,13 @@ const sendMailNotificationToUsers = async (
           templateName,
         })
       )
+
+      sendMessageMetric({
+        quote,
+        account: sender.context.account,
+        sentTo: user,
+        templateName,
+      })
     }
 
     return Promise.all(promises)
