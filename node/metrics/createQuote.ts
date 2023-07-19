@@ -28,7 +28,7 @@ type CreateQuoteMetricParam = {
   creationDate: string
 }
 
-type QuoteFieldsMetric = {
+type CreateQuoteFieldsMetric = {
   cost_center_id: string
   cost_center_name: string
   buy_org_id: string
@@ -42,7 +42,7 @@ type QuoteFieldsMetric = {
   send_to_sales_rep: boolean
 }
 
-type QuoteMetric = Metric & { fields: QuoteFieldsMetric }
+type CreateQuoteMetric = Metric & { fields: CreateQuoteFieldsMetric }
 
 const getCostCenterById = async (id: string, ctx: Context) => {
   const cost = await ctx.clients.organizations.getCostCenterById(id)
@@ -59,7 +59,7 @@ const getOrganizationById = async (id: string, ctx: Context) => {
 const buildQuoteMetric = async (
   metricsParam: CreateQuoteMetricParam,
   ctx: Context
-): Promise<QuoteMetric> => {
+): Promise<CreateQuoteMetric> => {
   const { namespaces } = metricsParam.sessionData
   const accountName = namespaces.account.accountName.value
   const userEmail = namespaces.profile.email.value
@@ -69,7 +69,7 @@ const buildQuoteMetric = async (
     getCostCenterById(metricsParam.userData?.costId, ctx),
   ])
 
-  const metric: QuoteMetric = {
+  const metric: CreateQuoteMetric = {
     name: 'b2b-suite-buyerorg-data',
     kind: 'create-quote-graphql-event',
     description: 'Create Quotation Action - Graphql',
