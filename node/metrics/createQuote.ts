@@ -64,7 +64,7 @@ const buildQuoteMetric = async (
   const accountName = namespaces.account.accountName.value
   const userEmail = namespaces.profile.email.value
 
-  const names = await Promise.all([
+  const [organizationName, costCenter] = await Promise.all([
     getOrganizationById(metricsParam.userData.orgId, ctx),
     getCostCenterById(metricsParam.userData?.costId, ctx),
   ])
@@ -76,9 +76,9 @@ const buildQuoteMetric = async (
     account: accountName,
     fields: {
       buy_org_id: metricsParam.userData.orgId,
-      buy_org_name: names[0],
+      buy_org_name: organizationName,
       cost_center_id: metricsParam.userData?.costId,
-      cost_center_name: names[1],
+      cost_center_name: costCenter,
       member_id: namespaces?.profile?.id?.value,
       member_email: userEmail,
       role: metricsParam.userData?.roleId,
