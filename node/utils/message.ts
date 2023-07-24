@@ -1,3 +1,5 @@
+import type { JsonDataQuote } from '../clients/email'
+import type MailClient from '../clients/email'
 import type StorefrontPermissions from '../clients/storefrontPermissions'
 import { sendMessageMetric } from '../metrics/sendMessage'
 
@@ -66,6 +68,29 @@ const getOrgAndCostCenterNames = async (
   }
 }
 
+const sendNotificationToUser = async (
+  mailClient: MailClient,
+  user: string,
+  quote: JsonDataQuote,
+  templateName: string,
+  account: string
+) => {
+  await mailClient.sendMail({
+    jsonData: {
+      message: { to: user },
+      quote,
+    },
+    templateName,
+  })
+
+  sendMessageMetric({
+    quote,
+    account,
+    sentTo: user,
+    templateName,
+  })
+}
+
 const sendMailNotificationToUsers = async (
   ctx: Context | EventBroadcastContext,
   { quote, mail: sender, users }: any,
@@ -80,21 +105,14 @@ const sendMailNotificationToUsers = async (
 
     for (const user of users) {
       promises.push(
-        sender.sendMail({
-          jsonData: {
-            message: { to: user },
-            quote,
-          },
+        sendNotificationToUser(
+          sender,
+          user,
+          quote,
           templateName,
-        })
+          sender.context.account
+        )
       )
-
-      sendMessageMetric({
-        quote,
-        account: sender.context.account,
-        sentTo: user,
-        templateName,
-      })
     }
 
     return Promise.all(promises)

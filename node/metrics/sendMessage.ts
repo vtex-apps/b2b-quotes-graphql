@@ -54,6 +54,6 @@ export const sendMessageMetric = async (
 
     await sendMetric(metric)
   } catch (error) {
-    console.warn('Unable to log Send Quote Metrics', error)
+    console.warn('Unable to log Send Quote Message Metrics', error)
   }
 }

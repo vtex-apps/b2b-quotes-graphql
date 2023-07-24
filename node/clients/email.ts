@@ -42,19 +42,21 @@ export interface JsonData {
   message: {
     to: string
   }
-  quote: {
-    name: string
-    id: string
-    link: string
-    organization: string
-    costCenter: string
-    lastUpdate: {
-      email: string
-      status: string
-      note?: string
-    }
-    expired?: boolean
+  quote: JsonDataQuote
+}
+
+export type JsonDataQuote = {
+  name: string
+  id: string
+  link: string
+  organization: string
+  costCenter: string
+  lastUpdate: {
+    email: string
+    status: string
+    note?: string
   }
+  expired?: boolean
 }
 
 interface Template {
