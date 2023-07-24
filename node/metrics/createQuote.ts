@@ -30,9 +30,7 @@ type CreateQuoteMetricParam = {
 
 type CreateQuoteFieldsMetric = {
   cost_center_id: string
-  cost_center_name: string
   buy_org_id: string
-  buy_org_name: string
   member_id: string
   member_email: string
   role: string
@@ -44,30 +42,12 @@ type CreateQuoteFieldsMetric = {
 
 type CreateQuoteMetric = Metric & { fields: CreateQuoteFieldsMetric }
 
-const getCostCenterById = async (id: string, ctx: Context) => {
-  const cost = await ctx.clients.organizations.getCostCenterById(id)
-
-  return cost?.data?.getCostCenterById?.name
-}
-
-const getOrganizationById = async (id: string, ctx: Context) => {
-  const cost = await ctx.clients.organizations.getOrganizationById(id)
-
-  return cost?.data?.getOrganizationById?.name
-}
-
 const buildQuoteMetric = async (
-  metricsParam: CreateQuoteMetricParam,
-  ctx: Context
+  metricsParam: CreateQuoteMetricParam
 ): Promise<CreateQuoteMetric> => {
   const { namespaces } = metricsParam.sessionData
   const accountName = namespaces.account.accountName.value
   const userEmail = namespaces.profile.email.value
-
-  const [organizationName, costCenter] = await Promise.all([
-    getOrganizationById(metricsParam.userData.orgId, ctx),
-    getCostCenterById(metricsParam.userData?.costId, ctx),
-  ])
 
   const metric: CreateQuoteMetric = {
     name: 'b2b-suite-buyerorg-data',
@@ -76,9 +56,7 @@ const buildQuoteMetric = async (
     account: accountName,
     fields: {
       buy_org_id: metricsParam.userData.orgId,
-      buy_org_name: organizationName,
       cost_center_id: metricsParam.userData?.costId,
-      cost_center_name: costCenter,
       member_id: namespaces?.profile?.id?.value,
       member_email: userEmail,
       role: metricsParam.userData?.roleId,
@@ -93,11 +71,10 @@ const buildQuoteMetric = async (
 }
 
 export const sendCreateQuoteMetric = async (
-  metricsParam: CreateQuoteMetricParam,
-  ctx: Context
+  metricsParam: CreateQuoteMetricParam
 ) => {
   try {
-    const metric = await buildQuoteMetric(metricsParam, ctx)
+    const metric = await buildQuoteMetric(metricsParam)
 
     await sendMetric(metric)
   } catch (error) {

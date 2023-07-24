@@ -174,7 +174,7 @@ export const Mutation = {
         creationDate: nowISO,
       }
 
-      sendCreateQuoteMetric(metricsParam, ctx)
+      sendCreateQuoteMetric(metricsParam)
 
       return data.DocumentId
     } catch (error) {
