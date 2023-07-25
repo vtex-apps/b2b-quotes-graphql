@@ -22,6 +22,8 @@ import {
   routes,
 } from '../../constants'
 import { sendCreateQuoteMetric } from '../../metrics/createQuote'
+import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
+import { sendUseQuoteMetric } from '../../metrics/useQuote'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -472,6 +474,15 @@ export const Mutation = {
         },
         useHeaders
       )
+
+      const metricParams: UseQuoteMetricsParams = {
+        quote,
+        orderFormId,
+        account,
+        userEmail: sessionData?.namespaces?.profile?.email?.value,
+      }
+
+      sendUseQuoteMetric(metricParams)
     } catch (error) {
       logger.error({
         error,
