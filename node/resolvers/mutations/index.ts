@@ -169,7 +169,7 @@ export const Mutation = {
           roleId: slug,
         },
         costCenterName: 'costCenterData?.getCostCenterById?.name',
-        buyOrgName: 'organizationData?.getOrganizationById?.name',
+        buyerOrgName: 'organizationData?.getOrganizationById?.name',
         quoteId: data.DocumentId,
         quoteReferenceName: referenceName,
         sendToSalesRep,

@@ -30,7 +30,7 @@ type CreateQuoteMetricParam = {
 
 type CreateQuoteFieldsMetric = {
   cost_center_id: string
-  buy_org_id: string
+  buyer_org_id: string
   member_id: string
   member_email: string
   role: string
@@ -55,7 +55,7 @@ const buildQuoteMetric = async (
     description: 'Create Quotation Action - Graphql',
     account: accountName,
     fields: {
-      buy_org_id: metricsParam.userData.orgId,
+      buyer_org_id: metricsParam.userData.orgId,
       cost_center_id: metricsParam.userData?.costId,
       member_id: namespaces?.profile?.id?.value,
       member_email: userEmail,

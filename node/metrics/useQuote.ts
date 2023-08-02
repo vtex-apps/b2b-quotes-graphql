@@ -10,7 +10,7 @@ type UseQuoteFieldsMetric = {
   creator_email: string
   user_email: string
   cost_center_id: string
-  buy_org_id: string
+  buyer_org_id: string
   quote_last_update: string
 }
 
@@ -23,9 +23,9 @@ export type UseQuoteMetricsParams = {
   userEmail: string
 }
 
-const buildUseQuoteMetric = async (
+const buildUseQuoteMetric = (
   metricsParam: UseQuoteMetricsParams
-): Promise<UseQuoteMetric> => {
+): UseQuoteMetric => {
   const { quote, orderFormId, account, userEmail } = metricsParam
 
   const metric: UseQuoteMetric = {
@@ -34,7 +34,7 @@ const buildUseQuoteMetric = async (
     description: 'Use Quotation Action - Graphql',
     account,
     fields: {
-      buy_org_id: quote.organization,
+      buyer_org_id: quote.organization,
       cost_center_id: quote.costCenter,
       quote_id: quote.id,
       quote_reference_name: quote.referenceName,
@@ -54,9 +54,9 @@ export const sendUseQuoteMetric = async (
   metricsParam: UseQuoteMetricsParams
 ) => {
   try {
-    const metric = await buildUseQuoteMetric(metricsParam)
+    const metric = buildUseQuoteMetric(metricsParam)
 
-    sendMetric(metric)
+    await sendMetric(metric)
   } catch (error) {
     console.warn('Unable to log metrics', error)
   }
