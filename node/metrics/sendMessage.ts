@@ -25,9 +25,9 @@ type SendMessageFieldsMetric = {
 
 type SendMessageMetric = Metric & { fields: SendMessageFieldsMetric }
 
-const buildSendMessageMetric = async (
+const buildSendMessageMetric = (
   metricParam: SendMessageMetricParam
-): Promise<SendMessageMetric> => {
+): SendMessageMetric => {
   const metric: SendMessageMetric = {
     name: 'b2b-suite-buyerorg-data',
     kind: 'send-message-graphql-event',
@@ -50,7 +50,7 @@ export const sendMessageMetric = async (
   metricsParam: SendMessageMetricParam
 ) => {
   try {
-    const metric = await buildSendMessageMetric(metricsParam)
+    const metric = buildSendMessageMetric(metricsParam)
 
     await sendMetric(metric)
   } catch (error) {
