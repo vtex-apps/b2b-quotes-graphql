@@ -22,6 +22,8 @@ import {
   routes,
 } from '../../constants'
 import { sendCreateQuoteMetric } from '../../metrics/createQuote'
+import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
+import { sendUseQuoteMetric } from '../../metrics/useQuote'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -167,7 +169,7 @@ export const Mutation = {
           roleId: slug,
         },
         costCenterName: 'costCenterData?.getCostCenterById?.name',
-        buyOrgName: 'organizationData?.getOrganizationById?.name',
+        buyerOrgName: 'organizationData?.getOrganizationById?.name',
         quoteId: data.DocumentId,
         quoteReferenceName: referenceName,
         sendToSalesRep,
@@ -472,6 +474,15 @@ export const Mutation = {
         },
         useHeaders
       )
+
+      const metricParams: UseQuoteMetricsParams = {
+        quote,
+        orderFormId,
+        account,
+        userEmail: sessionData?.namespaces?.profile?.email?.value,
+      }
+
+      sendUseQuoteMetric(metricParams)
     } catch (error) {
       logger.error({
         error,

@@ -12,10 +12,15 @@ type SendMessageMetric = {
   description: 'Send Message Action - Graphql'
 }
 
+type UseQuoteMetric = {
+  kind: 'use-quote-graphql-event'
+  description: 'Use Quotation Action - Graphql'
+}
+
 export type Metric = {
   name: 'b2b-suite-buyerorg-data'
   account: string
-} & (CreateQuoteMetric | SendMessageMetric)
+} & (CreateQuoteMetric | SendMessageMetric | UseQuoteMetric)
 
 export const sendMetric = async (metric: Metric) => {
   try {
