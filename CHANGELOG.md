@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2023-08-03
+
 ### Added
 - Send metrics to Analytics (Create Quote and Send Message events)
 - Send use quote metrics to Analytics 
