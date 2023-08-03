@@ -42,9 +42,9 @@ type CreateQuoteFieldsMetric = {
 
 type CreateQuoteMetric = Metric & { fields: CreateQuoteFieldsMetric }
 
-const buildQuoteMetric = async (
+const buildQuoteMetric = (
   metricsParam: CreateQuoteMetricParam
-): Promise<CreateQuoteMetric> => {
+): CreateQuoteMetric => {
   const { namespaces } = metricsParam.sessionData
   const accountName = namespaces.account.accountName.value
   const userEmail = namespaces.profile.email.value
@@ -74,7 +74,7 @@ export const sendCreateQuoteMetric = async (
   metricsParam: CreateQuoteMetricParam
 ) => {
   try {
-    const metric = await buildQuoteMetric(metricsParam)
+    const metric = buildQuoteMetric(metricsParam)
 
     await sendMetric(metric)
   } catch (error) {
