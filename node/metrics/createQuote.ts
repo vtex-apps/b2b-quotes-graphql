@@ -55,7 +55,7 @@ const buildQuoteMetric = async (
     description: 'Create Quotation Action - Graphql',
     account: accountName,
     fields: {
-      buyer_org_id: metricsParam.userData.orgId,
+      buyer_org_id: metricsParam.userData?.orgId,
       cost_center_id: metricsParam.userData?.costId,
       member_id: namespaces?.profile?.id?.value,
       member_email: userEmail,
