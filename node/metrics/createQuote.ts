@@ -31,7 +31,6 @@ type CreateQuoteMetricParam = {
 type CreateQuoteFieldsMetric = {
   cost_center_id: string
   buyer_org_id: string
-  member_id: string
   member_email: string
   role: string
   creation_date: string
@@ -46,8 +45,8 @@ const buildQuoteMetric = (
   metricsParam: CreateQuoteMetricParam
 ): CreateQuoteMetric => {
   const { namespaces } = metricsParam.sessionData
-  const accountName = namespaces.account.accountName.value
-  const userEmail = namespaces.profile.email.value
+  const accountName = namespaces?.account?.accountName?.value
+  const userEmail = namespaces?.profile?.email?.value
 
   const metric: CreateQuoteMetric = {
     name: 'b2b-suite-buyerorg-data',
@@ -57,7 +56,6 @@ const buildQuoteMetric = (
     fields: {
       buyer_org_id: metricsParam.userData?.orgId,
       cost_center_id: metricsParam.userData?.costId,
-      member_id: namespaces?.profile?.id?.value,
       member_email: userEmail,
       role: metricsParam.userData?.roleId,
       creation_date: metricsParam.creationDate,

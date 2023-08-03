@@ -17,7 +17,7 @@ type SendMessageMetricParam = {
 type SendMessageFieldsMetric = {
   cost_center_name: string
   quote_id: string
-  buy_org_name: string
+  buyer_org_name: string
   template_name: string
   sent_to: string
   sent_date: string
@@ -34,7 +34,7 @@ const buildSendMessageMetric = (
     description: 'Send Message Action - Graphql',
     account: metricParam.account,
     fields: {
-      buy_org_name: metricParam.quote?.organization,
+      buyer_org_name: metricParam.quote?.organization,
       cost_center_name: metricParam.quote?.costCenter,
       quote_id: metricParam.quote?.id,
       template_name: metricParam.templateName,
