@@ -21,6 +21,9 @@ import {
   SCHEMA_VERSION,
   routes,
 } from '../../constants'
+import { sendCreateQuoteMetric } from '../../metrics/createQuote'
+import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
+import { sendUseQuoteMetric } from '../../metrics/useQuote'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -157,6 +160,23 @@ export const Mutation = {
             })
           })
       }
+
+      const metricsParam = {
+        sessionData,
+        userData: {
+          orgId: organizationId,
+          costId: costCenterId,
+          roleId: slug,
+        },
+        costCenterName: 'costCenterData?.getCostCenterById?.name',
+        buyerOrgName: 'organizationData?.getOrganizationById?.name',
+        quoteId: data.DocumentId,
+        quoteReferenceName: referenceName,
+        sendToSalesRep,
+        creationDate: nowISO,
+      }
+
+      sendCreateQuoteMetric(metricsParam)
 
       return data.DocumentId
     } catch (error) {
@@ -454,6 +474,15 @@ export const Mutation = {
         },
         useHeaders
       )
+
+      const metricParams: UseQuoteMetricsParams = {
+        quote,
+        orderFormId,
+        account,
+        userEmail: sessionData?.namespaces?.profile?.email?.value,
+      }
+
+      sendUseQuoteMetric(metricParams)
     } catch (error) {
       logger.error({
         error,

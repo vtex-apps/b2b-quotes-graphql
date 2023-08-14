@@ -1,4 +1,7 @@
+import type { JsonDataQuote } from '../clients/email'
+import type MailClient from '../clients/email'
 import type StorefrontPermissions from '../clients/storefrontPermissions'
+import { sendMessageMetric } from '../metrics/sendMessage'
 
 interface QuoteUpdate {
   email: string
@@ -65,6 +68,29 @@ const getOrgAndCostCenterNames = async (
   }
 }
 
+const sendNotificationToUser = async (
+  mailClient: MailClient,
+  user: string,
+  quote: JsonDataQuote,
+  templateName: string,
+  account: string
+) => {
+  await mailClient.sendMail({
+    jsonData: {
+      message: { to: user },
+      quote,
+    },
+    templateName,
+  })
+
+  sendMessageMetric({
+    quote,
+    account,
+    sentTo: user,
+    templateName,
+  })
+}
+
 const sendMailNotificationToUsers = async (
   ctx: Context | EventBroadcastContext,
   { quote, mail: sender, users }: any,
@@ -73,18 +99,19 @@ const sendMailNotificationToUsers = async (
   const {
     vtex: { logger },
   } = ctx
+
   try {
     const promises = []
 
     for (const user of users) {
       promises.push(
-        sender.sendMail({
-          jsonData: {
-            message: { to: user },
-            quote,
-          },
+        sendNotificationToUser(
+          sender,
+          user,
+          quote,
           templateName,
-        })
+          sender.context.account
+        )
       )
     }
 
