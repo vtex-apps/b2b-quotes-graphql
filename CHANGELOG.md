@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.1] - 2023-09-13
+
 ### Fixed
 - Use the account to get the token in the header and send it to clear the cart and order
 
