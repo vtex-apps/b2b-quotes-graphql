@@ -359,7 +359,7 @@ export const Mutation = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const token = ctx.cookies.get(`VtexIdclientAutCookie_$account}`)
+    const token = ctx.cookies.get(`VtexIdclientAutCookie_${account}`)
 
     const useHeaders = {
       'Content-Type': 'application/json',
