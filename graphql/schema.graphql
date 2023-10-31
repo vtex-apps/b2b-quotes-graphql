@@ -22,13 +22,16 @@ type Query {
 }
 
 type Mutation {
-  createQuote(input: QuoteInput!): String @withPermissions @withSession @withSegment
+  createQuote(input: QuoteInput!): String
+    @withPermissions
+    @withSession
+    @withSegment
   updateQuote(input: QuoteUpdateInput!): String @withPermissions @withSession
   useQuote(id: String, orderFormId: String): String
     @withPermissions
     @withSession
-  clearCart(orderFormId: String): String
-  saveAppSettings(input: AppSettingsInput!): AppSettings 
-    @cacheControl(scope: PRIVATE) 
+  clearCart(orderFormId: String): String @auditAccess
+  saveAppSettings(input: AppSettingsInput!): AppSettings
+    @cacheControl(scope: PRIVATE)
     @checkAdminAccess
 }
