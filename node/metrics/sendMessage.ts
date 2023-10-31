@@ -1,5 +1,5 @@
-import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import type { Metric } from '../clients/metrics'
+import { B2B_METRIC_NAME, sendMetric } from '../clients/metrics'
 
 type Quote = {
   costCenter: string
@@ -23,7 +23,20 @@ type SendMessageFieldsMetric = {
   sent_date: string
 }
 
-type SendMessageMetric = Metric & { fields: SendMessageFieldsMetric }
+export class SendMessageMetric implements Metric {
+  public readonly description: string
+  public readonly kind: string
+  public readonly account: string
+  public readonly fields: SendMessageFieldsMetric
+  public readonly name = B2B_METRIC_NAME
+
+  constructor(account: string, fields: SendMessageFieldsMetric) {
+    this.account = account
+    this.fields = fields
+    this.kind = 'send-message-graphql-event'
+    this.description = 'Send Message Action - Graphql'
+  }
+}
 
 const buildSendMessageMetric = (
   metricParam: SendMessageMetricParam

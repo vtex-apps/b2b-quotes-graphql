@@ -1,5 +1,5 @@
-import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import type { Metric } from '../clients/metrics'
+import { B2B_METRIC_NAME, sendMetric } from '../clients/metrics'
 
 type UseQuoteFieldsMetric = {
   quote_id: string
@@ -14,7 +14,20 @@ type UseQuoteFieldsMetric = {
   quote_last_update: string
 }
 
-type UseQuoteMetric = Metric & { fields: UseQuoteFieldsMetric }
+export class UseQuoteMetric implements Metric {
+  public readonly description: string
+  public readonly kind: string
+  public readonly account: string
+  public readonly fields: UseQuoteFieldsMetric
+  public readonly name = B2B_METRIC_NAME
+
+  constructor(account: string, fields: UseQuoteFieldsMetric) {
+    this.account = account
+    this.fields = fields
+    this.kind = 'use-quote-graphql-event'
+    this.description = 'Use Quotation Action - Graphql'
+  }
+}
 
 export type UseQuoteMetricsParams = {
   quote: Quote
@@ -28,10 +41,7 @@ const buildUseQuoteMetric = (
 ): UseQuoteMetric => {
   const { quote, orderFormId, account, userEmail } = metricsParam
 
-  const metric: UseQuoteMetric = {
-    name: 'b2b-suite-buyerorg-data',
-    kind: 'use-quote-graphql-event',
-    description: 'Use Quotation Action - Graphql',
+  return {
     account,
     fields: {
       buyer_org_id: quote.organization,
@@ -45,9 +55,7 @@ const buildUseQuoteMetric = (
       user_email: userEmail,
       quote_last_update: quote.lastUpdate,
     },
-  }
-
-  return metric
+  } as UseQuoteMetric
 }
 
 export const sendUseQuoteMetric = async (
