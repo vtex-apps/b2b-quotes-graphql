@@ -41,21 +41,18 @@ const buildUseQuoteMetric = (
 ): UseQuoteMetric => {
   const { quote, orderFormId, account, userEmail } = metricsParam
 
-  return {
-    account,
-    fields: {
-      buyer_org_id: quote.organization,
-      cost_center_id: quote.costCenter,
-      quote_id: quote.id,
-      quote_reference_name: quote.referenceName,
-      order_form_id: orderFormId,
-      quote_creation_date: quote.creationDate,
-      quote_use_date: new Date().toISOString(),
-      creator_email: quote.creatorEmail,
-      user_email: userEmail,
-      quote_last_update: quote.lastUpdate,
-    },
-  } as UseQuoteMetric
+  return new UseQuoteMetric(account, {
+    buyer_org_id: quote.organization,
+    cost_center_id: quote.costCenter,
+    quote_id: quote.id,
+    quote_reference_name: quote.referenceName,
+    order_form_id: orderFormId,
+    quote_creation_date: quote.creationDate,
+    quote_use_date: new Date().toISOString(),
+    creator_email: quote.creatorEmail,
+    user_email: userEmail,
+    quote_last_update: quote.lastUpdate,
+  })
 }
 
 export const sendUseQuoteMetric = async (

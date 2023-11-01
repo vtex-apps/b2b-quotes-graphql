@@ -41,22 +41,14 @@ export class SendMessageMetric implements Metric {
 const buildSendMessageMetric = (
   metricParam: SendMessageMetricParam
 ): SendMessageMetric => {
-  const metric: SendMessageMetric = {
-    name: 'b2b-suite-buyerorg-data',
-    kind: 'send-message-graphql-event',
-    description: 'Send Message Action - Graphql',
-    account: metricParam.account,
-    fields: {
-      buyer_org_name: metricParam.quote?.organization,
-      cost_center_name: metricParam.quote?.costCenter,
-      quote_id: metricParam.quote?.id,
-      template_name: metricParam.templateName,
-      sent_to: metricParam.sentTo,
-      sent_date: new Date().toISOString(),
-    },
-  }
-
-  return metric
+  return new SendMessageMetric(metricParam.account, {
+    buyer_org_name: metricParam.quote?.organization,
+    cost_center_name: metricParam.quote?.costCenter,
+    quote_id: metricParam.quote?.id,
+    template_name: metricParam.templateName,
+    sent_to: metricParam.sentTo,
+    sent_date: new Date().toISOString(),
+  })
 }
 
 export const sendMessageMetric = async (
