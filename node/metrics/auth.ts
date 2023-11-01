@@ -24,7 +24,7 @@ export class AuthMetric implements Metric {
   constructor(account: string, fields: AuthAuditMetric) {
     this.account = account
     this.fields = fields
-    this.kind = 'b2b-organization-auth-event'
+    this.kind = 'b2b-quotes-graphql-auth-event'
     this.description = 'Auth metric event'
   }
 }
