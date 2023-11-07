@@ -1,5 +1,5 @@
-import type { Metric } from './metrics'
-import { sendMetric } from './metrics'
+import type { Metric } from '../clients/metrics'
+import { B2B_METRIC_NAME, sendMetric } from '../clients/metrics'
 
 type UserData = {
   orgId: string
@@ -39,7 +39,20 @@ type CreateQuoteFieldsMetric = {
   send_to_sales_rep: boolean
 }
 
-type CreateQuoteMetric = Metric & { fields: CreateQuoteFieldsMetric }
+export class CreateQuoteMetric implements Metric {
+  public readonly description: string
+  public readonly kind: string
+  public readonly account: string
+  public readonly fields: CreateQuoteFieldsMetric
+  public readonly name = B2B_METRIC_NAME
+
+  constructor(account: string, fields: CreateQuoteFieldsMetric) {
+    this.account = account
+    this.fields = fields
+    this.kind = 'create-quote-graphql-event'
+    this.description = 'Create Quotation Action - Graphql'
+  }
+}
 
 const buildQuoteMetric = (
   metricsParam: CreateQuoteMetricParam
@@ -48,24 +61,16 @@ const buildQuoteMetric = (
   const accountName = namespaces?.account?.accountName?.value
   const userEmail = namespaces?.profile?.email?.value
 
-  const metric: CreateQuoteMetric = {
-    name: 'b2b-suite-buyerorg-data',
-    kind: 'create-quote-graphql-event',
-    description: 'Create Quotation Action - Graphql',
-    account: accountName,
-    fields: {
-      buyer_org_id: metricsParam.userData?.orgId,
-      cost_center_id: metricsParam.userData?.costId,
-      member_email: userEmail,
-      role: metricsParam.userData?.roleId,
-      creation_date: metricsParam.creationDate,
-      quote_id: metricsParam.quoteId,
-      quote_reference_name: metricsParam.quoteReferenceName,
-      send_to_sales_rep: metricsParam.sendToSalesRep,
-    },
-  }
-
-  return metric
+  return new CreateQuoteMetric(accountName, {
+    buyer_org_id: metricsParam.userData?.orgId,
+    cost_center_id: metricsParam.userData?.costId,
+    member_email: userEmail,
+    role: metricsParam.userData?.roleId,
+    creation_date: metricsParam.creationDate,
+    quote_id: metricsParam.quoteId,
+    quote_reference_name: metricsParam.quoteReferenceName,
+    send_to_sales_rep: metricsParam.sendToSalesRep,
+  })
 }
 
 export const sendCreateQuoteMetric = async (
