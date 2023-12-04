@@ -1,3 +1,5 @@
+import { UserInputError } from '@vtex/api'
+
 import { checkConfig } from '../utils/checkConfig'
 import GraphQLError from '../../utils/GraphQLError'
 import {
@@ -16,6 +18,7 @@ const buildWhereStatement = async ({
   userOrganizationId,
   userCostCenterId,
   userSalesChannel,
+  isAdmin,
 }: {
   permissions: string[]
   organization?: string[]
@@ -25,12 +28,13 @@ const buildWhereStatement = async ({
   userOrganizationId: string
   userCostCenterId: string
   userSalesChannel?: string
+  isAdmin?: boolean
 }) => {
   const whereArray = []
 
   // if user only has permission to access their organization's quotes,
   // hard-code that organization into the masterdata search
-  if (!permissions.includes('access-quotes-all')) {
+  if (!permissions?.includes('access-quotes-all') && !isAdmin) {
     whereArray.push(`organization=${userOrganizationId}`)
   } else if (organization?.length) {
     const orgArray = organization.map((org) => `organization=${org}`)
@@ -42,8 +46,9 @@ const buildWhereStatement = async ({
   // similarly, if user only has permission to see their cost center's quotes,
   // hard-code its ID into the search
   if (
-    !permissions.includes('access-quotes-all') &&
-    !permissions.includes('access-quotes-organization')
+    !permissions?.includes('access-quotes-all') &&
+    !permissions?.includes('access-quotes-organization') &&
+    !isAdmin
   ) {
     whereArray.push(`costCenter=${userCostCenterId}`)
   } else if (costCenter?.length) {
@@ -57,9 +62,10 @@ const buildWhereStatement = async ({
   // hard-code its value into the search
   // allow all users to view quotes without a sales channel
   if (
-    !permissions.includes('access-quotes-all') &&
-    !permissions.includes('access-quotes-all-saleschannel') &&
-    userSalesChannel
+    !permissions?.includes('access-quotes-all') &&
+    !permissions?.includes('access-quotes-all-saleschannel') &&
+    userSalesChannel &&
+    !isAdmin
   ) {
     whereArray.push(
       `((salesChannel is null) OR salesChannel="${userSalesChannel}")`
@@ -94,29 +100,37 @@ export const Query = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions, segmentData } = vtex as any
+    const {
+      sessionData,
+      storefrontPermissions,
+      segmentData,
+      authenticatedUser,
+    } = vtex as any
 
-    if (
-      !storefrontPermissions?.permissions?.length ||
-      !sessionData?.namespaces['storefront-permissions']?.organization?.value ||
-      !sessionData?.namespaces['storefront-permissions']?.costcenter?.value
-    ) {
+    const isAdmin = !!(
+      authenticatedUser ||
+      (sessionData?.namespaces?.authentication?.adminUserEmail?.value &&
+        !storefrontPermissions?.permissions?.length)
+    )
+
+    if (!storefrontPermissions?.permissions?.length && !isAdmin) {
       return null
     }
 
-    const { permissions } = storefrontPermissions
+    const { permissions } = storefrontPermissions || {}
     const userOrganizationId =
-      sessionData.namespaces['storefront-permissions'].organization.value
+      sessionData?.namespaces?.['storefront-permissions']?.organization?.value
 
     const userCostCenterId =
-      sessionData.namespaces['storefront-permissions'].costcenter.value
+      sessionData?.namespaces?.['storefront-permissions']?.costcenter?.value
 
     const userSalesChannel = segmentData?.channel
 
     if (
-      !permissions.some(
+      !permissions?.some(
         (permission: string) => permission.indexOf('access-quotes') >= 0
-      )
+      ) &&
+      !isAdmin
     ) {
       return null
     }
@@ -130,32 +144,34 @@ export const Query = {
         id,
       })
 
-      // if user only has permission to view their organization's quotes, check that the org matches
-      if (
-        !permissions.includes('access-quotes-all') &&
-        permissions.includes('access-quotes-organization') &&
-        userOrganizationId !== quote.organization
-      ) {
-        return null
-      }
+      if (!isAdmin) {
+        // if user only has permission to view their organization's quotes, check that the org matches
+        if (
+          !permissions.includes('access-quotes-all') &&
+          permissions.includes('access-quotes-organization') &&
+          userOrganizationId !== quote.organization
+        ) {
+          return null
+        }
 
-      // if user only has permission to view their cost center's quotes, check that the cost center matches
-      if (
-        !permissions.includes('access-quotes-all') &&
-        !permissions.includes('access-quotes-organization') &&
-        userCostCenterId !== quote.costCenter
-      ) {
-        return null
-      }
+        // if user only has permission to view their cost center's quotes, check that the cost center matches
+        if (
+          !permissions.includes('access-quotes-all') &&
+          !permissions.includes('access-quotes-organization') &&
+          userCostCenterId !== quote.costCenter
+        ) {
+          return null
+        }
 
-      // if user only has permission to view quotes from their sales channel, check that the sales channel matches or is null
-      if (
-        !permissions.includes('access-quotes-all') &&
-        !permissions.includes('access-quotes-all-saleschannel') &&
-        quote.salesChannel &&
-        userSalesChannel !== quote.salesChannel
-      ) {
-        return null
+        // if user only has permission to view quotes from their sales channel, check that the sales channel matches or is null
+        if (
+          !permissions.includes('access-quotes-all') &&
+          !permissions.includes('access-quotes-all-saleschannel') &&
+          quote.salesChannel &&
+          userSalesChannel !== quote.salesChannel
+        ) {
+          return null
+        }
       }
 
       return quote
@@ -202,27 +218,41 @@ export const Query = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions, segmentData } = vtex as any
+    const {
+      sessionData,
+      storefrontPermissions,
+      segmentData,
+      authenticatedUser,
+    } = vtex as any
 
-    if (
-      !storefrontPermissions?.permissions?.length ||
-      !sessionData?.namespaces['storefront-permissions']?.organization?.value ||
-      !sessionData?.namespaces['storefront-permissions']?.costcenter?.value
-    ) {
+    const isAdmin = !!(
+      authenticatedUser ||
+      (sessionData?.namespaces?.authentication?.adminUserEmail?.value &&
+        !storefrontPermissions?.permissions?.length)
+    )
+
+    if (!sessionData || !storefrontPermissions?.permissions?.length) {
+      if (!organization?.length) {
+        throw new UserInputError('organization is required.')
+      }
+    }
+
+    if (!storefrontPermissions?.permissions?.length && !isAdmin) {
       return null
     }
 
-    const { permissions } = storefrontPermissions
+    const { permissions } = storefrontPermissions || {}
     const userOrganizationId =
-      sessionData.namespaces['storefront-permissions'].organization.value
+      sessionData?.namespaces?.['storefront-permissions']?.organization?.value
 
     const userCostCenterId =
-      sessionData.namespaces['storefront-permissions'].costcenter.value
+      sessionData?.namespaces?.['storefront-permissions']?.costcenter?.value
 
     if (
-      !permissions.some(
+      !permissions?.some(
         (permission: string) => permission.indexOf('access-quotes') >= 0
-      )
+      ) &&
+      !isAdmin
     ) {
       return null
     }
@@ -240,6 +270,7 @@ export const Query = {
       userOrganizationId,
       userCostCenterId,
       userSalesChannel,
+      isAdmin,
     })
 
     try {
