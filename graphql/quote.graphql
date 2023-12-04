@@ -4,6 +4,9 @@ input QuoteInput {
   subtotal: Float
   note: String
   sendToSalesRep: Boolean
+  organization: String
+  costCenter: String
+  role: String
 }
 
 input QuoteItemInput {
@@ -27,6 +30,9 @@ input QuoteUpdateInput {
   note: String
   decline: Boolean
   expirationDate: String
+  organization: String
+  costCenter: String
+  role: String
 }
 
 type Quotes {
