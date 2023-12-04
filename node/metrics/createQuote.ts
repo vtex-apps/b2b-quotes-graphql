@@ -57,7 +57,7 @@ export class CreateQuoteMetric implements Metric {
 const buildQuoteMetric = (
   metricsParam: CreateQuoteMetricParam
 ): CreateQuoteMetric => {
-  const { namespaces } = metricsParam.sessionData
+  const { namespaces } = metricsParam.sessionData || {}
   const accountName = namespaces?.account?.accountName?.value
   const userEmail = namespaces?.profile?.email?.value
 

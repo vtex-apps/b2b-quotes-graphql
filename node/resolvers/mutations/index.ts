@@ -1,4 +1,5 @@
 import { indexBy, map, prop } from 'ramda'
+import { UserInputError } from '@vtex/api'
 
 import {
   checkConfig,
@@ -53,7 +54,16 @@ export const Mutation = {
   createQuote: async (
     _: any,
     {
-      input: { referenceName, items, subtotal, note, sendToSalesRep },
+      input: {
+        referenceName,
+        items,
+        subtotal,
+        note,
+        sendToSalesRep,
+        organization,
+        costCenter,
+        role: roleName,
+      },
     }: {
       input: {
         referenceName: string
@@ -61,6 +71,9 @@ export const Mutation = {
         subtotal: number
         note: string
         sendToSalesRep: boolean
+        organization?: string
+        costCenter?: string
+        role: string
       }
     },
     ctx: Context
@@ -71,25 +84,58 @@ export const Mutation = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions, segmentData } = vtex as any
+    const {
+      sessionData,
+      storefrontPermissions,
+      segmentData,
+      authenticatedUser,
+    } = vtex as any
+
+    const isAdmin = !!(
+      authenticatedUser ||
+      (sessionData?.namespaces?.authentication?.adminUserEmail?.value &&
+        !storefrontPermissions?.permissions?.length)
+    )
 
     const settings = await checkConfig(ctx)
 
-    checkSession(sessionData)
+    if (!isAdmin) {
+      checkSession(sessionData)
+    }
 
-    if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
+    if (
+      !storefrontPermissions?.permissions?.includes('create-quotes') &&
+      !isAdmin
+    ) {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const email = sessionData.namespaces.profile.email.value
-    const {
-      role: { slug },
-    } = storefrontPermissions
+    if (isAdmin) {
+      if (!organization || !costCenter) {
+        throw new UserInputError(
+          'organizationId and costcenterId are required.'
+        )
+      }
+    }
 
-    const {
-      organization: { value: organizationId },
-      costcenter: { value: costCenterId },
-    } = sessionData.namespaces['storefront-permissions']
+    const email =
+      sessionData?.namespaces?.profile?.email?.value ||
+      authenticatedUser?.user ||
+      sessionData?.namespaces?.authentication?.adminUserEmail?.value
+
+    const { role } = storefrontPermissions || {}
+
+    const { slug } = role || {}
+
+    const newRole = isAdmin ? roleName || 'admin' : slug
+
+    const organizationId =
+      sessionData?.namespaces?.['storefront-permissions']?.organization
+        ?.value || organization
+
+    const costCenterId =
+      sessionData?.namespaces?.['storefront-permissions']?.costcenter?.value ||
+      costCenter
 
     const now = new Date()
     const nowISO = now.toISOString()
@@ -107,7 +153,7 @@ export const Mutation = {
         date: nowISO,
         email,
         note,
-        role: slug,
+        role: newRole,
         status,
       },
     ]
@@ -118,7 +164,7 @@ export const Mutation = {
       costCenter: costCenterId,
       creationDate: nowISO,
       creatorEmail: email,
-      creatorRole: slug,
+      creatorRole: newRole,
       expirationDate: expirationDateISO,
       items,
       lastUpdate,
@@ -166,7 +212,7 @@ export const Mutation = {
         userData: {
           orgId: organizationId,
           costId: costCenterId,
-          roleId: slug,
+          roleId: newRole,
         },
         costCenterName: 'costCenterData?.getCostCenterById?.name',
         buyerOrgName: 'organizationData?.getOrganizationById?.name',
@@ -196,7 +242,17 @@ export const Mutation = {
   updateQuote: async (
     _: any,
     {
-      input: { id, items, subtotal, note, decline, expirationDate },
+      input: {
+        id,
+        items,
+        subtotal,
+        note,
+        decline,
+        expirationDate,
+        organization,
+        costCenter,
+        role: roleName
+      },
     }: {
       input: {
         id: string
@@ -205,6 +261,9 @@ export const Mutation = {
         note: string
         decline: boolean
         expirationDate: string
+        organization: string
+        costCenter: string
+        role: string
       }
     },
     ctx: Context
@@ -215,30 +274,58 @@ export const Mutation = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions } = vtex as any
-
-    checkSession(sessionData)
-
-    const email = sessionData.namespaces.profile.email.value
     const {
-      permissions,
-      role: { slug },
-    } = storefrontPermissions
+      sessionData,
+      storefrontPermissions,
+      authenticatedUser,
+    } = vtex as any
 
-    const isCustomer = slug.includes('customer')
-    const isSales = slug.includes('sales')
+    const isAdmin = !!(
+      authenticatedUser ||
+      (sessionData?.namespaces?.authentication?.adminUserEmail?.value &&
+        !storefrontPermissions?.permissions?.length)
+    )
+
+    if (!isAdmin) {
+      checkSession(sessionData)
+    }
+
+    if (isAdmin) {
+      if (!organization || !costCenter) {
+        throw new UserInputError(
+          'organizationId and costcenterId are required.'
+        )
+      }
+    }
+
+    const email =
+      sessionData?.namespaces?.profile?.email?.value ||
+      authenticatedUser?.user ||
+      sessionData?.namespaces?.authentication?.adminUserEmail?.value
+
+    const { permissions, role } = storefrontPermissions || {}
+
+    const { slug } = role || {}
+
+    const isCustomer = slug?.includes('customer')
+    const isSales = slug?.includes('sales')
     const itemsChanged = items?.length > 0
 
-    checkPermissionsForUpdateQuote({
-      permissions,
-      itemsChanged,
-      decline,
-    })
+    if (!isAdmin) {
+      checkPermissionsForUpdateQuote({
+        permissions,
+        itemsChanged,
+        decline,
+      })
+    }
 
-    const {
-      organization: { value: userOrganizationId },
-      costcenter: { value: userCostCenterId },
-    } = sessionData.namespaces['storefront-permissions']
+    const userOrganizationId =
+      sessionData?.namespaces?.['storefront-permissions']?.organization
+        ?.value || organization
+
+    const userCostCenterId =
+      sessionData?.namespaces?.['storefront-permissions']?.costcenter?.value ||
+      costCenter
 
     const now = new Date()
     const nowISO = now.toISOString()
@@ -254,15 +341,25 @@ export const Mutation = {
 
       const expirationChanged = expirationDate !== existingQuote.expirationDate
 
-      checkOperationsForUpdateQuote({
-        permissions,
-        expirationChanged,
-        itemsChanged,
-        existingQuote,
-        userCostCenterId,
-        userOrganizationId,
-        declineQuote: decline,
-      })
+      if (!isAdmin) {
+        checkOperationsForUpdateQuote({
+          permissions,
+          expirationChanged,
+          itemsChanged,
+          existingQuote,
+          userCostCenterId,
+          userOrganizationId,
+          declineQuote: decline,
+        })
+      } else {
+        if (userOrganizationId !== existingQuote.organization) {
+          throw new GraphQLError('operation-not-permitted')
+        }
+
+        if (userCostCenterId !== existingQuote.costCenter) {
+          throw new GraphQLError('operation-not-permitted')
+        }
+      }
 
       const readyOrRevised = itemsChanged ? 'ready' : 'revised'
       const status = decline ? 'declined' : readyOrRevised
@@ -272,7 +369,7 @@ export const Mutation = {
         date: nowISO,
         email,
         note,
-        role: slug,
+        role: isAdmin ? roleName || 'admin' : slug,
         status,
       }
 
@@ -285,7 +382,7 @@ export const Mutation = {
         expirationDate: expirationChanged
           ? expirationDate
           : existingQuote.expirationDate,
-        items: itemsChanged ? items : existingQuote.items,
+        items: itemsChanged ? items : existingQuote?.items || [],
         lastUpdate,
         status,
         subtotal: subtotal ?? existingQuote.subtotal,
@@ -329,7 +426,7 @@ export const Mutation = {
           })
         })
 
-      return data.id
+      return data?.id || existingQuote.id
     } catch (error) {
       logger.warn({
         error,
@@ -349,17 +446,31 @@ export const Mutation = {
       vtex: { account, logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions } = vtex as any
+    const {
+      sessionData,
+      storefrontPermissions,
+      authenticatedUser,
+    } = vtex as any
 
-    checkSession(sessionData)
+    const isAdmin = !!(
+      authenticatedUser ||
+      (sessionData?.namespaces?.authentication?.adminUserEmail?.value &&
+        !storefrontPermissions?.permissions?.length)
+    )
 
-    const { permissions } = storefrontPermissions
+    if (!isAdmin) {
+      checkSession(sessionData)
+    }
 
-    if (!permissions.includes('use-quotes')) {
+    const { permissions } = storefrontPermissions || {}
+
+    if (!permissions?.includes('use-quotes') && !isAdmin) {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const token = ctx.cookies.get(`VtexIdclientAutCookie_${account}`)
+    const token =
+      ctx.cookies.get(`VtexIdclientAutCookie_${account}`) ||
+      authenticatedUser?.token
 
     const useHeaders = {
       'Content-Type': 'application/json',
@@ -462,8 +573,8 @@ export const Mutation = {
       itemsAdded.forEach((item: any, key: number) => {
         orderItems.push({
           index: key,
-          price: prop(item.id, sellingPriceMap).price,
-          quantity: null,
+          price: prop(item.id, sellingPriceMap)?.price,
+          quantity: item.quantity,
         })
       })
 
@@ -479,7 +590,9 @@ export const Mutation = {
         quote,
         orderFormId,
         account,
-        userEmail: sessionData?.namespaces?.profile?.email?.value,
+        userEmail:
+          sessionData?.namespaces?.profile?.email?.value ||
+          authenticatedUser?.user,
       }
 
       sendUseQuoteMetric(metricParams)
