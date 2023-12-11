@@ -30,7 +30,7 @@ type Mutation {
   useQuote(id: String, orderFormId: String): String
     @withPermissions
     @withSession
-  clearCart(orderFormId: String): String @auditAccess
+  clearCart(orderFormId: String): String @checkUserAccess
   saveAppSettings(input: AppSettingsInput!): AppSettings
     @cacheControl(scope: PRIVATE)
     @checkAdminAccess
