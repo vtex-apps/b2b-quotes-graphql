@@ -1,38 +1,11 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
-import { AppClient, GraphQLClient } from '@vtex/api'
+import { AppGraphQLClient } from '@vtex/api'
 
-export default class Organizations extends AppClient {
-  protected graphql: GraphQLClient
+import { getTokenToHeader } from './index'
 
+export default class Organizations extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
-    super('vtex.graphql-server@1.x', ctx, options)
-    this.graphql = new GraphQLClient(this.http)
-  }
-
-  public getOrganizationIDs = async (search: string): Promise<any> => {
-    const graphQLQuery = `query GetOrganizations($search: String!) {
-      getOrganizations(search: $search) {
-          data {
-              id
-          }
-        }
-      }`
-
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.b2b-quotes-graphql@1.x',
-          },
-        },
-        query: graphQLQuery,
-        variables: {
-          search,
-        },
-      },
-      { url: '/graphql' }
-    )
+    super('vtex.b2b-organizations-graphql@0.x', ctx, options)
   }
 
   public getOrganizationById = async (id: string): Promise<any> => {
@@ -43,47 +16,13 @@ export default class Organizations extends AppClient {
       }
       `
 
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.b2b-quotes-graphql@1.x',
-          },
-        },
-        query: graphQLQuery,
-        variables: {
-          id,
-        },
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: graphQLQuery,
+      variables: {
+        id,
       },
-      { url: '/graphql' }
-    )
-  }
-
-  public getCostCenterIDs = async (search: string): Promise<any> => {
-    const graphQLQuery = `query GetCostCenters($search: String!) {
-      getCostCenters(search: $search) {
-          data {
-              id
-          }
-        }
-      }`
-
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.b2b-quotes-graphql@1.x',
-          },
-        },
-        query: graphQLQuery,
-        variables: {
-          search,
-        },
-      },
-      { url: '/graphql' }
-    )
+    })
   }
 
   public getCostCenterById = async (id: string): Promise<any> => {
@@ -94,20 +33,43 @@ export default class Organizations extends AppClient {
       }
       `
 
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: graphQLQuery,
+      variables: {
+        id,
+      },
+    })
+  }
+
+  private getPersistedQuery = () => {
+    return {
+      persistedQuery: {
+        provider: 'vtex.b2b-organizations-graphql@0.x',
+        sender: 'vtex.b2b-quotes@0.x',
+      },
+    }
+  }
+
+  private query = async (param: {
+    query: string
+    variables: any
+    extensions: any
+  }): Promise<any> => {
+    const { query, variables, extensions } = param
+
     return this.graphql.query(
       {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.b2b-organizations-graphql@0.x',
-            sender: 'vtex.b2b-quotes-graphql@1.x',
-          },
-        },
-        query: graphQLQuery,
-        variables: {
-          id,
-        },
+        extensions,
+        query,
+        variables,
       },
-      { url: '/graphql' }
+      {
+        headers: getTokenToHeader(this.context),
+        params: {
+          locale: this.context.locale,
+        },
+      }
     )
   }
 }

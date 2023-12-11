@@ -1,6 +1,8 @@
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { AppGraphQLClient } from '@vtex/api'
 
+import { getTokenToHeader } from './index'
+
 export const QUERIES = {
   getPermission: `query permissions {
     checkUserPermission {
@@ -60,35 +62,19 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }
 
   public checkUserPermission = async (): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-quotes@0.x',
-          },
-        },
-        query: QUERIES.getPermission,
-        variables: {},
-      },
-      {}
-    )
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: QUERIES.getPermission,
+      variables: {},
+    })
   }
 
   public listRoles = async (): Promise<any> => {
-    return this.graphql.query(
-      {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-quotes@0.x',
-          },
-        },
-        query: QUERIES.listRoles,
-        variables: {},
-      },
-      {}
-    )
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: QUERIES.listRoles,
+      variables: {},
+    })
   }
 
   public listUsers = async ({
@@ -98,21 +84,44 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     roleId: string
     organizationId?: string
   }): Promise<any> => {
+    return this.query({
+      extensions: this.getPersistedQuery(),
+      query: QUERIES.listUsers,
+      variables: {
+        roleId,
+        ...(organizationId && { organizationId }),
+      },
+    })
+  }
+
+  private getPersistedQuery = () => {
+    return {
+      persistedQuery: {
+        provider: 'vtex.storefront-permissions@1.x',
+        sender: 'vtex.b2b-quotes@0.x',
+      },
+    }
+  }
+
+  private query = async (param: {
+    query: string
+    variables: any
+    extensions: any
+  }): Promise<any> => {
+    const { query, variables, extensions } = param
+
     return this.graphql.query(
       {
-        extensions: {
-          persistedQuery: {
-            provider: 'vtex.storefront-permissions@1.x',
-            sender: 'vtex.b2b-quotes@0.x',
-          },
-        },
-        query: QUERIES.listUsers,
-        variables: {
-          roleId,
-          ...(organizationId && { organizationId }),
-        },
+        extensions,
+        query,
+        variables,
       },
-      {}
+      {
+        headers: getTokenToHeader(this.context),
+        params: {
+          locale: this.context.locale,
+        },
+      }
     )
   }
 }
