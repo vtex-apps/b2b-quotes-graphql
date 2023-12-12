@@ -12,19 +12,19 @@ import Organizations from './organizations'
 import StorefrontPermissions from './storefrontPermissions'
 import VtexId from './vtexId'
 
-// Extend the default IOClients implementation with our own custom clients.
 export const getTokenToHeader = (ctx: IOContext) => {
   const token =
     ctx.storeUserAuthToken ?? ctx.adminUserAuthToken ?? ctx.authToken
 
   return {
     VtexIdclientAutCookie: token,
-    cookie: `VtexIdclientAutCookie=${ctx.authToken}`,
+    cookie: `VtexIdclientAutCookie=${token}`,
     sessionToken: ctx.sessionToken,
     'x-vtex-session': ctx.sessionToken,
   }
 }
 
+// Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
   public get hub() {
     return this.getOrSet('hub', RequestHub)
