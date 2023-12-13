@@ -16,11 +16,13 @@ export const getTokenToHeader = (ctx: IOContext) => {
   const token =
     ctx.storeUserAuthToken ?? ctx.adminUserAuthToken ?? ctx.authToken
 
+  const { sessionToken } = ctx
+
   return {
+    'x-vtex-credential': ctx.authToken,
     VtexIdclientAutCookie: token,
     cookie: `VtexIdclientAutCookie=${token}`,
-    sessionToken: ctx.sessionToken,
-    'x-vtex-session': ctx.sessionToken,
+    'x-vtex-session': sessionToken,
   }
 }
 
