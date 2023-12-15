@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2023-12-15
+
 ### Added
 
 - Add token validation in graphql operations and token to call storefront-permission and b2b-organization
