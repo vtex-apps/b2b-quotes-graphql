@@ -1,6 +1,8 @@
+import type { IOContext } from '@vtex/api'
 import { IOClients } from '@vtex/api'
 
 import RequestHub from '../utils/Hub'
+import Identity from '../utils/Identity'
 import { Scheduler } from '../utils/Scheduler'
 import Checkout from './checkout'
 import MailClient from './email'
@@ -9,7 +11,20 @@ import OrdersClient from './OrdersClient'
 import Organizations from './organizations'
 import StorefrontPermissions from './storefrontPermissions'
 import VtexId from './vtexId'
-import Identity from '../utils/Identity'
+
+export const getTokenToHeader = (ctx: IOContext) => {
+  const token =
+    ctx.storeUserAuthToken ?? ctx.adminUserAuthToken ?? ctx.authToken
+
+  const { sessionToken } = ctx
+
+  return {
+    'x-vtex-credential': ctx.authToken,
+    VtexIdclientAutCookie: token,
+    cookie: `VtexIdclientAutCookie=${token}`,
+    'x-vtex-session': sessionToken,
+  }
+}
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {

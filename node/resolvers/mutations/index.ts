@@ -1,15 +1,15 @@
 import { indexBy, map, prop } from 'ramda'
 
 import {
-  checkConfig,
   checkAndCreateQuotesConfig,
+  checkConfig,
   defaultSettings,
 } from '../utils/checkConfig'
 import {
-  checkSession,
+  checkOperationsForUpdateQuote,
   checkPermissionsForUpdateQuote,
   checkQuoteStatus,
-  checkOperationsForUpdateQuote,
+  checkSession,
 } from '../utils/checkPermissions'
 import { isEmail } from '../../utils'
 import GraphQLError from '../../utils/GraphQLError'
@@ -18,8 +18,8 @@ import {
   APP_NAME,
   QUOTE_DATA_ENTITY,
   QUOTE_FIELDS,
-  SCHEMA_VERSION,
   routes,
+  SCHEMA_VERSION,
 } from '../../constants'
 import { sendCreateQuoteMetric } from '../../metrics/createQuote'
 import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
@@ -346,7 +346,7 @@ export const Mutation = {
     const {
       clients: { masterdata, hub },
       vtex,
-      vtex: { account, logger },
+      vtex: { account, logger, storeUserAuthToken },
     } = ctx
 
     const { sessionData, storefrontPermissions } = vtex as any
@@ -359,11 +359,9 @@ export const Mutation = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const token = ctx.cookies.get(`VtexIdclientAutCookie_${account}`)
-
     const useHeaders = {
       'Content-Type': 'application/json',
-      Cookie: `VtexIdclientAutCookie=${token};`,
+      Cookie: `VtexIdclientAutCookie=${storeUserAuthToken};`,
     }
 
     try {

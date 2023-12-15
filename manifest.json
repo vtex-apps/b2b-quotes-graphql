@@ -11,11 +11,10 @@
   },
   "dependencies": {
     "vtex.storefront-permissions": "1.x",
+    "vtex.b2b-organizations-graphql": "0.x",
     "vtex.orders-broadcast": "0.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "vbase-read-write"
@@ -48,7 +47,7 @@
       "name": "vtex.storefront-permissions:resolve-graphql"
     },
     {
-      "name": "vtex.graphql-server:resolve-graphql"
+      "name": "vtex.b2b-organizations-graphql:resolve-graphql"
     },
     {
       "name": "Get_User_By_Identifier"
