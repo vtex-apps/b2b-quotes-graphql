@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2024-01-31
+
 ### Fixed
 
 - Adjust the auth token and policies to update the order form when using the quote.
