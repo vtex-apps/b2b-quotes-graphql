@@ -346,7 +346,7 @@ export const Mutation = {
     const {
       clients: { masterdata, hub },
       vtex,
-      vtex: { account, logger, storeUserAuthToken },
+      vtex: { account, logger, authToken },
     } = ctx
 
     const { sessionData, storefrontPermissions } = vtex as any
@@ -361,7 +361,7 @@ export const Mutation = {
 
     const useHeaders = {
       'Content-Type': 'application/json',
-      Cookie: `VtexIdclientAutCookie=${storeUserAuthToken};`,
+      Cookie: `VtexIdclientAutCookie=${authToken};`,
     }
 
     try {
