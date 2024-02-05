@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Adjust the policies to allow getAuthenticatedUser
+
 ## [2.5.1] - 2024-01-31
 
 ### Fixed
