@@ -13,16 +13,23 @@ import StorefrontPermissions from './storefrontPermissions'
 import VtexId from './vtexId'
 
 export const getTokenToHeader = (ctx: IOContext) => {
-  const token =
-    ctx.storeUserAuthToken ?? ctx.adminUserAuthToken ?? ctx.authToken
+  const adminToken = ctx.adminUserAuthToken ?? ctx.authToken
+  const userToken = ctx.storeUserAuthToken ?? null
+  const { sessionToken, account } = ctx
 
-  const { sessionToken } = ctx
+  let allCookies = `VtexIdclientAutCookie=${adminToken}`
+
+  if (userToken) {
+    allCookies += `; VtexIdclientAutCookie_${account}=${userToken}`
+  }
 
   return {
     'x-vtex-credential': ctx.authToken,
-    VtexIdclientAutCookie: token,
-    cookie: `VtexIdclientAutCookie=${token}`,
-    'x-vtex-session': sessionToken,
+    VtexIdclientAutCookie: adminToken,
+    cookie: allCookies,
+    ...(sessionToken && {
+      'x-vtex-session': sessionToken,
+    }),
   }
 }
 
