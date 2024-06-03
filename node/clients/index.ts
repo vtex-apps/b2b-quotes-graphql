@@ -14,7 +14,7 @@ import VtexId from './vtexId'
 
 export const getTokenToHeader = (ctx: IOContext) => {
   const adminToken = ctx.adminUserAuthToken ?? ctx.authToken
-  const userToken = ctx.storeUserAuthToken ?? null
+  const userToken = ctx.storeUserAuthToken
   const { sessionToken, account } = ctx
 
   let allCookies = `VtexIdclientAutCookie=${adminToken}`
