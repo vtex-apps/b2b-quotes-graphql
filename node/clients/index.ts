@@ -31,7 +31,7 @@ export const getTokenToHeader = (ctx: IOContext) => {
     cookie: allCookies,
     ...(sessionToken && {
       'x-vtex-session': sessionToken,
-    }), // The axios client http doesn't allow undefined headers
+    }),
   }
 }
 
