@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Use listUsersPaginated internally instead of deprecated listUsers
+
 ## [2.5.3] - 2024-06-10
 
 ### Fixed
