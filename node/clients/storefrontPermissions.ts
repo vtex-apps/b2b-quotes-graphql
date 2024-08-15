@@ -41,17 +41,11 @@ export const QUERIES = {
       slug
     }
   }`,
-  listUsers: `query users($organizationId: ID, $costCenterId: ID, $roleId: ID) {
-    listUsers(organizationId: $organizationId, costCenterId: $costCenterId, roleId: $roleId) {
-      id
-      roleId
-      userId
-      clId
-      orgId
-      costId
-      name
-      email
-      canImpersonate
+  listUsersPaginated: `query users($organizationId: ID, $roleId: ID) {
+    listUsersPaginated(organizationId: $organizationId, roleId: $roleId) {
+      data {
+        email
+      }
     }
   }`,
 }
@@ -77,7 +71,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  public listUsers = async ({
+  public listUsersPaginated = async ({
     roleId,
     organizationId,
   }: {
@@ -86,7 +80,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   }): Promise<any> => {
     return this.query({
       extensions: this.getPersistedQuery(),
-      query: QUERIES.listUsers,
+      query: QUERIES.listUsersPaginated,
       variables: {
         roleId,
         ...(organizationId && { organizationId }),

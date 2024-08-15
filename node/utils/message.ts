@@ -9,6 +9,11 @@ interface QuoteUpdate {
   note: string
 }
 
+// As this is currently used only to get the sales-admin users to
+// send an email notification when a quote is created, we only get
+// the first page of users (25) and return them.
+// If there is a new use case where we need to get all users,
+// we need to implement pagination properly.
 const getUsers = async (
   storefrontPermissions: StorefrontPermissions,
   roleSlug: string,
@@ -25,13 +30,14 @@ const getUsers = async (
   }
 
   const {
-    data: { listUsers },
-  }: any = await storefrontPermissions.listUsers({
+    data: { listUsersPaginated },
+  }: any = await storefrontPermissions.listUsersPaginated({
     roleId: role.id,
     ...(organizationId && { organizationId }),
   })
 
-  return listUsers
+  // we only return the first page of users (25)
+  return listUsersPaginated.data
 }
 
 const getOrgAndCostCenterNames = async (
@@ -159,7 +165,7 @@ const message = (ctx: Context | EventBroadcastContext) => {
     let users = []
 
     try {
-      users = (await getUsers(storefrontPermissions, 'sales-admin')).map(
+      users = (await getUsers(storefrontPermissions, 'sales-admin', organization)).map(
         (user: any) => user.email
       )
     } catch (error) {
