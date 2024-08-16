@@ -27,14 +27,14 @@ const getOrgSalesAdminEmail = async (
   }
 
   const {
-    data: { getOrgSalesAdminEmail },
+    data: { getOrgSalesAdminEmailResult },
   }: any = await storefrontPermissions.getOrgSalesAdminEmail({
     roleId: role.id,
     ...(organizationId && { organizationId }),
   })
 
   // we only return the first page of sales-admin users (25)
-  return getOrgSalesAdminEmail.data
+  return getOrgSalesAdminEmailResult.data
 }
 
 const getOrgAndCostCenterNames = async (
@@ -162,9 +162,9 @@ const message = (ctx: Context | EventBroadcastContext) => {
     let users = []
 
     try {
-      users = (await getOrgSalesAdminEmail(storefrontPermissions, organization)).map(
-        (user: any) => user.email
-      )
+      users = (
+        await getOrgSalesAdminEmail(storefrontPermissions, organization)
+      ).map((user: any) => user.email)
     } catch (error) {
       logger.error({
         error,
