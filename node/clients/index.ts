@@ -13,8 +13,10 @@ import StorefrontPermissions from './storefrontPermissions'
 import VtexId from './vtexId'
 
 export const getTokenToHeader = (ctx: IOContext) => {
-  const adminToken = ctx.adminUserAuthToken ?? ctx.authToken
-  const userToken = ctx.storeUserAuthToken
+  // provide authToken (app token) as an admin token as this is a call
+  // between b2b suite apps and no further token validation is needed
+  const adminToken = ctx.authToken
+  const userToken = ctx.storeUserAuthToken ?? null
   const { sessionToken, account } = ctx
 
   let allCookies = `VtexIdclientAutCookie=${adminToken}`

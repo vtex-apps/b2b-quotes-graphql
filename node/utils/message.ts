@@ -9,29 +9,32 @@ interface QuoteUpdate {
   note: string
 }
 
-const getUsers = async (
+// As this is currently used only to get the sales-admin users to
+// send an email notification when a quote is created, we only get
+// the first page of users (25) and return them.
+const getOrgSalesAdminEmail = async (
   storefrontPermissions: StorefrontPermissions,
-  roleSlug: string,
   organizationId?: string
 ) => {
   const {
     data: { listRoles },
   }: any = await storefrontPermissions.listRoles()
 
-  const role = listRoles.find((r: any) => r.slug === roleSlug)
+  const role = listRoles.find((r: any) => r.slug === 'sales-admin')
 
   if (!role) {
     return []
   }
 
   const {
-    data: { listUsers },
-  }: any = await storefrontPermissions.listUsers({
+    data: { getOrgSalesAdminEmailResult },
+  }: any = await storefrontPermissions.getOrgSalesAdminEmail({
     roleId: role.id,
     ...(organizationId && { organizationId }),
   })
 
-  return listUsers
+  // we only return the first page of sales-admin users (25)
+  return getOrgSalesAdminEmailResult.data
 }
 
 const getOrgAndCostCenterNames = async (
@@ -159,13 +162,13 @@ const message = (ctx: Context | EventBroadcastContext) => {
     let users = []
 
     try {
-      users = (await getUsers(storefrontPermissions, 'sales-admin')).map(
-        (user: any) => user.email
-      )
+      users = (
+        await getOrgSalesAdminEmail(storefrontPermissions, organization)
+      ).map((user: any) => user.email)
     } catch (error) {
       logger.error({
         error,
-        message: 'quoteCreatedMessage-getUsersError',
+        message: 'quoteCreatedMessage-getOrgSalesAdminEmailError',
       })
     }
 
