@@ -1,5 +1,7 @@
 type Query {
   getAppSettings: AppSettings @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  getQuoteEnabledForUser(email: String!): Boolean
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getQuote(id: String): Quote
     @withPermissions
     @withSession

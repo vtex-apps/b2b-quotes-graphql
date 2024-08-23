@@ -1,6 +1,8 @@
 export const APP_NAME = 'b2b-quotes-graphql'
 export const SCHEMA_VERSION = 'v1.3'
 export const QUOTE_DATA_ENTITY = 'quotes'
+export const B2B_USER_SCHEMA_VERSION = 'v0.1.2'
+export const B2B_USER_DATA_ENTITY = 'b2b_users'
 export const CRON_EXPRESSION = '0 */12 * * *'
 
 export const QUOTE_FIELDS = [

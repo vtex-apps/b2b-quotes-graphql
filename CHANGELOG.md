@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add getQuoteEnabledForUser query to be used by the b2b-quotes app
+
 ## [2.5.4] - 2024-08-20
 
 ### Fixed
