@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Set viewedByCustomer value corectly on quote creation
+
 ## [2.5.4] - 2024-08-20
 
 ### Fixed
