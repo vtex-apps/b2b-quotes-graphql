@@ -127,7 +127,7 @@ export const Mutation = {
       status,
       subtotal,
       updateHistory,
-      viewedByCustomer: sendToSalesRep,
+      viewedByCustomer: !!sendToSalesRep,
       viewedBySales: !sendToSalesRep,
       salesChannel,
     }
