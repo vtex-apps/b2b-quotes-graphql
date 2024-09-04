@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Set viewedByCustomer value corectly on quote creation
 
+## [2.6.0] - 2024-09-04
+
+### Added
+- Add getQuoteEnabledForUser query to be used by the b2b-quotes app
+
 ## [2.5.4] - 2024-08-20
 
 ### Fixed
