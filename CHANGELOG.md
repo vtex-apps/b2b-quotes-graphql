@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Do not throw error if there is no sales admin on quote creation
+
 ## [2.6.0] - 2024-09-04
 
 ### Added

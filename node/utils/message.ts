@@ -34,7 +34,7 @@ const getOrgSalesAdminEmail = async (
   })
 
   // we only return the first page of sales-admin users (25)
-  return getOrgSalesAdminEmailResult.data
+  return getOrgSalesAdminEmailResult?.data
 }
 
 const getOrgAndCostCenterNames = async (
