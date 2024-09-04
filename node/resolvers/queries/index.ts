@@ -2,10 +2,41 @@ import { checkConfig } from '../utils/checkConfig'
 import GraphQLError from '../../utils/GraphQLError'
 import {
   APP_NAME,
+  B2B_USER_DATA_ENTITY,
+  B2B_USER_SCHEMA_VERSION,
   QUOTE_DATA_ENTITY,
   QUOTE_FIELDS,
   SCHEMA_VERSION,
 } from '../../constants'
+
+// This function checks if given email is an user part of a buyer org.
+export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
+  const {
+    clients: { masterdata },
+  } = ctx
+
+  const where = `email=${email}`
+  const resp = await masterdata.searchDocumentsWithPaginationInfo({
+    dataEntity: B2B_USER_DATA_ENTITY,
+    fields: ['id'], // we don't need to fetch all fields, only if there is an entry or not
+    pagination: {
+      page: 1,
+      pageSize: 1, // we only need to know if there is at least one user entry
+    },
+    schema: B2B_USER_SCHEMA_VERSION,
+    ...(where ? { where } : {}),
+  })
+
+  const { data } = (resp as unknown) as {
+    data: any
+  }
+
+  if (data.length > 0) {
+    return true
+  }
+
+  return false
+}
 
 const buildWhereStatement = async ({
   permissions,
@@ -255,6 +286,26 @@ export const Query = {
       logger.error({
         error,
         message: 'getQuotes-error',
+      })
+      throw new GraphQLError(error)
+    }
+  },
+  getQuoteEnabledForUser: async (
+    _: any,
+    { email }: { email: string },
+    ctx: Context
+  ) => {
+    const {
+      vtex: { logger },
+    } = ctx
+
+    try {
+      // if user is part of a buyer org, quote functionality is enabled
+      return await isUserPartOfBuyerOrg(email, ctx)
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getQuoteEnabledForUser-error',
       })
       throw new GraphQLError(error)
     }
