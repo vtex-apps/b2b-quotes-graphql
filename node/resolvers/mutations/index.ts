@@ -176,7 +176,7 @@ export const Mutation = {
         creationDate: nowISO,
       }
 
-      sendCreateQuoteMetric(metricsParam)
+      sendCreateQuoteMetric(ctx, metricsParam)
 
       return data.DocumentId
     } catch (error) {
@@ -480,7 +480,7 @@ export const Mutation = {
         userEmail: sessionData?.namespaces?.profile?.email?.value,
       }
 
-      sendUseQuoteMetric(metricParams)
+      sendUseQuoteMetric(ctx, metricParams)
     } catch (error) {
       logger.error({
         error,

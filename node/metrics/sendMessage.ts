@@ -1,5 +1,5 @@
-import type { Metric } from '../clients/metrics'
-import { B2B_METRIC_NAME, sendMetric } from '../clients/metrics'
+import type { Metric } from '../clients/analytics'
+import { B2B_METRIC_NAME } from '../clients/analytics'
 
 type Quote = {
   costCenter: string
@@ -52,12 +52,17 @@ const buildSendMessageMetric = (
 }
 
 export const sendMessageMetric = async (
+  ctx: Context,
   metricsParam: SendMessageMetricParam
 ) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
     const metric = buildSendMessageMetric(metricsParam)
 
-    await sendMetric(metric)
+    await analytics.sendMetric(metric)
   } catch (error) {
     console.warn('Unable to log Send Quote Message Metrics', error)
   }
