@@ -1,5 +1,5 @@
-import type { Metric } from '../clients/metrics'
-import { B2B_METRIC_NAME, sendMetric } from '../clients/metrics'
+import type { Metric } from '../clients/analytics'
+import { B2B_METRIC_NAME } from '../clients/analytics'
 
 type UseQuoteFieldsMetric = {
   quote_id: string
@@ -56,12 +56,17 @@ const buildUseQuoteMetric = (
 }
 
 export const sendUseQuoteMetric = async (
+  ctx: Context,
   metricsParam: UseQuoteMetricsParams
 ) => {
+  const {
+    clients: { analytics },
+  } = ctx
+
   try {
     const metric = buildUseQuoteMetric(metricsParam)
 
-    await sendMetric(metric)
+    await analytics.sendMetric(metric)
   } catch (error) {
     console.warn('Unable to log metrics', error)
   }

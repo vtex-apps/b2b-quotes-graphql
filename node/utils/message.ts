@@ -72,6 +72,7 @@ const getOrgAndCostCenterNames = async (
 }
 
 const sendNotificationToUser = async (
+  ctx: Context,
   mailClient: MailClient,
   user: string,
   quote: JsonDataQuote,
@@ -86,7 +87,7 @@ const sendNotificationToUser = async (
     templateName,
   })
 
-  sendMessageMetric({
+  sendMessageMetric(ctx, {
     quote,
     account,
     sentTo: user,
@@ -109,6 +110,7 @@ const sendMailNotificationToUsers = async (
     for (const user of users) {
       promises.push(
         sendNotificationToUser(
+          ctx as Context,
           sender,
           user,
           quote,

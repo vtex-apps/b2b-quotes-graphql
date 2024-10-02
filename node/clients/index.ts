@@ -1,10 +1,12 @@
 import type { IOContext } from '@vtex/api'
 import { IOClients } from '@vtex/api'
 
+import AnalyticsClient from './analytics'
 import RequestHub from '../utils/Hub'
 import Identity from '../utils/Identity'
 import { Scheduler } from '../utils/Scheduler'
 import Checkout from './checkout'
+import LMClient from './LMClient'
 import MailClient from './email'
 import HostClient from './HostClient'
 import OrdersClient from './OrdersClient'
@@ -37,6 +39,10 @@ export const getTokenToHeader = (ctx: IOContext) => {
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
+  public get analytics() {
+    return this.getOrSet('analytics', AnalyticsClient)
+  }
+
   public get hub() {
     return this.getOrSet('hub', RequestHub)
   }
@@ -47,6 +53,10 @@ export class Clients extends IOClients {
 
   public get checkout() {
     return this.getOrSet('checkout', Checkout)
+  }
+
+  public get lm() {
+    return this.getOrSet('lm', LMClient)
   }
 
   public get mail() {
