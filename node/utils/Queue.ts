@@ -15,7 +15,7 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
   }
 
   if (item.viewedByCustomer === null) {
-    item.viewedByCustomer = false;
+    item.viewedByCustomer = false
   }
 
   const status = 'expired'
