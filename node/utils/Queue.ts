@@ -14,6 +14,10 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
     return
   }
 
+  if (item.viewedByCustomer === null) {
+    item.viewedByCustomer = false;
+  }
+
   const status = 'expired'
   const now = new Date()
   const nowISO = now.toISOString()
