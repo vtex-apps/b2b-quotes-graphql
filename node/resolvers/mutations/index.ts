@@ -290,8 +290,8 @@ export const Mutation = {
         status,
         subtotal: subtotal ?? existingQuote.subtotal,
         updateHistory,
-        viewedByCustomer: decline || isCustomer,
-        viewedBySales: decline || isSales,
+        viewedByCustomer: !!(decline || isCustomer),
+        viewedBySales: !!(decline || isSales),
       }
 
       const data = await masterdata

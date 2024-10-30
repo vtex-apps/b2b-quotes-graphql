@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Set viewedByCustomer value False when value is null
+
 ## [2.6.2] - 2024-10-02
 
 ### Added
