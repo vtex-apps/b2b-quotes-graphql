@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Only update Status, LastUpdate and UpdateHistory, in expired quotes
+
 ## [2.6.3] - 2024-10-30
 
 ### Fixed
