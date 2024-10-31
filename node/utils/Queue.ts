@@ -14,10 +14,6 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
     return
   }
 
-  if (item.viewedByCustomer === null) {
-    item.viewedByCustomer = false
-  }
-
   const status = 'expired'
   const now = new Date()
   const nowISO = now.toISOString()
@@ -37,9 +33,9 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
   updateHistory.push(update)
 
   masterdata
-    .updateEntireDocument({
+    .updatePartialDocument({
       dataEntity: QUOTE_DATA_ENTITY,
-      fields: { ...item, lastUpdate, updateHistory, status },
+      fields: { lastUpdate, updateHistory, status },
       id,
       schema: SCHEMA_VERSION,
     })
