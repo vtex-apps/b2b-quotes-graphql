@@ -65,15 +65,46 @@ export const Mutation = {
     },
     ctx: Context
   ) => {
+    // eslint-disable-next-line no-console
+    console.dir(
+      { referenceName, items, subtotal, note, sendToSalesRep },
+      { depth: null }
+    )
+
     const {
       clients: { masterdata },
       vtex,
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions, segmentData } = vtex as any
-
     const settings = await checkConfig(ctx)
+    const itemsBySeller: any = {}
+
+    if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
+      items.forEach((item) => {
+        if (!itemsBySeller[item.seller]) {
+          // TODO: criar objeto necessário para criar cotação
+          itemsBySeller[item.seller] = {
+            items: [],
+            referenceName,
+            note,
+            sendToSalesRep,
+            subtotal: 0,
+          }
+        }
+
+        itemsBySeller[item.seller].items.push(item)
+        const sellerSubtotal =
+          (itemsBySeller[item.seller].subtotal as number) + item.sellingPrice
+
+        itemsBySeller[item.seller].subtotal = sellerSubtotal
+      })
+
+      // eslint-disable-next-line no-console
+      console.dir({ itemsBySeller }, { depth: null })
+    }
+
+    const { sessionData, storefrontPermissions, segmentData } = vtex as any
 
     checkSession(sessionData)
 
@@ -81,6 +112,7 @@ export const Mutation = {
       throw new GraphQLError('operation-not-permitted')
     }
 
+    // TODO: o conteúdo entre as linhas 116 e 166 pode ficar em uma função separada
     const email = sessionData.namespaces.profile.email.value
     const {
       role: { slug },
@@ -114,6 +146,7 @@ export const Mutation = {
 
     const salesChannel: string = segmentData?.channel
 
+    // TODO: criar função que cria este objeto para poder usá-la na separação de cotações por seller
     const quote = {
       costCenter: costCenterId,
       creationDate: nowISO,
@@ -497,7 +530,9 @@ export const Mutation = {
   },
   saveAppSettings: async (
     _: void,
-    { input: { cartLifeSpan, quotesManagedBy = 'MARKETPLACE' } }: { input: { cartLifeSpan: number , quotesManagedBy: string} },
+    {
+      input: { cartLifeSpan, quotesManagedBy = 'MARKETPLACE' },
+    }: { input: { cartLifeSpan: number; quotesManagedBy: string } },
     ctx: Context
   ) => {
     const {
