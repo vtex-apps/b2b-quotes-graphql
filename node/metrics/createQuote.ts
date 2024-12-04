@@ -7,7 +7,7 @@ type UserData = {
   roleId: string
 }
 
-type SessionData = {
+export type SessionData = {
   namespaces: {
     profile: {
       id: { value: string }

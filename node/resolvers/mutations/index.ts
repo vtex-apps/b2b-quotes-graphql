@@ -25,6 +25,94 @@ import {
   checkSession,
 } from '../utils/checkPermissions'
 
+interface SellerQuote {
+  items: QuoteItem[]
+  referenceName: string
+  note: string
+  sendToSalesRep: boolean
+  subtotal: number
+}
+
+interface QuoteSessionData {
+  namespaces: {
+    [key: string]: any // Dynamic keys allowed
+  }
+}
+
+const createQuoteObject = ({
+  sessionData,
+  storefrontPermissions,
+  segmentData,
+  settings,
+  items,
+  referenceName,
+  subtotal,
+  note,
+  sendToSalesRep,
+}: {
+  sessionData: QuoteSessionData
+  storefrontPermissions: string
+  segmentData?: { channel?: string }
+  settings?: Settings
+  items: QuoteItem[]
+  referenceName: string
+  subtotal: number
+  note: string
+  sendToSalesRep: boolean
+}): QuoteWithOptionalId => {
+  const email = sessionData.namespaces.profile.email.value
+
+  const {
+    role: { slug },
+  } = storefrontPermissions
+
+  const {
+    organization: { value: organizationId },
+    costcenter: { value: costCenterId },
+  } = sessionData.namespaces['storefront-permissions']
+
+  const now = new Date()
+  const nowISO = now.toISOString()
+  const expirationDate = new Date()
+
+  expirationDate.setDate(
+    expirationDate.getDate() + (settings?.adminSetup?.cartLifeSpan ?? 30)
+  )
+  const expirationDateISO = expirationDate.toISOString()
+
+  const status = sendToSalesRep ? 'pending' : 'ready'
+  const lastUpdate = nowISO
+  const updateHistory = [
+    {
+      date: nowISO,
+      email,
+      note,
+      role: slug,
+      status,
+    },
+  ]
+
+  const salesChannel: string = segmentData?.channel ?? ''
+
+  return {
+    costCenter: costCenterId,
+    creationDate: nowISO,
+    creatorEmail: email,
+    creatorRole: slug,
+    expirationDate: expirationDateISO,
+    items,
+    lastUpdate,
+    organization: organizationId,
+    referenceName,
+    status,
+    subtotal,
+    updateHistory,
+    viewedByCustomer: !!sendToSalesRep,
+    viewedBySales: !sendToSalesRep,
+    salesChannel,
+  }
+}
+
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
     const {
@@ -65,12 +153,6 @@ export const Mutation = {
     },
     ctx: Context
   ) => {
-    // eslint-disable-next-line no-console
-    console.dir(
-      { referenceName, items, subtotal, note, sendToSalesRep },
-      { depth: null }
-    )
-
     const {
       clients: { masterdata },
       vtex,
@@ -78,13 +160,12 @@ export const Mutation = {
     } = ctx
 
     const settings = await checkConfig(ctx)
-    const itemsBySeller: any = {}
+    const itemsBySeller: Record<string, SellerQuote> = {}
 
     if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
-      items.forEach((item) => {
-        if (!itemsBySeller[item.seller]) {
-          // TODO: criar objeto necessário para criar cotação
-          itemsBySeller[item.seller] = {
+      items.forEach(({ seller, sellingPrice, ...itemData }) => {
+        if (!itemsBySeller[seller]) {
+          itemsBySeller[seller] = {
             items: [],
             referenceName,
             note,
@@ -93,15 +174,10 @@ export const Mutation = {
           }
         }
 
-        itemsBySeller[item.seller].items.push(item)
-        const sellerSubtotal =
-          (itemsBySeller[item.seller].subtotal as number) + item.sellingPrice
+        itemsBySeller[seller].items.push({ seller, sellingPrice, ...itemData })
 
-        itemsBySeller[item.seller].subtotal = sellerSubtotal
+        itemsBySeller[seller].subtotal += sellingPrice
       })
-
-      // eslint-disable-next-line no-console
-      console.dir({ itemsBySeller }, { depth: null })
     }
 
     const { sessionData, storefrontPermissions, segmentData } = vtex as any
@@ -112,58 +188,17 @@ export const Mutation = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    // TODO: o conteúdo entre as linhas 116 e 166 pode ficar em uma função separada
-    const email = sessionData.namespaces.profile.email.value
-    const {
-      role: { slug },
-    } = storefrontPermissions
-
-    const {
-      organization: { value: organizationId },
-      costcenter: { value: costCenterId },
-    } = sessionData.namespaces['storefront-permissions']
-
-    const now = new Date()
-    const nowISO = now.toISOString()
-    const expirationDate = new Date()
-
-    expirationDate.setDate(
-      expirationDate.getDate() + (settings?.adminSetup?.cartLifeSpan ?? 30)
-    )
-    const expirationDateISO = expirationDate.toISOString()
-
-    const status = sendToSalesRep ? 'pending' : 'ready'
-    const lastUpdate = nowISO
-    const updateHistory = [
-      {
-        date: nowISO,
-        email,
-        note,
-        role: slug,
-        status,
-      },
-    ]
-
-    const salesChannel: string = segmentData?.channel
-
-    // TODO: criar função que cria este objeto para poder usá-la na separação de cotações por seller
-    const quote = {
-      costCenter: costCenterId,
-      creationDate: nowISO,
-      creatorEmail: email,
-      creatorRole: slug,
-      expirationDate: expirationDateISO,
+    const quote = createQuoteObject({
+      sessionData,
+      storefrontPermissions,
+      segmentData,
+      settings: settings || undefined,
       items,
-      lastUpdate,
-      organization: organizationId,
       referenceName,
-      status,
       subtotal,
-      updateHistory,
-      viewedByCustomer: !!sendToSalesRep,
-      viewedBySales: !sendToSalesRep,
-      salesChannel,
-    }
+      note,
+      sendToSalesRep,
+    })
 
     try {
       const data = await masterdata
@@ -177,15 +212,15 @@ export const Mutation = {
       if (sendToSalesRep) {
         message(ctx)
           .quoteCreated({
-            costCenter: costCenterId,
+            costCenter: quote.costCenter,
             id: data.DocumentId,
             lastUpdate: {
-              email,
+              email: quote.creatorEmail,
               note,
-              status: status.toUpperCase(),
+              status: quote.status.toUpperCase(),
             },
             name: referenceName,
-            organization: organizationId,
+            organization: quote.organization,
           })
           .then(() => {
             logger.info({
@@ -197,16 +232,16 @@ export const Mutation = {
       const metricsParam = {
         sessionData,
         userData: {
-          orgId: organizationId,
-          costId: costCenterId,
-          roleId: slug,
+          orgId: quote.organization,
+          costId: quote.costCenter,
+          roleId: quote.creatorRole,
         },
         costCenterName: 'costCenterData?.getCostCenterById?.name',
         buyerOrgName: 'organizationData?.getOrganizationById?.name',
         quoteId: data.DocumentId,
         quoteReferenceName: referenceName,
         sendToSalesRep,
-        creationDate: nowISO,
+        creationDate: quote.creationDate,
       }
 
       sendCreateQuoteMetric(ctx, metricsParam)

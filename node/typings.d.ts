@@ -17,6 +17,10 @@ interface Quote {
   salesChannel: string | null
 }
 
+interface QuoteWithOptionalId extends Quote {
+  id?: string
+}
+
 interface QuoteUpdate {
   email: string
   role: string
