@@ -334,10 +334,10 @@ export const Query = {
       return null
     }
 
-    if(settings && !settings?.adminSetup.quotesManagedBy){
+    if (settings && !settings?.adminSetup.quotesManagedBy) {
       settings.adminSetup.quotesManagedBy = 'MARKETPLACE'
     }
-    
+
     return settings
   },
 }

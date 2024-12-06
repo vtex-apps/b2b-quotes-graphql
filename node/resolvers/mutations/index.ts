@@ -497,7 +497,9 @@ export const Mutation = {
   },
   saveAppSettings: async (
     _: void,
-    { input: { cartLifeSpan, quotesManagedBy = 'MARKETPLACE' } }: { input: { cartLifeSpan: number , quotesManagedBy: string} },
+    {
+      input: { cartLifeSpan, quotesManagedBy = 'MARKETPLACE' },
+    }: { input: { cartLifeSpan: number; quotesManagedBy: string } },
     ctx: Context
   ) => {
     const {
