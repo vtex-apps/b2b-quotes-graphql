@@ -240,7 +240,7 @@ export const Mutation = {
         })
       )
 
-      return documentIds
+      return documentIds.join(',')
     }
 
     if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
