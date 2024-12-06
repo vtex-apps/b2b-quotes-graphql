@@ -160,12 +160,15 @@ export const Mutation = {
     } = ctx
 
     const settings = await checkConfig(ctx)
-    const itemsBySeller: Record<string, SellerQuote> = {}
+    const quoteBySeller: Record<string, SellerQuote> = {}
+    const { sessionData, storefrontPermissions, segmentData } = vtex as any
+
+    checkSession(sessionData)
 
     if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
       items.forEach(({ seller, sellingPrice, ...itemData }) => {
-        if (!itemsBySeller[seller]) {
-          itemsBySeller[seller] = {
+        if (!quoteBySeller[seller]) {
+          quoteBySeller[seller] = {
             items: [],
             referenceName,
             note,
@@ -174,15 +177,71 @@ export const Mutation = {
           }
         }
 
-        itemsBySeller[seller].items.push({ seller, sellingPrice, ...itemData })
-
-        itemsBySeller[seller].subtotal += sellingPrice
+        quoteBySeller[seller].items.push({ seller, sellingPrice, ...itemData })
+        quoteBySeller[seller].subtotal += sellingPrice
       })
+
+      const documentIds = await Promise.all(
+        Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
+          const sellerQuoteObject = createQuoteObject({
+            sessionData,
+            storefrontPermissions,
+            segmentData,
+            settings: settings || undefined,
+            items: sellerQuote.items,
+            referenceName: sellerQuote.referenceName,
+            subtotal: sellerQuote.subtotal,
+            note: sellerQuote.note,
+            sendToSalesRep: sellerQuote.sendToSalesRep,
+          })
+
+          const data = await masterdata.createDocument({
+            dataEntity: QUOTE_DATA_ENTITY,
+            fields: sellerQuoteObject,
+            schema: SCHEMA_VERSION,
+          })
+
+          if (sendToSalesRep) {
+            await message(ctx).quoteCreated({
+              costCenter: sellerQuoteObject.costCenter,
+              id: data.DocumentId,
+              lastUpdate: {
+                email: sellerQuoteObject.creatorEmail,
+                note: sellerQuote.note,
+                status: sellerQuoteObject.status.toUpperCase(),
+              },
+              name: sellerQuote.referenceName,
+              organization: sellerQuoteObject.organization,
+            })
+
+            logger.info({
+              message: `[Quote created for seller: ${seller}] E-mail sent to sales reps`,
+            })
+          }
+
+          const metricsParam = {
+            sessionData,
+            userData: {
+              orgId: sellerQuoteObject.organization,
+              costId: sellerQuoteObject.costCenter,
+              roleId: sellerQuoteObject.creatorRole,
+            },
+            costCenterName: 'costCenterData?.getCostCenterById?.name',
+            buyerOrgName: 'organizationData?.getOrganizationById?.name',
+            quoteId: data.DocumentId,
+            quoteReferenceName: referenceName,
+            sendToSalesRep,
+            creationDate: sellerQuoteObject.creationDate,
+          }
+
+          sendCreateQuoteMetric(ctx, metricsParam)
+
+          return data.DocumentId
+        })
+      )
+
+      return documentIds
     }
-
-    const { sessionData, storefrontPermissions, segmentData } = vtex as any
-
-    checkSession(sessionData)
 
     if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
       throw new GraphQLError('operation-not-permitted')
