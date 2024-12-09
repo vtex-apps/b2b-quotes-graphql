@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Add new input quotesManagedBy on appSettings to handle splitting marketplace
+- Add new input quotesManagedBy on appSettings to handle splitting quotes
 
 ## [2.6.4] - 2024-10-31
 
