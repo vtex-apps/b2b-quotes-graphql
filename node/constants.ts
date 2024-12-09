@@ -22,6 +22,8 @@ export const QUOTE_FIELDS = [
   'viewedBySales',
   'viewedByCustomer',
   'salesChannel',
+  'seller',
+  'approvedBySeller',
 ]
 
 export const routes = {
@@ -134,6 +136,14 @@ export const schema = {
       title: 'Viewed by Sales',
       type: 'boolean',
     },
+    seller: {
+      title: 'Seller',
+      type: ['null', 'string'],
+    },
+    approvedBySeller: {
+      title: 'Quote approved by seller',
+      type: ['null', 'boolean'],
+    },
   },
   'v-cache': false,
   'v-default-fields': [
@@ -157,5 +167,7 @@ export const schema = {
     'organization',
     'costCenter',
     'salesChannel',
+    'seller',
+    'approvedBySeller',
   ],
 }

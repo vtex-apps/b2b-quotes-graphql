@@ -59,6 +59,8 @@ type Quote {
   viewedBySales: Boolean
   viewedByCustomer: Boolean
   salesChannel: String
+  seller: String
+  approvedBySeller: Boolean
 }
 
 type QuoteUpdate {

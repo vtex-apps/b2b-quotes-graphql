@@ -49,16 +49,20 @@ const createQuoteObject = ({
   subtotal,
   note,
   sendToSalesRep,
+  seller,
+  approvedBySeller,
 }: {
   sessionData: QuoteSessionData
-  storefrontPermissions: string
+  storefrontPermissions: { role: { slug: string } }
   segmentData?: { channel?: string }
-  settings?: Settings
+  settings?: Settings | null
   items: QuoteItem[]
   referenceName: string
   subtotal: number
   note: string
   sendToSalesRep: boolean
+  seller?: string
+  approvedBySeller?: boolean
 }): QuoteWithOptionalId => {
   const email = sessionData.namespaces.profile.email.value
 
@@ -110,6 +114,8 @@ const createQuoteObject = ({
     viewedByCustomer: !!sendToSalesRep,
     viewedBySales: !sendToSalesRep,
     salesChannel,
+    seller,
+    approvedBySeller,
   }
 }
 
@@ -187,12 +193,14 @@ export const Mutation = {
             sessionData,
             storefrontPermissions,
             segmentData,
-            settings: settings || undefined,
+            settings,
             items: sellerQuote.items,
             referenceName: sellerQuote.referenceName,
             subtotal: sellerQuote.subtotal,
             note: sellerQuote.note,
             sendToSalesRep: sellerQuote.sendToSalesRep,
+            seller,
+            approvedBySeller: false,
           })
 
           const data = await masterdata.createDocument({
@@ -251,7 +259,7 @@ export const Mutation = {
       sessionData,
       storefrontPermissions,
       segmentData,
-      settings: settings || undefined,
+      settings,
       items,
       referenceName,
       subtotal,

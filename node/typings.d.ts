@@ -15,6 +15,8 @@ interface Quote {
   viewedBySales: boolean
   viewedByCustomer: boolean
   salesChannel: string | null
+  seller?: string | null
+  approvedBySeller?: boolean | null
 }
 
 interface QuoteWithOptionalId extends Quote {
