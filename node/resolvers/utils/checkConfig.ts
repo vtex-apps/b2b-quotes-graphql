@@ -13,6 +13,7 @@ export const defaultSettings: Settings = {
   adminSetup: {
     allowManualPrice: false,
     cartLifeSpan: 30,
+    quotesManagedBy: 'MARKETPLACE',
     hasCron: false,
   },
   schemaVersion: '',
@@ -345,7 +346,10 @@ export const checkConfig = async (ctx: Context) => {
     return null
   }
 
-  if (!settings?.adminSetup?.cartLifeSpan) {
+  if (
+    !settings?.adminSetup?.cartLifeSpan &&
+    !settings?.adminSetup?.quotesManagedBy
+  ) {
     settings = defaultSettings
     changed = true
   }
