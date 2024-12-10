@@ -24,100 +24,7 @@ import {
   checkQuoteStatus,
   checkSession,
 } from '../utils/checkPermissions'
-
-interface SellerQuote {
-  items: QuoteItem[]
-  referenceName: string
-  note: string
-  sendToSalesRep: boolean
-  subtotal: number
-}
-
-interface QuoteSessionData {
-  namespaces: {
-    [key: string]: any // Dynamic keys allowed
-  }
-}
-
-const createQuoteObject = ({
-  sessionData,
-  storefrontPermissions,
-  segmentData,
-  settings,
-  items,
-  referenceName,
-  subtotal,
-  note,
-  sendToSalesRep,
-  seller,
-  approvedBySeller,
-}: {
-  sessionData: QuoteSessionData
-  storefrontPermissions: { role: { slug: string } }
-  segmentData?: { channel?: string }
-  settings?: Settings | null
-  items: QuoteItem[]
-  referenceName: string
-  subtotal: number
-  note: string
-  sendToSalesRep: boolean
-  seller?: string
-  approvedBySeller?: boolean
-}): QuoteWithOptionalId => {
-  const email = sessionData.namespaces.profile.email.value
-
-  const {
-    role: { slug },
-  } = storefrontPermissions
-
-  const {
-    organization: { value: organizationId },
-    costcenter: { value: costCenterId },
-  } = sessionData.namespaces['storefront-permissions']
-
-  const now = new Date()
-  const nowISO = now.toISOString()
-  const expirationDate = new Date()
-
-  expirationDate.setDate(
-    expirationDate.getDate() + (settings?.adminSetup?.cartLifeSpan ?? 30)
-  )
-  const expirationDateISO = expirationDate.toISOString()
-
-  const status = sendToSalesRep ? 'pending' : 'ready'
-  const lastUpdate = nowISO
-  const updateHistory = [
-    {
-      date: nowISO,
-      email,
-      note,
-      role: slug,
-      status,
-    },
-  ]
-
-  const salesChannel: string = segmentData?.channel ?? ''
-
-  return {
-    costCenter: costCenterId,
-    creationDate: nowISO,
-    creatorEmail: email,
-    creatorRole: slug,
-    expirationDate: expirationDateISO,
-    items,
-    lastUpdate,
-    organization: organizationId,
-    referenceName,
-    status,
-    subtotal,
-    updateHistory,
-    viewedByCustomer: !!sendToSalesRep,
-    viewedBySales: !sendToSalesRep,
-    salesChannel,
-    seller,
-    approvedBySeller,
-  }
-}
+import { createQuoteObject } from '../utils/quotes'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -166,96 +73,15 @@ export const Mutation = {
     } = ctx
 
     const settings = await checkConfig(ctx)
-    const quoteBySeller: Record<string, SellerQuote> = {}
     const { sessionData, storefrontPermissions, segmentData } = vtex as any
 
     checkSession(sessionData)
-
-    if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
-      items.forEach(({ seller, sellingPrice, ...itemData }) => {
-        if (!quoteBySeller[seller]) {
-          quoteBySeller[seller] = {
-            items: [],
-            referenceName,
-            note,
-            sendToSalesRep,
-            subtotal: 0,
-          }
-        }
-
-        quoteBySeller[seller].items.push({ seller, sellingPrice, ...itemData })
-        quoteBySeller[seller].subtotal += sellingPrice
-      })
-
-      const documentIds = await Promise.all(
-        Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
-          const sellerQuoteObject = createQuoteObject({
-            sessionData,
-            storefrontPermissions,
-            segmentData,
-            settings,
-            items: sellerQuote.items,
-            referenceName: sellerQuote.referenceName,
-            subtotal: sellerQuote.subtotal,
-            note: sellerQuote.note,
-            sendToSalesRep: sellerQuote.sendToSalesRep,
-            seller,
-            approvedBySeller: false,
-          })
-
-          const data = await masterdata.createDocument({
-            dataEntity: QUOTE_DATA_ENTITY,
-            fields: sellerQuoteObject,
-            schema: SCHEMA_VERSION,
-          })
-
-          if (sendToSalesRep) {
-            await message(ctx).quoteCreated({
-              costCenter: sellerQuoteObject.costCenter,
-              id: data.DocumentId,
-              lastUpdate: {
-                email: sellerQuoteObject.creatorEmail,
-                note: sellerQuote.note,
-                status: sellerQuoteObject.status.toUpperCase(),
-              },
-              name: sellerQuote.referenceName,
-              organization: sellerQuoteObject.organization,
-            })
-
-            logger.info({
-              message: `[Quote created for seller: ${seller}] E-mail sent to sales reps`,
-            })
-          }
-
-          const metricsParam = {
-            sessionData,
-            userData: {
-              orgId: sellerQuoteObject.organization,
-              costId: sellerQuoteObject.costCenter,
-              roleId: sellerQuoteObject.creatorRole,
-            },
-            costCenterName: 'costCenterData?.getCostCenterById?.name',
-            buyerOrgName: 'organizationData?.getOrganizationById?.name',
-            quoteId: data.DocumentId,
-            quoteReferenceName: referenceName,
-            sendToSalesRep,
-            creationDate: sellerQuoteObject.creationDate,
-          }
-
-          sendCreateQuoteMetric(ctx, metricsParam)
-
-          return data.DocumentId
-        })
-      )
-
-      return documentIds.join(',')
-    }
 
     if (!storefrontPermissions?.permissions?.includes('create-quotes')) {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const quote = createQuoteObject({
+    const parentQuote = createQuoteObject({
       sessionData,
       storefrontPermissions,
       segmentData,
@@ -268,26 +94,83 @@ export const Mutation = {
     })
 
     try {
-      const data = await masterdata
-        .createDocument({
-          dataEntity: QUOTE_DATA_ENTITY,
-          fields: quote,
-          schema: SCHEMA_VERSION,
+      const { DocumentId: parentQuoteId } = await masterdata.createDocument({
+        dataEntity: QUOTE_DATA_ENTITY,
+        fields: parentQuote,
+        schema: SCHEMA_VERSION,
+      })
+
+      if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
+        const quoteBySeller: Record<string, SellerQuoteInput> = {}
+
+        items.forEach(({ seller, sellingPrice, ...itemData }) => {
+          if (!quoteBySeller[seller]) {
+            quoteBySeller[seller] = {
+              items: [],
+              referenceName,
+              note,
+              sendToSalesRep,
+              subtotal: 0,
+            }
+          }
+
+          quoteBySeller[seller].items.push({
+            seller,
+            sellingPrice,
+            ...itemData,
+          })
+          quoteBySeller[seller].subtotal += sellingPrice * itemData.quantity
         })
-        .then((res: any) => res)
+
+        const documentIds = await Promise.all(
+          Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
+            const sellerQuoteObject = createQuoteObject({
+              sessionData,
+              storefrontPermissions,
+              segmentData,
+              settings,
+              items: sellerQuote.items,
+              referenceName: sellerQuote.referenceName,
+              subtotal: sellerQuote.subtotal,
+              note: sellerQuote.note,
+              sendToSalesRep: sellerQuote.sendToSalesRep,
+              seller,
+              approvedBySeller: false,
+              parentQuote: parentQuoteId,
+            })
+
+            const data = await masterdata.createDocument({
+              dataEntity: QUOTE_DATA_ENTITY,
+              fields: sellerQuoteObject,
+              schema: SCHEMA_VERSION,
+            })
+
+            return data.DocumentId
+          })
+        )
+
+        if (documentIds.length) {
+          await masterdata.updatePartialDocument({
+            dataEntity: QUOTE_DATA_ENTITY,
+            fields: { hasChildren: true },
+            id: parentQuoteId,
+            schema: SCHEMA_VERSION,
+          })
+        }
+      }
 
       if (sendToSalesRep) {
         message(ctx)
           .quoteCreated({
-            costCenter: quote.costCenter,
-            id: data.DocumentId,
+            costCenter: parentQuote.costCenter,
+            id: parentQuoteId,
             lastUpdate: {
-              email: quote.creatorEmail,
+              email: parentQuote.creatorEmail,
               note,
-              status: quote.status.toUpperCase(),
+              status: parentQuote.status.toUpperCase(),
             },
             name: referenceName,
-            organization: quote.organization,
+            organization: parentQuote.organization,
           })
           .then(() => {
             logger.info({
@@ -299,21 +182,21 @@ export const Mutation = {
       const metricsParam = {
         sessionData,
         userData: {
-          orgId: quote.organization,
-          costId: quote.costCenter,
-          roleId: quote.creatorRole,
+          orgId: parentQuote.organization,
+          costId: parentQuote.costCenter,
+          roleId: parentQuote.creatorRole,
         },
         costCenterName: 'costCenterData?.getCostCenterById?.name',
         buyerOrgName: 'organizationData?.getOrganizationById?.name',
-        quoteId: data.DocumentId,
+        quoteId: parentQuoteId,
         quoteReferenceName: referenceName,
         sendToSalesRep,
-        creationDate: quote.creationDate,
+        creationDate: parentQuote.creationDate,
       }
 
       sendCreateQuoteMetric(ctx, metricsParam)
 
-      return data.DocumentId
+      return parentQuoteId
     } catch (error) {
       logger.error({
         error,

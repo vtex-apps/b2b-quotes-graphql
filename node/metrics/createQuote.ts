@@ -7,18 +7,6 @@ type UserData = {
   roleId: string
 }
 
-export type SessionData = {
-  namespaces: {
-    profile: {
-      id: { value: string }
-      email: { value: string }
-    }
-    account: {
-      accountName: { value: string }
-    }
-  }
-}
-
 type CreateQuoteMetricParam = {
   sessionData: SessionData
   sendToSalesRep: boolean

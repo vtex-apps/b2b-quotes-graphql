@@ -61,6 +61,8 @@ type Quote {
   salesChannel: String
   seller: String
   approvedBySeller: Boolean
+  parentQuote: String
+  hasChildren: Boolean
 }
 
 type QuoteUpdate {

@@ -24,6 +24,8 @@ export const QUOTE_FIELDS = [
   'salesChannel',
   'seller',
   'approvedBySeller',
+  'parentQuote',
+  'hasChildren',
 ]
 
 export const routes = {
@@ -144,6 +146,14 @@ export const schema = {
       title: 'Quote approved by seller',
       type: ['null', 'boolean'],
     },
+    parentQuote: {
+      title: 'Parent quote',
+      type: ['null', 'string'],
+    },
+    hasChildren: {
+      title: 'Has children',
+      type: ['null', 'boolean'],
+    },
   },
   'v-cache': false,
   'v-default-fields': [
@@ -155,6 +165,10 @@ export const schema = {
     'items',
     'subtotal',
     'status',
+    'seller',
+    'approvedBySeller',
+    'parentQuote',
+    'hasChildren',
   ],
   'v-immediate-indexing': true,
   'v-indexed': [
@@ -169,5 +183,7 @@ export const schema = {
     'salesChannel',
     'seller',
     'approvedBySeller',
+    'parentQuote',
+    'hasChildren',
   ],
 }

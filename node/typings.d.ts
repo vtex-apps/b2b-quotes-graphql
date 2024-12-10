@@ -17,10 +17,8 @@ interface Quote {
   salesChannel: string | null
   seller?: string | null
   approvedBySeller?: boolean | null
-}
-
-interface QuoteWithOptionalId extends Quote {
-  id?: string
+  parentQuote?: string | null
+  hasChildren?: boolean | null
 }
 
 interface QuoteUpdate {
@@ -114,6 +112,31 @@ interface Settings {
     cronWorkspace?: string
     quotesManagedBy?: string
   }
+  hasSplittingQuoteFieldsInSchema?: boolean
   schemaVersion: string
   templateHash: string | null
+}
+
+interface SessionData {
+  namespaces: {
+    profile: {
+      id: { value: string }
+      email: { value: string }
+    }
+    account: {
+      accountName: { value: string }
+    }
+    'storefront-permissions': {
+      organization: { value: string }
+      costcenter: { value: string }
+    }
+  }
+}
+
+interface SellerQuoteInput {
+  items: QuoteItem[]
+  referenceName: string
+  note: string
+  sendToSalesRep: boolean
+  subtotal: number
 }
