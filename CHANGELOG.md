@@ -8,38 +8,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Add new input quotesManagedBy on appSettings to handle splitting quotes
+- Add new quote configuration to handle split quote by seller
 - Verify if seller accept manage quotes
 - Notify seller with quote payload if it accepts to manage quotes
 
 ## [2.6.4] - 2024-10-31
 
 ### Fixed
+
 - Only update Status, LastUpdate and UpdateHistory, in expired quotes
 
 ## [2.6.3] - 2024-10-30
 
 ### Fixed
+
 - Set viewedByCustomer value False when value is null
 
 ## [2.6.2] - 2024-10-02
 
 ### Added
+
 - Add audit access metrics to all graphql APIs
 
 ## [2.6.1] - 2024-09-09
 
 ### Fixed
+
 - Set viewedByCustomer value corectly on quote creation
 
 ## [2.6.0] - 2024-09-04
 
 ### Added
+
 - Add getQuoteEnabledForUser query to be used by the b2b-quotes app
 
 ## [2.5.4] - 2024-08-20
 
 ### Fixed
+
 - Use listUsersPaginated internally instead of deprecated listUsers
 
 ## [2.5.3] - 2024-06-10
@@ -81,15 +89,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.3.1] - 2023-09-13
 
 ### Fixed
+
 - Use the account to get the token in the header and send it to clear the cart and order
 
 ## [2.3.0] - 2023-08-14
 
 ### Added
+
 - Send metrics to Analytics (Create Quote and Send Message events)
-- Send use quote metrics to Analytics 
-  
+- Send use quote metrics to Analytics
+
 ### Removed
+
 - [ENGINEERS-1247] - Disable cypress tests in PR level
 
 ### Changed
