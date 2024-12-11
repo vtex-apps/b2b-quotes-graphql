@@ -124,6 +124,12 @@ export const Mutation = {
 
         const documentIds = await Promise.all(
           Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
+            const verifyResponse = await ctx.clients.sellerQuotes.verifyQuoteSettings(
+              seller
+            )
+
+            if (!verifyResponse.receiveQuotes) return null
+
             const sellerQuoteObject = createQuoteObject({
               sessionData,
               storefrontPermissions,
@@ -145,11 +151,16 @@ export const Mutation = {
               schema: SCHEMA_VERSION,
             })
 
+            await ctx.clients.sellerQuotes.notifyNewQuote(seller, {
+              id: data.DocumentId,
+              ...sellerQuoteObject,
+            })
+
             return data.DocumentId
           })
         )
 
-        if (documentIds.length) {
+        if (documentIds.filter(Boolean).length) {
           await masterdata.updatePartialDocument({
             dataEntity: QUOTE_DATA_ENTITY,
             fields: { hasChildren: true },

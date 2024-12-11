@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add new input quotesManagedBy on appSettings to handle splitting quotes
+- Verify if seller accept manage quotes
+- Notify seller with quote payload if it accepts to manage quotes
 
 ## [2.6.4] - 2024-10-31
 

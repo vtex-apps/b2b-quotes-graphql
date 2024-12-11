@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { ExternalClient } from '@vtex/api'
 
@@ -9,8 +10,17 @@ const SELLER_CLIENT_OPTIONS: InstanceOptions = {
   initialBackoffDelay: 100,
 }
 
+interface VerifyQuoteSettingsResponse {
+  receiveQuotes: boolean
+}
+
 interface NotifySellerQuoteResponse {
   status: string
+}
+
+const routes = {
+  verifyQuoteSettings: '/verify-quote-settings',
+  notifyNewQuote: '/notify-new-quote',
 }
 
 export default class SellerQuotesClient extends ExternalClient {
@@ -26,22 +36,48 @@ export default class SellerQuotesClient extends ExternalClient {
     })
   }
 
-  private getUrl(account: string) {
+  private getRoute(account: string, path: string) {
     const subdomain = this.context.production
       ? account
       : `${this.context.workspace}--${account}`
 
-    return `http://${subdomain}.myvtex.com/_v/b2b-seller-quotes/notify-quote`
+    return `http://${subdomain}.myvtex.com/_v/b2b-seller-quotes${path}`
   }
 
-  public async notify(account: string, quote: Quote) {
+  public async verifyQuoteSettings(account: string) {
     return this.http
-      .postRaw<NotifySellerQuoteResponse>(this.getUrl(account), quote)
+      .get<VerifyQuoteSettingsResponse>(
+        this.getRoute(account, routes.verifyQuoteSettings)
+      )
       .then((res) => {
-        // eslint-disable-next-line no-console
-        console.log('RESPONSE', res)
+        console.log('==================================================')
+        console.log('SUCCESS RESPONSE WHEN VERIFY SELLER:', res)
 
         return res
+      })
+      .catch((err) => {
+        console.log('==================================================')
+        console.log('ERROR WHEN VEFIFY SELLER:', err)
+        throw err
+      })
+  }
+
+  public async notifyNewQuote(account: string, quote: Quote) {
+    return this.http
+      .postRaw<NotifySellerQuoteResponse>(
+        this.getRoute(account, routes.notifyNewQuote),
+        quote
+      )
+      .then((res) => {
+        console.log('==================================================')
+        console.log('SUCCESS RESPONSE WHEN NOTIFY SELLER:', res)
+
+        return res
+      })
+      .catch((err) => {
+        console.log('==================================================')
+        console.log('ERROR WHEN NOTIFY SELLER:', err)
+        throw err
       })
   }
 }
