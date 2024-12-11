@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import type { InstanceOptions, IOContext } from '@vtex/api'
 import { ExternalClient } from '@vtex/api'
 
@@ -45,39 +44,15 @@ export default class SellerQuotesClient extends ExternalClient {
   }
 
   public async verifyQuoteSettings(account: string) {
-    return this.http
-      .get<VerifyQuoteSettingsResponse>(
-        this.getRoute(account, routes.verifyQuoteSettings)
-      )
-      .then((res) => {
-        console.log('==================================================')
-        console.log('SUCCESS RESPONSE WHEN VERIFY SELLER:', res)
-
-        return res
-      })
-      .catch((err) => {
-        console.log('==================================================')
-        console.log('ERROR WHEN VEFIFY SELLER:', err)
-        throw err
-      })
+    return this.http.get<VerifyQuoteSettingsResponse>(
+      this.getRoute(account, routes.verifyQuoteSettings)
+    )
   }
 
   public async notifyNewQuote(account: string, quote: Quote) {
-    return this.http
-      .postRaw<NotifySellerQuoteResponse>(
-        this.getRoute(account, routes.notifyNewQuote),
-        quote
-      )
-      .then((res) => {
-        console.log('==================================================')
-        console.log('SUCCESS RESPONSE WHEN NOTIFY SELLER:', res)
-
-        return res
-      })
-      .catch((err) => {
-        console.log('==================================================')
-        console.log('ERROR WHEN NOTIFY SELLER:', err)
-        throw err
-      })
+    return this.http.postRaw<NotifySellerQuoteResponse>(
+      this.getRoute(account, routes.notifyNewQuote),
+      quote
+    )
   }
 }
