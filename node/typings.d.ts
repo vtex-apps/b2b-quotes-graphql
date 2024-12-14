@@ -106,6 +106,7 @@ interface Settings {
     hasCron?: boolean
     cronExpression?: string
     cronWorkspace?: string
+    quotesManagedBy?: string
   }
   schemaVersion: string
   templateHash: string | null
