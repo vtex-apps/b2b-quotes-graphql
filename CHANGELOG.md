@@ -9,10 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add new input quotesManagedBy on appSettings to handle splitting quotes
-- Add new quote configuration to handle split quote by seller
-- Verify if seller accept manage quotes
-- Notify seller with quote payload if it accepts to manage quotes
+- Add field quotesManagedBy on appSettings to handle splitting quotes
+- Process splitting quote by seller if it accepts to manage quotes
+- Notify seller with quote reference data as payload
 
 ## [2.6.4] - 2024-10-31
 

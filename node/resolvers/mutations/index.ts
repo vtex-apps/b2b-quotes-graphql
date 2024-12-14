@@ -24,7 +24,7 @@ import {
   checkQuoteStatus,
   checkSession,
 } from '../utils/checkPermissions'
-import { createQuoteObject } from '../utils/quotes'
+import { createQuoteObject, processSellerItems } from '../utils/quotes'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -81,55 +81,68 @@ export const Mutation = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const parentQuote = createQuoteObject({
-      sessionData,
-      storefrontPermissions,
-      segmentData,
-      settings,
-      items,
-      referenceName,
-      subtotal,
-      note,
-      sendToSalesRep,
-    })
-
     try {
+      const quoteBySeller: Record<string, SellerQuoteInput> = {}
+
+      if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
+        const sellerItems = items.filter(
+          ({ seller }) => seller && seller !== '1'
+        )
+
+        await processSellerItems({
+          ctx,
+          quoteBySeller,
+          referenceName,
+          note,
+          sendToSalesRep,
+          items: sellerItems,
+        })
+      }
+
+      const hasSellerQuotes = Object.keys(quoteBySeller).length
+
+      const parentQuoteItems = hasSellerQuotes
+        ? items.filter(
+            (item) =>
+              !Object.values(quoteBySeller).some((quote) =>
+                quote.items.some((quoteItem) => quoteItem.id === item.id)
+              )
+          )
+        : items
+
+      // We believe that parent quote should contain the overall subtotal.
+      // If for some reason it is necessary to subtract the subtotal from
+      // sellers quotes, we can use the adjustedSubtotal below, assigning
+      // it to subtotal in createQuoteObject (subtotal: adjustedSubtotal).
+      //
+      // const adjustedSubtotal = hasSellerQuotes
+      //   ? Object.values(quoteBySeller).reduce(
+      //       (acc, quote) => acc - quote.subtotal,
+      //       subtotal
+      //     )
+      //   : subtotal
+
+      const parentQuote = createQuoteObject({
+        sessionData,
+        storefrontPermissions,
+        segmentData,
+        settings,
+        items: parentQuoteItems,
+        referenceName,
+        subtotal,
+        note,
+        sendToSalesRep,
+      })
+
       const { DocumentId: parentQuoteId } = await masterdata.createDocument({
         dataEntity: QUOTE_DATA_ENTITY,
         fields: parentQuote,
         schema: SCHEMA_VERSION,
       })
 
-      if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
-        const quoteBySeller: Record<string, SellerQuoteInput> = {}
-
-        items.forEach(({ seller, sellingPrice, ...itemData }) => {
-          if (!quoteBySeller[seller]) {
-            quoteBySeller[seller] = {
-              items: [],
-              referenceName,
-              note,
-              sendToSalesRep,
-              subtotal: 0,
-            }
-          }
-
-          quoteBySeller[seller].items.push({
-            seller,
-            sellingPrice,
-            ...itemData,
-          })
-          quoteBySeller[seller].subtotal += sellingPrice * itemData.quantity
-        })
-
-        const documentIds = await Promise.all(
+      if (hasSellerQuotes) {
+        const sellerQuoteIds = await Promise.all(
           Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
-            const verifyResponse = await ctx.clients.sellerQuotes.verifyQuoteSettings(
-              seller
-            )
-
-            if (!verifyResponse.receiveQuotes) return null
-
             const sellerQuoteObject = createQuoteObject({
               sessionData,
               storefrontPermissions,
@@ -151,16 +164,16 @@ export const Mutation = {
               schema: SCHEMA_VERSION,
             })
 
-            await ctx.clients.sellerQuotes.notifyNewQuote(seller, {
-              id: data.DocumentId,
-              ...sellerQuoteObject,
-            })
+            await ctx.clients.sellerQuotes.notifyNewQuote(
+              seller,
+              data.DocumentId
+            )
 
             return data.DocumentId
           })
         )
 
-        if (documentIds.filter(Boolean).length) {
+        if (sellerQuoteIds.length) {
           await masterdata.updatePartialDocument({
             dataEntity: QUOTE_DATA_ENTITY,
             fields: { hasChildren: true },

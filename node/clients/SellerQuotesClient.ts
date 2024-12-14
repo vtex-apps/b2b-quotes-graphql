@@ -13,13 +13,14 @@ interface VerifyQuoteSettingsResponse {
   receiveQuotes: boolean
 }
 
-interface NotifySellerQuoteResponse {
-  status: string
+interface SellerQuoteNotifyInput {
+  quoteId: string
+  marketplaceAccount: string
 }
 
 const routes = {
-  verifyQuoteSettings: '/verify-quote-settings',
-  notifyNewQuote: '/notify-new-quote',
+  verifyQuoteSettings: 'verify-quote-settings',
+  notifyNewQuote: 'notify-new-quote',
 }
 
 export default class SellerQuotesClient extends ExternalClient {
@@ -35,24 +36,29 @@ export default class SellerQuotesClient extends ExternalClient {
     })
   }
 
-  private getRoute(account: string, path: string) {
+  private getRoute(sellerAccount: string, path: string) {
     const subdomain = this.context.production
-      ? account
-      : `${this.context.workspace}--${account}`
+      ? sellerAccount
+      : `${this.context.workspace}--${sellerAccount}`
 
-    return `http://${subdomain}.myvtex.com/_v/b2b-seller-quotes${path}`
+    return `http://${subdomain}.myvtex.com/b2b-seller-quotes/_v/0/${path}`
   }
 
-  public async verifyQuoteSettings(account: string) {
+  public async verifyQuoteSettings(sellerAccount: string) {
     return this.http.get<VerifyQuoteSettingsResponse>(
-      this.getRoute(account, routes.verifyQuoteSettings)
+      this.getRoute(sellerAccount, routes.verifyQuoteSettings)
     )
   }
 
-  public async notifyNewQuote(account: string, quote: Quote) {
-    return this.http.postRaw<NotifySellerQuoteResponse>(
-      this.getRoute(account, routes.notifyNewQuote),
-      quote
+  public async notifyNewQuote(sellerAccount: string, quoteId: string) {
+    const payload: SellerQuoteNotifyInput = {
+      quoteId,
+      marketplaceAccount: this.context.account,
+    }
+
+    return this.http.postRaw(
+      this.getRoute(sellerAccount, routes.notifyNewQuote),
+      payload
     )
   }
 }

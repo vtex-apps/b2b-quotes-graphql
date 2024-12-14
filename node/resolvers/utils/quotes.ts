@@ -1,3 +1,62 @@
+export async function processSellerItems({
+  ctx,
+  quoteBySeller,
+  referenceName,
+  note,
+  sendToSalesRep,
+  items,
+  index = 0,
+}: {
+  ctx: Context
+  quoteBySeller: Record<string, SellerQuoteInput>
+  referenceName: string
+  note: string
+  sendToSalesRep: boolean
+  items: QuoteItem[]
+  index?: number
+}): Promise<void> {
+  if (index >= items.length) return
+
+  const item = items[index]
+  const { seller } = item
+
+  const next = async () =>
+    processSellerItems({
+      ctx,
+      quoteBySeller,
+      referenceName,
+      note,
+      sendToSalesRep,
+      items,
+      index: index + 1,
+    })
+
+  const verifyResponse = await ctx.clients.sellerQuotes
+    .verifyQuoteSettings(seller)
+    .catch(() => null)
+
+  if (!verifyResponse?.receiveQuotes) {
+    await next()
+
+    return
+  }
+
+  if (!quoteBySeller[seller]) {
+    quoteBySeller[seller] = {
+      items: [],
+      referenceName,
+      note,
+      sendToSalesRep,
+      subtotal: 0,
+    }
+  }
+
+  quoteBySeller[seller].items.push(item)
+  quoteBySeller[seller].subtotal += item.sellingPrice * item.quantity
+
+  await next()
+}
+
 export const createQuoteObject = ({
   sessionData,
   storefrontPermissions,
