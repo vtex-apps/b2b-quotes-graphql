@@ -1,60 +1,54 @@
-export async function processSellerItems({
+export async function splitItemsBySeller({
   ctx,
-  quoteBySeller,
-  referenceName,
-  note,
-  sendToSalesRep,
   items,
+  quoteBySeller = {},
   index = 0,
 }: {
   ctx: Context
-  quoteBySeller: Record<string, SellerQuoteInput>
-  referenceName: string
-  note: string
-  sendToSalesRep: boolean
   items: QuoteItem[]
+  quoteBySeller?: SellerQuoteMap
   index?: number
-}): Promise<void> {
-  if (index >= items.length) return
+}): Promise<SellerQuoteMap> {
+  if (index >= items.length) return quoteBySeller
 
   const item = items[index]
   const { seller } = item
 
   const next = async () =>
-    processSellerItems({
+    splitItemsBySeller({
       ctx,
-      quoteBySeller,
-      referenceName,
-      note,
-      sendToSalesRep,
       items,
+      quoteBySeller,
       index: index + 1,
     })
 
-  const verifyResponse = await ctx.clients.sellerQuotes
-    .verifyQuoteSettings(seller)
-    .catch(() => null)
+  // The ternary check is to not request again from the same seller
+  const verifyResponse = quoteBySeller[seller]
+    ? { receiveQuotes: true }
+    : await ctx.clients.sellerQuotes
+        .verifyQuoteSettings(seller)
+        .catch(() => null)
 
   if (!verifyResponse?.receiveQuotes) {
     await next()
 
-    return
+    return quoteBySeller
   }
 
   if (!quoteBySeller[seller]) {
-    quoteBySeller[seller] = {
-      items: [],
-      referenceName,
-      note,
-      sendToSalesRep,
-      subtotal: 0,
-    }
+    quoteBySeller[seller] = { items: [], subtotal: 0 }
   }
 
   quoteBySeller[seller].items.push(item)
   quoteBySeller[seller].subtotal += item.sellingPrice * item.quantity
 
   await next()
+
+  return quoteBySeller
+}
+
+export function createItemComparator<T extends QuoteItem>(item: T) {
+  return ({ id, seller }: T) => item.id === id && item.seller === seller
 }
 
 export const createQuoteObject = ({

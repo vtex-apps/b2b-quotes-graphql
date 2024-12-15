@@ -135,8 +135,16 @@ interface SessionData {
 
 interface SellerQuoteInput {
   items: QuoteItem[]
-  referenceName: string
-  note: string
-  sendToSalesRep: boolean
   subtotal: number
+}
+
+type SellerQuoteMap = Record<string, SellerQuoteInput>
+
+interface VerifyQuoteSettingsResponse {
+  receiveQuotes: boolean
+}
+
+interface SellerQuoteNotifyInput {
+  quoteId: string
+  marketplaceAccount: string
 }

@@ -24,7 +24,11 @@ import {
   checkQuoteStatus,
   checkSession,
 } from '../utils/checkPermissions'
-import { createQuoteObject, processSellerItems } from '../utils/quotes'
+import {
+  createItemComparator,
+  createQuoteObject,
+  splitItemsBySeller,
+} from '../utils/quotes'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -82,19 +86,15 @@ export const Mutation = {
     }
 
     try {
-      const quoteBySeller: Record<string, SellerQuoteInput> = {}
+      let quoteBySeller: SellerQuoteMap = {}
 
       if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
         const sellerItems = items.filter(
           ({ seller }) => seller && seller !== '1'
         )
 
-        await processSellerItems({
+        quoteBySeller = await splitItemsBySeller({
           ctx,
-          quoteBySeller,
-          referenceName,
-          note,
-          sendToSalesRep,
           items: sellerItems,
         })
       }
@@ -105,15 +105,25 @@ export const Mutation = {
         ? items.filter(
             (item) =>
               !Object.values(quoteBySeller).some((quote) =>
-                quote.items.some((quoteItem) => quoteItem.id === item.id)
+                quote.items.some(createItemComparator(item))
               )
           )
         : items
 
+      const quoteCommonFields = {
+        sessionData,
+        storefrontPermissions,
+        segmentData,
+        settings,
+        referenceName,
+        note,
+        sendToSalesRep,
+      }
+
       // We believe that parent quote should contain the overall subtotal.
       // If for some reason it is necessary to subtract the subtotal from
       // sellers quotes, we can use the adjustedSubtotal below, assigning
-      // it to subtotal in createQuoteObject (subtotal: adjustedSubtotal).
+      // it to subtotal in createQuoteObject -> `subtotal: adjustedSubtotal`
       //
       // const adjustedSubtotal = hasSellerQuotes
       //   ? Object.values(quoteBySeller).reduce(
@@ -121,17 +131,10 @@ export const Mutation = {
       //       subtotal
       //     )
       //   : subtotal
-
       const parentQuote = createQuoteObject({
-        sessionData,
-        storefrontPermissions,
-        segmentData,
-        settings,
+        ...quoteCommonFields,
         items: parentQuoteItems,
-        referenceName,
         subtotal,
-        note,
-        sendToSalesRep,
       })
 
       const { DocumentId: parentQuoteId } = await masterdata.createDocument({
@@ -144,15 +147,8 @@ export const Mutation = {
         const sellerQuoteIds = await Promise.all(
           Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
             const sellerQuoteObject = createQuoteObject({
-              sessionData,
-              storefrontPermissions,
-              segmentData,
-              settings,
-              items: sellerQuote.items,
-              referenceName: sellerQuote.referenceName,
-              subtotal: sellerQuote.subtotal,
-              note: sellerQuote.note,
-              sendToSalesRep: sellerQuote.sendToSalesRep,
+              ...quoteCommonFields,
+              ...sellerQuote,
               seller,
               approvedBySeller: false,
               parentQuote: parentQuoteId,

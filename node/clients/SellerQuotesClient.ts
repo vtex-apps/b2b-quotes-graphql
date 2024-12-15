@@ -9,15 +9,6 @@ const SELLER_CLIENT_OPTIONS: InstanceOptions = {
   initialBackoffDelay: 100,
 }
 
-interface VerifyQuoteSettingsResponse {
-  receiveQuotes: boolean
-}
-
-interface SellerQuoteNotifyInput {
-  quoteId: string
-  marketplaceAccount: string
-}
-
 const routes = {
   verifyQuoteSettings: 'verify-quote-settings',
   notifyNewQuote: 'notify-new-quote',
