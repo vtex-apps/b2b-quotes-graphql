@@ -9,7 +9,9 @@ const SELLER_CLIENT_OPTIONS: InstanceOptions = {
   initialBackoffDelay: 100,
 }
 
-const routes = {
+const BASE_PATH = 'b2b-seller-quotes/_v/0'
+
+const ROUTES = {
   verifyQuoteSettings: 'verify-quote-settings',
   notifyNewQuote: 'notify-new-quote',
 }
@@ -32,12 +34,12 @@ export default class SellerQuotesClient extends ExternalClient {
       ? sellerAccount
       : `${this.context.workspace}--${sellerAccount}`
 
-    return `http://${subdomain}.myvtex.com/b2b-seller-quotes/_v/0/${path}`
+    return `http://${subdomain}.myvtex.com/${BASE_PATH}/${path}`
   }
 
   public async verifyQuoteSettings(sellerAccount: string) {
     return this.http.get<VerifyQuoteSettingsResponse>(
-      this.getRoute(sellerAccount, routes.verifyQuoteSettings)
+      this.getRoute(sellerAccount, ROUTES.verifyQuoteSettings)
     )
   }
 
@@ -48,7 +50,7 @@ export default class SellerQuotesClient extends ExternalClient {
     }
 
     return this.http.postRaw(
-      this.getRoute(sellerAccount, routes.notifyNewQuote),
+      this.getRoute(sellerAccount, ROUTES.notifyNewQuote),
       payload
     )
   }
