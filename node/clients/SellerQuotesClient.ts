@@ -43,9 +43,14 @@ export default class SellerQuotesClient extends ExternalClient {
     )
   }
 
-  public async notifyNewQuote(sellerAccount: string, quoteId: string) {
+  public async notifyNewQuote(
+    sellerAccount: string,
+    quoteId: string,
+    creationDate: string
+  ) {
     const payload: SellerQuoteNotifyInput = {
       quoteId,
+      creationDate,
       marketplaceAccount: this.context.account,
     }
 

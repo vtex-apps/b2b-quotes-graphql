@@ -147,4 +147,5 @@ interface VerifyQuoteSettingsResponse {
 interface SellerQuoteNotifyInput {
   quoteId: string
   marketplaceAccount: string
+  creationDate: string
 }

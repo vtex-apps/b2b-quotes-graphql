@@ -162,7 +162,8 @@ export const Mutation = {
 
             await ctx.clients.sellerQuotes.notifyNewQuote(
               seller,
-              data.DocumentId
+              data.DocumentId,
+              sellerQuoteObject.creationDate
             )
 
             return data.DocumentId
