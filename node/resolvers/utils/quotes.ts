@@ -151,10 +151,10 @@ export const createQuoteObject = ({
 
 type GetQuotesArgs = {
   ctx: Context
-  where?: string
-  sort?: string
   page?: number
   pageSize?: number
+  where?: string
+  sort?: string
 }
 
 export async function getQuotes({
@@ -187,21 +187,25 @@ export async function getSellerQuote(ctx: Context, seller: string, id: string) {
   return quote
 }
 
+export async function getOrganizationData(ctx: Context, quote: Quote) {
+  const [organizationName, costCenterName] = await Promise.all([
+    getOrganizationName({ organization: quote.organization }, null, ctx),
+    getCostCenterName({ costCenter: quote.costCenter }, null, ctx),
+  ])
+
+  return { organizationName, costCenterName }
+}
+
 export async function getFullSellerQuote(
   ctx: Context,
   seller: string,
   id: string
 ) {
   const quote = await getSellerQuote(ctx, id, seller)
-  const { organization, costCenter } = quote
-
-  const organizationName = await getOrganizationName(
-    { organization },
-    null,
-    ctx
+  const { organizationName, costCenterName } = await getOrganizationData(
+    ctx,
+    quote
   )
-
-  const costCenterName = await getCostCenterName({ costCenter }, null, ctx)
 
   return { ...quote, organizationName, costCenterName }
 }
