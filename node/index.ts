@@ -11,6 +11,7 @@ import { Clients } from './clients'
 import { orderHandler } from './middlewares/order'
 import { resolvers } from './resolvers'
 import { schemaDirectives } from './resolvers/directives'
+import type SellerQuotesService from './resolvers/utils/sellerQuotesService'
 
 const TIMEOUT_MS = 5000
 
@@ -42,7 +43,7 @@ declare global {
   type Context = ServiceContext<
     Clients,
     RecorderState & {
-      seller?: string
+      sellerQuotesService?: SellerQuotesService
     }
   >
 

@@ -1,5 +1,7 @@
 import { ForbiddenError } from '@vtex/api'
 
+import SellerQuotesService from '../../utils/sellerQuotesService'
+
 const USER_AGENT_REGEX = /^vtex\.b2b-seller-quotes@\d+.\d+.\d+$/
 
 export function invalidParam(
@@ -19,7 +21,7 @@ export async function validateSellerRequest(ctx: Context, next: NextFn) {
     throw new ForbiddenError('request-not-allowed')
   }
 
-  ctx.state.seller = seller
+  ctx.state.sellerQuotesService = new SellerQuotesService(ctx, seller)
 
   await next()
 }

@@ -1,6 +1,5 @@
 import { UserInputError } from '@vtex/api'
 
-import { getFullSellerQuote } from '../../utils/quotes'
 import { invalidParam } from './utils'
 
 export async function getSellerQuote(ctx: Context, next: NextFn) {
@@ -10,8 +9,7 @@ export async function getSellerQuote(ctx: Context, next: NextFn) {
     throw new UserInputError('get-seller-quote-invalid-params')
   }
 
-  const { seller } = ctx.state as { seller: string }
-  const quote = await getFullSellerQuote(ctx, seller, id)
+  const quote = await ctx.state.sellerQuotesService?.getFullSellerQuote(id)
 
   ctx.body = quote
 

@@ -1,15 +1,3 @@
-import { NotFoundError } from '@vtex/api'
-
-import {
-  QUOTE_DATA_ENTITY,
-  QUOTE_FIELDS,
-  SCHEMA_VERSION,
-} from '../../constants'
-import {
-  costCenterName as getCostCenterName,
-  organizationName as getOrganizationName,
-} from '../fieldResolvers'
-
 export async function splitItemsBySeller({
   ctx,
   items,
@@ -147,65 +135,4 @@ export const createQuoteObject = ({
     parentQuote,
     hasChildren,
   }
-}
-
-type GetQuotesArgs = {
-  ctx: Context
-  page?: number
-  pageSize?: number
-  where?: string
-  sort?: string
-}
-
-export async function getQuotes({
-  ctx,
-  page = 1,
-  pageSize = 1,
-  where,
-  sort,
-}: GetQuotesArgs) {
-  return ctx.clients.masterdata.searchDocuments<Quote>({
-    dataEntity: QUOTE_DATA_ENTITY,
-    fields: QUOTE_FIELDS,
-    schema: SCHEMA_VERSION,
-    pagination: { page, pageSize },
-    where,
-    sort,
-  })
-}
-
-export async function getSellerQuote(ctx: Context, seller: string, id: string) {
-  const [quote] = await getQuotes({
-    ctx,
-    where: `id=${id} AND seller=${seller}`,
-  })
-
-  if (!quote) {
-    throw new NotFoundError('seller-quote-not-found')
-  }
-
-  return quote
-}
-
-export async function getOrganizationData(ctx: Context, quote: Quote) {
-  const [organizationName, costCenterName] = await Promise.all([
-    getOrganizationName({ organization: quote.organization }, null, ctx),
-    getCostCenterName({ costCenter: quote.costCenter }, null, ctx),
-  ])
-
-  return { organizationName, costCenterName }
-}
-
-export async function getFullSellerQuote(
-  ctx: Context,
-  seller: string,
-  id: string
-) {
-  const quote = await getSellerQuote(ctx, id, seller)
-  const { organizationName, costCenterName } = await getOrganizationData(
-    ctx,
-    quote
-  )
-
-  return { ...quote, organizationName, costCenterName }
 }
