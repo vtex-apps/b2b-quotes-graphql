@@ -150,7 +150,6 @@ export const Mutation = {
               ...quoteCommonFields,
               ...sellerQuote,
               seller,
-              approvedBySeller: false,
               parentQuote: parentQuoteId,
             })
 

@@ -60,7 +60,6 @@ type Quote {
   viewedByCustomer: Boolean
   salesChannel: String
   seller: String
-  approvedBySeller: Boolean
   parentQuote: String
   hasChildren: Boolean
 }

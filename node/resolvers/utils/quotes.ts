@@ -62,7 +62,6 @@ export const createQuoteObject = ({
   note,
   sendToSalesRep,
   seller,
-  approvedBySeller,
   parentQuote,
   hasChildren,
 }: {
@@ -76,7 +75,6 @@ export const createQuoteObject = ({
   note: string
   sendToSalesRep: boolean
   seller?: string
-  approvedBySeller?: boolean | null
   parentQuote?: string | null
   hasChildren?: boolean | null
 }): Omit<Quote, 'id'> => {
@@ -131,7 +129,6 @@ export const createQuoteObject = ({
     viewedBySales: !sendToSalesRep,
     salesChannel,
     seller,
-    approvedBySeller,
     parentQuote,
     hasChildren,
   }
