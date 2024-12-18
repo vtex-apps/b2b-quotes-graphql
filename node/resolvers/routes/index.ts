@@ -3,6 +3,7 @@ import { method } from '@vtex/api'
 import { getAppId } from '../../constants'
 import { processQueue } from '../../utils/Queue'
 import { getSellerQuote } from './seller/getSellerQuote'
+import { getSellerQuotesPaginated } from './seller/getSellerQuotesPaginated'
 import {
   setSellerResponseMetadata,
   validateSellerRequest,
@@ -33,5 +34,8 @@ export const Routes = {
   },
   getSellerQuote: method({
     GET: createSellerHandlers(getSellerQuote),
+  }),
+  getSellerQuotesPaginated: method({
+    GET: createSellerHandlers(getSellerQuotesPaginated),
   }),
 }
