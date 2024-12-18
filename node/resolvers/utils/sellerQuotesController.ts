@@ -1,4 +1,5 @@
 import { NotFoundError } from '@vtex/api'
+import pLimit from 'p-limit'
 
 import {
   QUOTE_DATA_ENTITY,
@@ -23,21 +24,24 @@ export default class SellerQuotesController {
   private async getSellerQuotes({
     page = 1,
     pageSize = 1,
-    where,
-    sort,
+    where = '',
+    sort = '',
   }: GetQuotesArgs) {
-    return this.ctx.clients.masterdata.searchDocuments<Quote>({
-      dataEntity: QUOTE_DATA_ENTITY,
-      fields: QUOTE_FIELDS,
-      schema: SCHEMA_VERSION,
-      pagination: { page, pageSize },
-      where: `seller=${this.seller} AND (${where})`,
-      sort,
-    })
+    return this.ctx.clients.masterdata.searchDocumentsWithPaginationInfo<Quote>(
+      {
+        dataEntity: QUOTE_DATA_ENTITY,
+        fields: QUOTE_FIELDS,
+        schema: SCHEMA_VERSION,
+        pagination: { page, pageSize },
+        where: `seller=${this.seller} AND (${where})`,
+        sort,
+      }
+    )
   }
 
   private async getSellerQuote(id: string) {
-    const [quote] = await this.getSellerQuotes({ where: `id=${id}` })
+    const { data } = await this.getSellerQuotes({ where: `id=${id}` })
+    const quote = data[0]
 
     if (!quote) {
       throw new NotFoundError('seller-quote-not-found')
@@ -62,5 +66,28 @@ export default class SellerQuotesController {
     )
 
     return { ...quote, organizationName, costCenterName }
+  }
+
+  public async getSellerQuotesPaginated(page: number, pageSize: number) {
+    const { data, pagination } = await this.getSellerQuotes({ page, pageSize })
+
+    const limit = pLimit(15)
+    const enrichedQuotes = await Promise.all(
+      data.map((quote) =>
+        limit(async () => {
+          const {
+            organizationName,
+            costCenterName,
+          } = await this.getOrganizationData(quote)
+
+          return { ...quote, organizationName, costCenterName }
+        })
+      )
+    )
+
+    return {
+      data: enrichedQuotes,
+      pagination,
+    }
   }
 }
