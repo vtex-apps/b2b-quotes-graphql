@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Provides a route for seller get paginated list of quote at marketplace
+
+### Added
+
 - Add field quotesManagedBy on appSettings to handle splitting quotes
 - Process splitting quote by seller if it accepts to manage quotes
 - Notify seller with quote reference data as payload
