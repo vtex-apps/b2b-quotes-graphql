@@ -17,7 +17,7 @@ type GetQuotesArgs = {
   sort?: string
 }
 
-export default class SellerQuotesService {
+export default class SellerQuotesController {
   constructor(private readonly ctx: Context, private readonly seller: string) {}
 
   private async getSellerQuotes({

@@ -1,6 +1,7 @@
 import type {
   ClientsConfig,
   EventContext,
+  IOContext,
   ParamsContext,
   RecorderState,
   ServiceContext,
@@ -11,7 +12,7 @@ import { Clients } from './clients'
 import { orderHandler } from './middlewares/order'
 import { resolvers } from './resolvers'
 import { schemaDirectives } from './resolvers/directives'
-import type SellerQuotesService from './resolvers/utils/sellerQuotesService'
+import type SellerQuotesController from './resolvers/utils/sellerQuotesController'
 
 const TIMEOUT_MS = 5000
 
@@ -40,12 +41,11 @@ const clients: ClientsConfig<Clients> = {
 
 declare global {
   // We declare a global Context type just to avoid re-writing ServiceContext<Clients, State> in every handler and resolver
-  type Context = ServiceContext<
-    Clients,
-    RecorderState & {
-      sellerQuotesService?: SellerQuotesService
+  type Context = ServiceContext<Clients> & {
+    vtex: IOContext & {
+      sellerQuotesController?: SellerQuotesController
     }
-  >
+  }
 
   type NextFn = () => Promise<unknown>
 

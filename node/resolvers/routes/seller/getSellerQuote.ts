@@ -9,7 +9,7 @@ export async function getSellerQuote(ctx: Context, next: NextFn) {
     throw new UserInputError('get-seller-quote-invalid-params')
   }
 
-  const quote = await ctx.state.sellerQuotesService?.getFullSellerQuote(id)
+  const quote = await ctx.vtex.sellerQuotesController?.getFullSellerQuote(id)
 
   ctx.body = quote
 
