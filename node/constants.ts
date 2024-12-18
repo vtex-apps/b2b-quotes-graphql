@@ -23,7 +23,6 @@ export const QUOTE_FIELDS = [
   'viewedByCustomer',
   'salesChannel',
   'seller',
-  'approvedBySeller',
   'parentQuote',
   'hasChildren',
 ]
@@ -142,10 +141,6 @@ export const schema = {
       title: 'Seller',
       type: ['null', 'string'],
     },
-    approvedBySeller: {
-      title: 'Quote approved by seller',
-      type: ['null', 'boolean'],
-    },
     parentQuote: {
       title: 'Parent quote',
       type: ['null', 'string'],
@@ -166,7 +161,6 @@ export const schema = {
     'subtotal',
     'status',
     'seller',
-    'approvedBySeller',
     'parentQuote',
     'hasChildren',
   ],
@@ -182,7 +176,6 @@ export const schema = {
     'costCenter',
     'salesChannel',
     'seller',
-    'approvedBySeller',
     'parentQuote',
     'hasChildren',
   ],

@@ -16,7 +16,6 @@ interface Quote {
   viewedByCustomer: boolean
   salesChannel: string | null
   seller?: string | null
-  approvedBySeller?: boolean | null
   parentQuote?: string | null
   hasChildren?: boolean | null
 }
