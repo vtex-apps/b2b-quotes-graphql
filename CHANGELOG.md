@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Provides a route for seller get paginated list of quote at marketplace
+- Provides a route for seller get paginated list of quotes at marketplace
 
 ### Added
 
