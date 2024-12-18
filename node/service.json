@@ -44,6 +44,18 @@
           "principals": ["vrn:apps:*:*:*:app/vtex.b2b-seller-quotes@*"]
         }
       ]
+    },
+    "saveSellerQuote": {
+      "path": "/b2b-quotes-graphql/_v/0/save-seller-quote/:seller/:id",
+      "public": true,
+      "access": "authorized",
+      "policies": [
+        {
+          "effect": "allow",
+          "actions": ["post"],
+          "principals": ["vrn:apps:*:*:*:app/vtex.b2b-seller-quotes@*"]
+        }
+      ]
     }
   }
 }

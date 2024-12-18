@@ -3,6 +3,7 @@ import { method } from '@vtex/api'
 import { getAppId } from '../../constants'
 import { processQueue } from '../../utils/Queue'
 import { getSellerQuote } from './seller/getSellerQuote'
+import { saveSellerQuote } from './seller/saveSellerQuote'
 import {
   setSellerResponseMetadata,
   validateSellerRequest,
@@ -33,5 +34,8 @@ export const Routes = {
   },
   getSellerQuote: method({
     GET: createSellerHandlers(getSellerQuote),
+  }),
+  saveSellerQuote: method({
+    POST: createSellerHandlers(saveSellerQuote),
   }),
 }
