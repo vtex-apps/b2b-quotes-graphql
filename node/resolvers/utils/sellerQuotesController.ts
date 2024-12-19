@@ -41,7 +41,7 @@ export default class SellerQuotesController {
 
   private async getSellerQuote(id: string) {
     const { data } = await this.getSellerQuotes({ where: `id=${id}` })
-    const quote = data[0]
+    const [quote] = data
 
     if (!quote) {
       throw new NotFoundError('seller-quote-not-found')
