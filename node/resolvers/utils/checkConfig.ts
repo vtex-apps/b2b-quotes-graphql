@@ -13,6 +13,7 @@ export const defaultSettings: Settings = {
   adminSetup: {
     allowManualPrice: false,
     cartLifeSpan: 30,
+    quotesManagedBy: 'MARKETPLACE',
     hasCron: false,
   },
   schemaVersion: '',
@@ -270,6 +271,8 @@ const checkInitializations = async ({
     vtex: { workspace },
   } = ctx
 
+  const hasSplittingQuoteFields = settings.hasSplittingQuoteFieldsInSchema
+
   if (
     !settings?.adminSetup?.hasCron ||
     settings?.adminSetup?.cronExpression !== CRON_EXPRESSION ||
@@ -290,12 +293,16 @@ const checkInitializations = async ({
     }
   }
 
-  if (settings?.schemaVersion !== SCHEMA_VERSION) {
+  if (settings?.schemaVersion !== SCHEMA_VERSION || !hasSplittingQuoteFields) {
     const oldSchemaVersion = settings?.schemaVersion
 
     settings = await initializeSchema(settings, ctx)
 
-    if (settings.schemaVersion !== oldSchemaVersion) {
+    const mustUpdateSettings =
+      settings.schemaVersion !== oldSchemaVersion || !hasSplittingQuoteFields
+
+    if (mustUpdateSettings) {
+      settings.hasSplittingQuoteFieldsInSchema = true
       changed = true
     }
   }
@@ -345,7 +352,10 @@ export const checkConfig = async (ctx: Context) => {
     return null
   }
 
-  if (!settings?.adminSetup?.cartLifeSpan) {
+  if (
+    !settings?.adminSetup?.cartLifeSpan &&
+    !settings?.adminSetup?.quotesManagedBy
+  ) {
     settings = defaultSettings
     changed = true
   }
