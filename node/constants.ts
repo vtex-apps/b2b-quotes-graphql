@@ -22,6 +22,9 @@ export const QUOTE_FIELDS = [
   'viewedBySales',
   'viewedByCustomer',
   'salesChannel',
+  'seller',
+  'parentQuote',
+  'hasChildren',
 ]
 
 export const routes = {
@@ -134,6 +137,18 @@ export const schema = {
       title: 'Viewed by Sales',
       type: 'boolean',
     },
+    seller: {
+      title: 'Seller',
+      type: ['null', 'string'],
+    },
+    parentQuote: {
+      title: 'Parent quote',
+      type: ['null', 'string'],
+    },
+    hasChildren: {
+      title: 'Has children',
+      type: ['null', 'boolean'],
+    },
   },
   'v-cache': false,
   'v-default-fields': [
@@ -145,6 +160,9 @@ export const schema = {
     'items',
     'subtotal',
     'status',
+    'seller',
+    'parentQuote',
+    'hasChildren',
   ],
   'v-immediate-indexing': true,
   'v-indexed': [
@@ -157,5 +175,8 @@ export const schema = {
     'organization',
     'costCenter',
     'salesChannel',
+    'seller',
+    'parentQuote',
+    'hasChildren',
   ],
 }
