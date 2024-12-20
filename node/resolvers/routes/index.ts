@@ -1,5 +1,19 @@
-import { processQueue } from '../../utils/Queue'
+import { method } from '@vtex/api'
+
 import { getAppId } from '../../constants'
+import { processQueue } from '../../utils/Queue'
+import { getSellerQuote } from './seller/getSellerQuote'
+import { saveSellerQuote } from './seller/saveSellerQuote'
+import {
+  setSellerResponseMetadata,
+  validateSellerRequest,
+} from './seller/utils'
+
+function createSellerHandlers(
+  mainHandler: (ctx: Context, next: NextFn) => Promise<void>
+) {
+  return [validateSellerRequest, mainHandler, setSellerResponseMetadata]
+}
 
 export const Routes = {
   host: async (ctx: Context) => {
@@ -18,4 +32,10 @@ export const Routes = {
     ctx.response.body = { date, appId: getAppId() }
     ctx.response.status = 200
   },
+  getSellerQuote: method({
+    GET: createSellerHandlers(getSellerQuote),
+  }),
+  saveSellerQuote: method({
+    POST: createSellerHandlers(saveSellerQuote),
+  }),
 }

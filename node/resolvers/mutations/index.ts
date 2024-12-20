@@ -1,6 +1,19 @@
 import { indexBy, map, prop } from 'ramda'
 
 import {
+  APP_NAME,
+  QUOTE_DATA_ENTITY,
+  QUOTE_FIELDS,
+  routes,
+  SCHEMA_VERSION,
+} from '../../constants'
+import { sendCreateQuoteMetric } from '../../metrics/createQuote'
+import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
+import { sendUseQuoteMetric } from '../../metrics/useQuote'
+import { isEmail } from '../../utils'
+import GraphQLError from '../../utils/GraphQLError'
+import message from '../../utils/message'
+import {
   checkAndCreateQuotesConfig,
   checkConfig,
   defaultSettings,
@@ -11,19 +24,11 @@ import {
   checkQuoteStatus,
   checkSession,
 } from '../utils/checkPermissions'
-import { isEmail } from '../../utils'
-import GraphQLError from '../../utils/GraphQLError'
-import message from '../../utils/message'
 import {
-  APP_NAME,
-  QUOTE_DATA_ENTITY,
-  QUOTE_FIELDS,
-  routes,
-  SCHEMA_VERSION,
-} from '../../constants'
-import { sendCreateQuoteMetric } from '../../metrics/createQuote'
-import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
-import { sendUseQuoteMetric } from '../../metrics/useQuote'
+  createItemComparator,
+  createQuoteObject,
+  splitItemsBySeller,
+} from '../utils/quotes'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -71,9 +76,8 @@ export const Mutation = {
       vtex: { logger },
     } = ctx
 
-    const { sessionData, storefrontPermissions, segmentData } = vtex as any
-
     const settings = await checkConfig(ctx)
+    const { sessionData, storefrontPermissions, segmentData } = vtex as any
 
     checkSession(sessionData)
 
@@ -81,78 +85,112 @@ export const Mutation = {
       throw new GraphQLError('operation-not-permitted')
     }
 
-    const email = sessionData.namespaces.profile.email.value
-    const {
-      role: { slug },
-    } = storefrontPermissions
-
-    const {
-      organization: { value: organizationId },
-      costcenter: { value: costCenterId },
-    } = sessionData.namespaces['storefront-permissions']
-
-    const now = new Date()
-    const nowISO = now.toISOString()
-    const expirationDate = new Date()
-
-    expirationDate.setDate(
-      expirationDate.getDate() + (settings?.adminSetup?.cartLifeSpan ?? 30)
-    )
-    const expirationDateISO = expirationDate.toISOString()
-
-    const status = sendToSalesRep ? 'pending' : 'ready'
-    const lastUpdate = nowISO
-    const updateHistory = [
-      {
-        date: nowISO,
-        email,
-        note,
-        role: slug,
-        status,
-      },
-    ]
-
-    const salesChannel: string = segmentData?.channel
-
-    const quote = {
-      costCenter: costCenterId,
-      creationDate: nowISO,
-      creatorEmail: email,
-      creatorRole: slug,
-      expirationDate: expirationDateISO,
-      items,
-      lastUpdate,
-      organization: organizationId,
-      referenceName,
-      status,
-      subtotal,
-      updateHistory,
-      viewedByCustomer: !!sendToSalesRep,
-      viewedBySales: !sendToSalesRep,
-      salesChannel,
-    }
-
     try {
-      const data = await masterdata
-        .createDocument({
-          dataEntity: QUOTE_DATA_ENTITY,
-          fields: quote,
-          schema: SCHEMA_VERSION,
+      let quoteBySeller: SellerQuoteMap = {}
+
+      if (settings?.adminSetup.quotesManagedBy === 'SELLER') {
+        const sellerItems = items.filter(
+          ({ seller }) => seller && seller !== '1'
+        )
+
+        quoteBySeller = await splitItemsBySeller({
+          ctx,
+          items: sellerItems,
         })
-        .then((res: any) => res)
+      }
+
+      const hasSellerQuotes = Object.keys(quoteBySeller).length
+
+      const parentQuoteItems = hasSellerQuotes
+        ? items.filter(
+            (item) =>
+              !Object.values(quoteBySeller).some((quote) =>
+                quote.items.some(createItemComparator(item))
+              )
+          )
+        : items
+
+      const quoteCommonFields = {
+        sessionData,
+        storefrontPermissions,
+        segmentData,
+        settings,
+        referenceName,
+        note,
+        sendToSalesRep,
+      }
+
+      // We believe that parent quote should contain the overall subtotal.
+      // If for some reason it is necessary to subtract the subtotal from
+      // sellers quotes, we can use the adjustedSubtotal below, assigning
+      // it to subtotal in createQuoteObject -> `subtotal: adjustedSubtotal`
+      //
+      // const adjustedSubtotal = hasSellerQuotes
+      //   ? Object.values(quoteBySeller).reduce(
+      //       (acc, quote) => acc - quote.subtotal,
+      //       subtotal
+      //     )
+      //   : subtotal
+      const parentQuote = createQuoteObject({
+        ...quoteCommonFields,
+        items: parentQuoteItems,
+        subtotal,
+      })
+
+      const { DocumentId: parentQuoteId } = await masterdata.createDocument({
+        dataEntity: QUOTE_DATA_ENTITY,
+        fields: parentQuote,
+        schema: SCHEMA_VERSION,
+      })
+
+      if (hasSellerQuotes) {
+        const sellerQuoteIds = await Promise.all(
+          Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
+            const sellerQuoteObject = createQuoteObject({
+              ...quoteCommonFields,
+              ...sellerQuote,
+              seller,
+              parentQuote: parentQuoteId,
+            })
+
+            const data = await masterdata.createDocument({
+              dataEntity: QUOTE_DATA_ENTITY,
+              fields: sellerQuoteObject,
+              schema: SCHEMA_VERSION,
+            })
+
+            await ctx.clients.sellerQuotes.notifyNewQuote(
+              seller,
+              data.DocumentId,
+              sellerQuoteObject.creationDate
+            )
+
+            return data.DocumentId
+          })
+        )
+
+        if (sellerQuoteIds.length) {
+          await masterdata.updatePartialDocument({
+            dataEntity: QUOTE_DATA_ENTITY,
+            fields: { hasChildren: true },
+            id: parentQuoteId,
+            schema: SCHEMA_VERSION,
+          })
+        }
+      }
 
       if (sendToSalesRep) {
         message(ctx)
           .quoteCreated({
-            costCenter: costCenterId,
-            id: data.DocumentId,
+            costCenter: parentQuote.costCenter,
+            id: parentQuoteId,
             lastUpdate: {
-              email,
+              email: parentQuote.creatorEmail,
               note,
-              status: status.toUpperCase(),
+              status: parentQuote.status.toUpperCase(),
             },
             name: referenceName,
-            organization: organizationId,
+            organization: parentQuote.organization,
           })
           .then(() => {
             logger.info({
@@ -164,21 +202,21 @@ export const Mutation = {
       const metricsParam = {
         sessionData,
         userData: {
-          orgId: organizationId,
-          costId: costCenterId,
-          roleId: slug,
+          orgId: parentQuote.organization,
+          costId: parentQuote.costCenter,
+          roleId: parentQuote.creatorRole,
         },
         costCenterName: 'costCenterData?.getCostCenterById?.name',
         buyerOrgName: 'organizationData?.getOrganizationById?.name',
-        quoteId: data.DocumentId,
+        quoteId: parentQuoteId,
         quoteReferenceName: referenceName,
         sendToSalesRep,
-        creationDate: nowISO,
+        creationDate: parentQuote.creationDate,
       }
 
       sendCreateQuoteMetric(ctx, metricsParam)
 
-      return data.DocumentId
+      return parentQuoteId
     } catch (error) {
       logger.error({
         error,
@@ -497,7 +535,9 @@ export const Mutation = {
   },
   saveAppSettings: async (
     _: void,
-    { input: { cartLifeSpan } }: { input: { cartLifeSpan: number } },
+    {
+      input: { cartLifeSpan, quotesManagedBy = 'MARKETPLACE' },
+    }: { input: { cartLifeSpan: number; quotesManagedBy: string } },
     ctx: Context
   ) => {
     const {
@@ -533,6 +573,7 @@ export const Mutation = {
       adminSetup: {
         ...settings.adminSetup,
         cartLifeSpan,
+        quotesManagedBy,
       },
     }
 
