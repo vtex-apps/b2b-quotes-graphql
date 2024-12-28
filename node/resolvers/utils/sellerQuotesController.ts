@@ -69,7 +69,11 @@ export default class SellerQuotesController {
   }
 
   public async getSellerQuotesPaginated(page: number, pageSize: number) {
-    const { data, pagination } = await this.getSellerQuotes({ page, pageSize })
+    const { data, pagination } = await this.getSellerQuotes({
+      page,
+      pageSize,
+      sort: 'creationDate DESC',
+    })
 
     const limit = pLimit(15)
     const enrichedQuotes = await Promise.all(
