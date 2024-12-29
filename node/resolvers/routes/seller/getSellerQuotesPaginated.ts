@@ -13,7 +13,11 @@ export async function getSellerQuotesPaginated(ctx: Context, next: NextFn) {
   const filters: string[] = []
 
   if (!invalidParam(search)) {
-    filters.push(`(referenceName='*${search.split(/\s+/).join('*')}*')`)
+    const searchTerm = `*${search.replace("'", '').split(/\s+/).join('*')}*`
+
+    filters.push(
+      `(referenceName='${searchTerm}' OR creatorEmail='${searchTerm}')`
+    )
   }
 
   if (!invalidParam(status)) {
