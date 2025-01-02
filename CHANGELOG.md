@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notify seller with quote reference data as payload
 - Provides a route for seller get a quote by id at marketplace
 - Provides a route for seller save a quote at marketplace
+- Provides a route for get splited quotes based on parentID
 
 ## [2.6.4] - 2024-10-31
 
