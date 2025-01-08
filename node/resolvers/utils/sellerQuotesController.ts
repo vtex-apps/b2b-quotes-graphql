@@ -68,16 +68,22 @@ export default class SellerQuotesController {
     return { ...quote, organizationName, costCenterName }
   }
 
-  public async getSellerQuotesPaginated(
-    page: number,
-    pageSize: number,
+  public async getSellerQuotesPaginated({
+    page,
+    pageSize,
+    where,
+    sort = 'creationDate DESC',
+  }: {
+    page: number
+    pageSize: number
     where?: string
-  ) {
+    sort?: string
+  }) {
     const { data, pagination } = await this.getSellerQuotes({
       page,
       pageSize,
       where,
-      sort: 'creationDate DESC',
+      sort,
     })
 
     const limit = pLimit(15)
