@@ -2,7 +2,7 @@ import { ForbiddenError } from '@vtex/api'
 
 import SellerQuotesController from '../../utils/sellerQuotesController'
 
-const USER_AGENT_REGEX = /^vtex\.b2b-seller-quotes@\d+.\d+.\d+$/
+const USER_AGENT_REGEX = /^vtex\.b2b-seller-quotes@\d+\.\d+\.\d+$/
 
 export function invalidParam(
   param?: string | string[]
