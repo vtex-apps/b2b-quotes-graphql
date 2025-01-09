@@ -15,6 +15,9 @@ interface Quote {
   viewedBySales: boolean
   viewedByCustomer: boolean
   salesChannel: string | null
+  seller?: string | null
+  parentQuote?: string | null
+  hasChildren?: boolean | null
 }
 
 interface QuoteUpdate {
@@ -106,7 +109,42 @@ interface Settings {
     hasCron?: boolean
     cronExpression?: string
     cronWorkspace?: string
+    quotesManagedBy?: string
   }
+  hasSplittingQuoteFieldsInSchema?: boolean
   schemaVersion: string
   templateHash: string | null
+}
+
+interface SessionData {
+  namespaces: {
+    profile: {
+      id: { value: string }
+      email: { value: string }
+    }
+    account: {
+      accountName: { value: string }
+    }
+    'storefront-permissions': {
+      organization: { value: string }
+      costcenter: { value: string }
+    }
+  }
+}
+
+interface SellerQuoteInput {
+  items: QuoteItem[]
+  subtotal: number
+}
+
+type SellerQuoteMap = Record<string, SellerQuoteInput>
+
+interface VerifyQuoteSettingsResponse {
+  receiveQuotes: boolean
+}
+
+interface SellerQuoteNotifyInput {
+  quoteId: string
+  marketplaceAccount: string
+  creationDate: string
 }
