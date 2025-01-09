@@ -271,6 +271,8 @@ const checkInitializations = async ({
     vtex: { workspace },
   } = ctx
 
+  const hasSplittingQuoteFields = settings.hasSplittingQuoteFieldsInSchema
+
   if (
     !settings?.adminSetup?.hasCron ||
     settings?.adminSetup?.cronExpression !== CRON_EXPRESSION ||
@@ -291,12 +293,16 @@ const checkInitializations = async ({
     }
   }
 
-  if (settings?.schemaVersion !== SCHEMA_VERSION) {
+  if (settings?.schemaVersion !== SCHEMA_VERSION || !hasSplittingQuoteFields) {
     const oldSchemaVersion = settings?.schemaVersion
 
     settings = await initializeSchema(settings, ctx)
 
-    if (settings.schemaVersion !== oldSchemaVersion) {
+    const mustUpdateSettings =
+      settings.schemaVersion !== oldSchemaVersion || !hasSplittingQuoteFields
+
+    if (mustUpdateSettings) {
+      settings.hasSplittingQuoteFieldsInSchema = true
       changed = true
     }
   }

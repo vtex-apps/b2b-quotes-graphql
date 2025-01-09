@@ -59,6 +59,9 @@ type Quote {
   viewedBySales: Boolean
   viewedByCustomer: Boolean
   salesChannel: String
+  seller: String
+  parentQuote: String
+  hasChildren: Boolean
 }
 
 type QuoteUpdate {

@@ -57,7 +57,8 @@ const buildWhereStatement = async ({
   userCostCenterId: string
   userSalesChannel?: string
 }) => {
-  const whereArray = []
+  // only the main quotes must be fetched
+  const whereArray = ['(parentQuote is null)']
 
   // if user only has permission to access their organization's quotes,
   // hard-code that organization into the masterdata search
