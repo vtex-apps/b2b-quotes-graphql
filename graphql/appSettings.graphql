@@ -3,7 +3,13 @@ type AppSettings {
 }
 type AdminSetup {
   cartLifeSpan: Int
+  quotesManagedBy: QuotesManagedBy!
 }
 input AppSettingsInput {
   cartLifeSpan: Int
+  quotesManagedBy: QuotesManagedBy
+}
+enum QuotesManagedBy {
+  MARKETPLACE
+  SELLER
 }

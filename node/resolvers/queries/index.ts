@@ -1,5 +1,3 @@
-import { checkConfig } from '../utils/checkConfig'
-import GraphQLError from '../../utils/GraphQLError'
 import {
   APP_NAME,
   B2B_USER_DATA_ENTITY,
@@ -8,6 +6,8 @@ import {
   QUOTE_FIELDS,
   SCHEMA_VERSION,
 } from '../../constants'
+import GraphQLError from '../../utils/GraphQLError'
+import { checkConfig } from '../utils/checkConfig'
 
 // This function checks if given email is an user part of a buyer org.
 export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
@@ -332,6 +332,10 @@ export const Query = {
       })
 
       return null
+    }
+
+    if (settings && !settings?.adminSetup.quotesManagedBy) {
+      settings.adminSetup.quotesManagedBy = 'MARKETPLACE'
     }
 
     return settings

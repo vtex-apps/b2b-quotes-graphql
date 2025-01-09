@@ -1,6 +1,19 @@
 import { indexBy, map, prop } from 'ramda'
 
 import {
+  APP_NAME,
+  QUOTE_DATA_ENTITY,
+  QUOTE_FIELDS,
+  routes,
+  SCHEMA_VERSION,
+} from '../../constants'
+import { sendCreateQuoteMetric } from '../../metrics/createQuote'
+import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
+import { sendUseQuoteMetric } from '../../metrics/useQuote'
+import { isEmail } from '../../utils'
+import GraphQLError from '../../utils/GraphQLError'
+import message from '../../utils/message'
+import {
   checkAndCreateQuotesConfig,
   checkConfig,
   defaultSettings,
@@ -11,19 +24,6 @@ import {
   checkQuoteStatus,
   checkSession,
 } from '../utils/checkPermissions'
-import { isEmail } from '../../utils'
-import GraphQLError from '../../utils/GraphQLError'
-import message from '../../utils/message'
-import {
-  APP_NAME,
-  QUOTE_DATA_ENTITY,
-  QUOTE_FIELDS,
-  routes,
-  SCHEMA_VERSION,
-} from '../../constants'
-import { sendCreateQuoteMetric } from '../../metrics/createQuote'
-import type { UseQuoteMetricsParams } from '../../metrics/useQuote'
-import { sendUseQuoteMetric } from '../../metrics/useQuote'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -497,7 +497,9 @@ export const Mutation = {
   },
   saveAppSettings: async (
     _: void,
-    { input: { cartLifeSpan } }: { input: { cartLifeSpan: number } },
+    {
+      input: { cartLifeSpan, quotesManagedBy = 'MARKETPLACE' },
+    }: { input: { cartLifeSpan: number; quotesManagedBy: string } },
     ctx: Context
   ) => {
     const {
@@ -533,6 +535,7 @@ export const Mutation = {
       adminSetup: {
         ...settings.adminSetup,
         cartLifeSpan,
+        quotesManagedBy,
       },
     }
 
