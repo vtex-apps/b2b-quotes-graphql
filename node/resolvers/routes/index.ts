@@ -4,6 +4,7 @@ import { getAppId } from '../../constants'
 import { processQueue } from '../../utils/Queue'
 import { getSellerQuote } from './seller/getSellerQuote'
 import { getSellerQuotesPaginated } from './seller/getSellerQuotesPaginated'
+import { saveSellerQuote } from './seller/saveSellerQuote'
 import {
   setSellerResponseMetadata,
   validateSellerRequest,
@@ -37,5 +38,8 @@ export const Routes = {
   }),
   getSellerQuotesPaginated: method({
     GET: createSellerHandlers(getSellerQuotesPaginated),
+  }),
+  saveSellerQuote: method({
+    POST: createSellerHandlers(saveSellerQuote),
   }),
 }
