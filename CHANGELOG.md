@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Provides a route for seller get paginated list of quotes at marketplace
 - Provides a route for seller save a quote at marketplace
+- Provides a route for get splited quotes based on parentID
 
 ## [2.7.0] - 2025-01-09
 

@@ -291,6 +291,47 @@ export const Query = {
       throw new GraphQLError(error)
     }
   },
+  getChildrenQuotes: async (
+    _: any,
+    {
+      id,
+      page,
+      pageSize,
+      sortOrder,
+      sortedBy,
+    }: {
+      id: string
+      page: number
+      pageSize: number
+      sortOrder: string
+      sortedBy: string
+    },
+    ctx: Context
+  ) => {
+    const {
+      clients: { masterdata },
+      vtex: { logger },
+    } = ctx
+
+    await checkConfig(ctx)
+
+    try {
+      return await masterdata.searchDocumentsWithPaginationInfo({
+        dataEntity: QUOTE_DATA_ENTITY,
+        fields: QUOTE_FIELDS,
+        pagination: { page, pageSize },
+        schema: SCHEMA_VERSION,
+        sort: `${sortedBy} ${sortOrder}`,
+        where: `parentQuote=${id}`,
+      })
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getQuotes-error',
+      })
+      throw new GraphQLError(error)
+    }
+  },
   getQuoteEnabledForUser: async (
     _: any,
     { email }: { email: string },
