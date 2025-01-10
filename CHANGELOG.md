@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Provides a route for seller get paginated list of quotes at marketplace
+
 ## [2.7.0] - 2025-01-09
 
 ### Added
