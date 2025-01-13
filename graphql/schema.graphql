@@ -28,11 +28,9 @@ type Query {
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getChildrenQuotes(
     id: String
-    page: Int = 1
-    pageSize: Int = 25
     sortOrder: String = "DESC"
     sortedBy: String = "lastUpdate"
-  ): Quotes
+  ): [Quote]
     @auditAccess
     @withPermissions
     @withSession

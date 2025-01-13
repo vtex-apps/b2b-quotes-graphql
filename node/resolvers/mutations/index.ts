@@ -29,6 +29,7 @@ import {
   createQuoteObject,
   splitItemsBySeller,
 } from '../utils/quotes'
+import SellerQuotesController from '../utils/sellerQuotesController'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -120,17 +121,6 @@ export const Mutation = {
         sendToSalesRep,
       }
 
-      // We believe that parent quote should contain the overall subtotal.
-      // If for some reason it is necessary to subtract the subtotal from
-      // sellers quotes, we can use the adjustedSubtotal below, assigning
-      // it to subtotal in createQuoteObject -> `subtotal: adjustedSubtotal`
-      //
-      // const adjustedSubtotal = hasSellerQuotes
-      //   ? Object.values(quoteBySeller).reduce(
-      //       (acc, quote) => acc - quote.subtotal,
-      //       subtotal
-      //     )
-      //   : subtotal
       const parentQuote = createQuoteObject({
         ...quoteCommonFields,
         items: parentQuoteItems,
@@ -144,6 +134,34 @@ export const Mutation = {
       })
 
       if (hasSellerQuotes) {
+        const childrenQuoteIds: string[] = []
+
+        if (parentQuoteItems.length) {
+          const marketplaceSubtotal = parentQuoteItems.reduce(
+            (acc, item) => acc + item.sellingPrice * item.quantity,
+            0
+          )
+
+          const marketplaceQuote = createQuoteObject({
+            ...quoteCommonFields,
+            items: parentQuoteItems,
+            subtotal: marketplaceSubtotal,
+            seller: '1',
+            sellerName: settings?.storeName ?? ctx.vtex.account,
+            parentQuote: parentQuoteId,
+          })
+
+          const {
+            DocumentId: markerplaceQuoteId,
+          } = await masterdata.createDocument({
+            dataEntity: QUOTE_DATA_ENTITY,
+            fields: marketplaceQuote,
+            schema: SCHEMA_VERSION,
+          })
+
+          childrenQuoteIds.push(markerplaceQuoteId)
+        }
+
         const sellerQuoteIds = await Promise.all(
           Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
             const sellerQuoteObject = createQuoteObject({
@@ -169,10 +187,15 @@ export const Mutation = {
           })
         )
 
-        if (sellerQuoteIds.length) {
+        childrenQuoteIds.push(...sellerQuoteIds)
+
+        if (childrenQuoteIds.length) {
           await masterdata.updatePartialDocument({
             dataEntity: QUOTE_DATA_ENTITY,
-            fields: { hasChildren: true },
+            fields: {
+              hasChildren: true,
+              childrenQuantity: childrenQuoteIds.length,
+            },
             id: parentQuoteId,
             schema: SCHEMA_VERSION,
           })
@@ -340,6 +363,14 @@ export const Mutation = {
           schema: SCHEMA_VERSION,
         })
         .then((res: any) => res)
+
+      if (existingQuote.parentQuote) {
+        const sellerQuotesController = new SellerQuotesController(ctx)
+
+        sellerQuotesController.handleParentQuoteSubtotalAndStatus(
+          existingQuote.parentQuote
+        )
+      }
 
       const users = updateHistory.map((anUpdate) => anUpdate.email)
       const uniqueUsers = [
@@ -568,6 +599,10 @@ export const Mutation = {
       noSettingsFound = true
     }
 
+    const accountData = await ctx.clients.licenseManager
+      .getAccountData(ctx.vtex.adminUserAuthToken ?? '')
+      .catch(() => null)
+
     const newSettings = {
       ...settings,
       adminSetup: {
@@ -575,6 +610,7 @@ export const Mutation = {
         cartLifeSpan,
         quotesManagedBy,
       },
+      storeName: accountData?.name,
     }
 
     try {

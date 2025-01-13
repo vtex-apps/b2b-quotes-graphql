@@ -24,7 +24,7 @@ export async function splitItemsBySeller({
 
   // The ternary check is to not request again from the same seller
   const verifyResponse = quoteBySeller[seller]
-    ? { receiveQuotes: true }
+    ? { receiveQuotes: true, sellerName: quoteBySeller[seller].sellerName }
     : await ctx.clients.sellerQuotes
         .verifyQuoteSettings(seller)
         .catch(() => null)
@@ -36,7 +36,11 @@ export async function splitItemsBySeller({
   }
 
   if (!quoteBySeller[seller]) {
-    quoteBySeller[seller] = { items: [], subtotal: 0 }
+    quoteBySeller[seller] = {
+      items: [],
+      subtotal: 0,
+      sellerName: verifyResponse.sellerName,
+    }
   }
 
   quoteBySeller[seller].items.push(item)
@@ -62,6 +66,7 @@ export const createQuoteObject = ({
   note,
   sendToSalesRep,
   seller,
+  sellerName,
   parentQuote,
   hasChildren,
 }: {
@@ -75,10 +80,15 @@ export const createQuoteObject = ({
   note: string
   sendToSalesRep: boolean
   seller?: string
+  sellerName?: string
   parentQuote?: string | null
   hasChildren?: boolean | null
 }): Omit<Quote, 'id'> => {
-  const email = sessionData.namespaces.profile.email.value
+  const { email, firstName, lastName } = sessionData.namespaces.profile
+  const { value: creatorEmail } = email
+  const creatorName = `${firstName.value}${
+    lastName.value ? ` ${lastName.value}` : ''
+  }`
 
   const {
     role: { slug },
@@ -103,7 +113,7 @@ export const createQuoteObject = ({
   const updateHistory = [
     {
       date: nowISO,
-      email,
+      email: creatorEmail,
       note,
       role: slug,
       status,
@@ -115,7 +125,8 @@ export const createQuoteObject = ({
   return {
     costCenter: costCenterId,
     creationDate: nowISO,
-    creatorEmail: email,
+    creatorEmail,
+    creatorName,
     creatorRole: slug,
     expirationDate: expirationDateISO,
     items,
@@ -129,6 +140,7 @@ export const createQuoteObject = ({
     viewedBySales: !sendToSalesRep,
     salesChannel,
     seller,
+    sellerName,
     parentQuote,
     hasChildren,
   }

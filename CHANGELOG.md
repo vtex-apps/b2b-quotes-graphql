@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Provides a route for seller get paginated list of quotes at marketplace
 - Provides a route for seller save a quote at marketplace
 - Provides a route for get splited quotes based on parentID
+- Add fields creatorName, sellerName and childrenQuantity on quote entity
+- Create a new quote to marketplace responsibility for remaining items when splitting a quote
+- Handle parent quote status and subtotal when updating splitted quotes
+- Receiving seller trade name on verify seller quotes settings to save it in sellerName quote field
+- Get all children quotes ordered by lastUpdate DESC once on getChildrenQuotes
+- Saving marketplace trade name in settings to display in quotes list when splitting a quote
+- Saving masterdata schema hash in settings to update when it changes
 
 ## [2.7.0] - 2025-01-09
 
