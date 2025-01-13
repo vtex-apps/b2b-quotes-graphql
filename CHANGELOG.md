@@ -7,13 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
 - Add fields creatorName, sellerName and childrenQuantity on quote entity
-- Create a new quote to marketplace responsibility for remaining items when splitting a quote
-- Handle parent quote status and subtotal when updating splitted quotes
-- Receiving seller trade name on verify seller quotes settings to save it in sellerName quote field
-- Get all children quotes ordered by lastUpdate DESC once on getChildrenQuotes
 - Saving marketplace trade name in settings to display in quotes list when splitting a quote
 - Saving masterdata schema hash in settings to update when it changes
+- Create a new quote to marketplace responsibility for remaining items when splitting a quote
+- Receiving seller trade name on verify seller quotes settings to save it in sellerName quote field
+
+### Changed
+
+- Handle parent quote status and subtotal when updating splitted quotes
+- Get all children quotes ordered by lastUpdate DESC once on getChildrenQuotes
 
 ## [2.8.0] - 2025-01-13
 
