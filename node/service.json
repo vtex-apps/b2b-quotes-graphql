@@ -44,6 +44,30 @@
           "principals": ["vrn:apps:*:*:*:app/vtex.b2b-seller-quotes@*"]
         }
       ]
+    },
+    "getSellerQuotesPaginated": {
+      "path": "/b2b-quotes-graphql/_v/0/get-seller-quotes-paginated/:seller",
+      "public": true,
+      "access": "authorized",
+      "policies": [
+        {
+          "effect": "allow",
+          "actions": ["get"],
+          "principals": ["vrn:apps:*:*:*:app/vtex.b2b-seller-quotes@*"]
+        }
+      ]
+    },
+    "saveSellerQuote": {
+      "path": "/b2b-quotes-graphql/_v/0/save-seller-quote/:seller/:id",
+      "public": true,
+      "access": "authorized",
+      "policies": [
+        {
+          "effect": "allow",
+          "actions": ["post"],
+          "principals": ["vrn:apps:*:*:*:app/vtex.b2b-seller-quotes@*"]
+        }
+      ]
     }
   }
 }
