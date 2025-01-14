@@ -39,6 +39,7 @@ export async function splitItemsBySeller({
     quoteBySeller[seller] = {
       items: [],
       subtotal: 0,
+      seller,
       sellerName: verifyResponse.sellerName,
     }
   }
@@ -86,9 +87,9 @@ export const createQuoteObject = ({
 }): Omit<Quote, 'id'> => {
   const { email, firstName, lastName } = sessionData.namespaces.profile
   const { value: creatorEmail } = email
-  const creatorName = `${firstName.value}${
-    lastName.value ? ` ${lastName.value}` : ''
-  }`
+  const creatorName = `${firstName?.value ?? ''}${
+    lastName?.value ? ` ${lastName.value}` : ''
+  }`.trim()
 
   const {
     role: { slug },

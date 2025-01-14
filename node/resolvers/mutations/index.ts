@@ -100,16 +100,27 @@ export const Mutation = {
         })
       }
 
-      const hasSellerQuotes = Object.keys(quoteBySeller).length
+      const sellerQuotesQuantity = Object.keys(quoteBySeller).length
 
-      const parentQuoteItems = hasSellerQuotes
-        ? items.filter(
-            (item) =>
-              !Object.values(quoteBySeller).some((quote) =>
-                quote.items.some(createItemComparator(item))
-              )
+      const remainingItems = items.filter(
+        (item) =>
+          !Object.values(quoteBySeller).some((quote) =>
+            quote.items.some(createItemComparator(item))
           )
-        : items
+      )
+
+      const isOnlyOneQuote =
+        !sellerQuotesQuantity ||
+        (sellerQuotesQuantity === 1 && !remainingItems.length)
+
+      const [firstSellerQuote] = Object.values(quoteBySeller)
+
+      const parentQuoteItems =
+        isOnlyOneQuote && firstSellerQuote
+          ? firstSellerQuote.items
+          : sellerQuotesQuantity
+          ? remainingItems
+          : items
 
       const quoteCommonFields = {
         sessionData,
@@ -125,6 +136,11 @@ export const Mutation = {
         ...quoteCommonFields,
         items: parentQuoteItems,
         subtotal,
+        ...(isOnlyOneQuote &&
+          firstSellerQuote && {
+            seller: firstSellerQuote.seller,
+            sellerName: firstSellerQuote.sellerName,
+          }),
       })
 
       const { DocumentId: parentQuoteId } = await masterdata.createDocument({
@@ -133,7 +149,15 @@ export const Mutation = {
         schema: SCHEMA_VERSION,
       })
 
-      if (hasSellerQuotes) {
+      if (isOnlyOneQuote) {
+        if (firstSellerQuote) {
+          await ctx.clients.sellerQuotes.notifyNewQuote(
+            firstSellerQuote.seller,
+            parentQuoteId,
+            parentQuote.creationDate
+          )
+        }
+      } else {
         const childrenQuoteIds: string[] = []
 
         if (parentQuoteItems.length) {
@@ -167,7 +191,6 @@ export const Mutation = {
             const sellerQuoteObject = createQuoteObject({
               ...quoteCommonFields,
               ...sellerQuote,
-              seller,
               parentQuote: parentQuoteId,
             })
 

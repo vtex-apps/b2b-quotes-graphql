@@ -141,6 +141,7 @@ interface SessionData {
 interface SellerQuoteInput {
   items: QuoteItem[]
   subtotal: number
+  seller: string
   sellerName: string
 }
 
