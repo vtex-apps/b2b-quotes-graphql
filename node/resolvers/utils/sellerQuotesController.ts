@@ -180,10 +180,12 @@ export default class SellerQuotesController {
       ? 'revised'
       : undefined
 
+    const lastUpdate = new Date().toISOString()
+
     this.ctx.clients.masterdata.updatePartialDocument({
       dataEntity: QUOTE_DATA_ENTITY,
       schema: SCHEMA_VERSION,
-      fields: { subtotal: sumSubtotal, status },
+      fields: { subtotal: sumSubtotal, status, lastUpdate },
       id: parentQuote,
     })
   }
