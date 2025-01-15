@@ -20,7 +20,7 @@ type GetQuotesArgs = {
 
 export default class SellerQuotesController {
   constructor(
-    private readonly ctx: Context,
+    private readonly ctx: Context | EventBroadcastContext,
     private readonly seller?: string
   ) {}
 

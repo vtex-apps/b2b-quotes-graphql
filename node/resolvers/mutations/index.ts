@@ -387,11 +387,40 @@ export const Mutation = {
         })
         .then((res: any) => res)
 
-      if (existingQuote.parentQuote) {
-        const sellerQuotesController = new SellerQuotesController(ctx)
+      const sellerQuotesController = new SellerQuotesController(ctx)
 
+      if (existingQuote.parentQuote) {
         sellerQuotesController.handleParentQuoteSubtotalAndStatus(
           existingQuote.parentQuote
+        )
+      }
+
+      if (existingQuote.hasChildren && decline) {
+        const childrenQuotes = await sellerQuotesController.getAllChildrenQuotes(
+          id
+        )
+
+        await Promise.all(
+          childrenQuotes.map((quote) => {
+            const { updateHistory: childUpdateHistory } = quote
+
+            childUpdateHistory.push(update)
+
+            return masterdata.updateEntireDocument({
+              dataEntity: QUOTE_DATA_ENTITY,
+              fields: {
+                ...quote,
+                status: 'declined',
+                lastUpdate,
+                expirationDate: updatedQuote.expirationDate,
+                updateHistory: childUpdateHistory,
+                viewedByCustomer: !!(decline || isCustomer),
+                viewedBySales: !!(decline || isSales),
+              },
+              id: quote.id,
+              schema: SCHEMA_VERSION,
+            })
+          })
         )
       }
 
@@ -458,15 +487,45 @@ export const Mutation = {
 
     try {
       // GET QUOTE DATA
-      const quote: Quote = await masterdata.getDocument({
+      const mainQuote: Quote = await masterdata.getDocument({
         dataEntity: QUOTE_DATA_ENTITY,
         fields: QUOTE_FIELDS,
         id,
       })
 
-      checkQuoteStatus(quote)
+      const quotes: Quote[] = []
+      const items: QuoteItem[] = []
 
-      const { items, salesChannel } = quote
+      if (mainQuote.hasChildren) {
+        const sellerQuotesController = new SellerQuotesController(ctx)
+        const childrenQuotes = await sellerQuotesController.getAllChildrenQuotes(
+          id
+        )
+
+        let errorsCount = 0
+
+        for (const quote of childrenQuotes) {
+          try {
+            checkQuoteStatus(quote)
+            quotes.push(quote)
+          } catch (e) {
+            if (++errorsCount === childrenQuotes.length) {
+              throw e
+            }
+
+            continue
+          }
+        }
+      } else {
+        checkQuoteStatus(mainQuote)
+        quotes.push(mainQuote)
+      }
+
+      for (const quote of quotes) {
+        items.push(...quote.items)
+      }
+
+      const { salesChannel } = mainQuote
 
       // CLEAR CURRENT CART
       if (orderFormId !== 'default-order-form') {
@@ -565,14 +624,16 @@ export const Mutation = {
         useHeaders
       )
 
-      const metricParams: UseQuoteMetricsParams = {
-        quote,
-        orderFormId,
-        account,
-        userEmail: sessionData?.namespaces?.profile?.email?.value,
-      }
+      for (const quote of quotes) {
+        const metricParams: UseQuoteMetricsParams = {
+          quote,
+          orderFormId,
+          account,
+          userEmail: sessionData?.namespaces?.profile?.email?.value,
+        }
 
-      sendUseQuoteMetric(ctx, metricParams)
+        sendUseQuoteMetric(ctx, metricParams)
+      }
     } catch (error) {
       logger.error({
         error,
