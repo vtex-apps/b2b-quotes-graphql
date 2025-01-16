@@ -92,7 +92,7 @@ export const schema = {
     },
     creatorName: {
       title: 'Creator Name',
-      type: 'string',
+      type: ['null', 'string'],
     },
     creatorRole: {
       title: 'Creator Role',
