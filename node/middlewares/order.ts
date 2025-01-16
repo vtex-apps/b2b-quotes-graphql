@@ -62,7 +62,7 @@ export async function orderHandler(
         }
 
         await Promise.all(
-          quotes.map((quote) => processQuote(ctx, body.orderId, quote))
+          quotes.map((quote) => processQuote(ctx, order, quote))
         )
       }
     }
@@ -80,24 +80,29 @@ export async function orderHandler(
 
 async function processQuote(
   ctx: EventBroadcastContext,
-  orderId: string,
+  order: Order,
   quote: Quote
 ) {
-  const newUpdateHistory = [
-    ...quote.updateHistory,
-    {
+  const { orderId } = order
+
+  const mustAddUpdateHistory =
+    !quote.seller ||
+    (quote.seller && order.items.some((item) => item.seller === quote.seller))
+
+  if (mustAddUpdateHistory) {
+    quote.updateHistory.push({
       date: new Date().toISOString(),
       email: NO_REPLY_EMAIL,
       note: `Order ID: ${orderId}`,
       role: 'order-notification-system',
       status: 'placed',
-    },
-  ]
+    })
+  }
 
   const quoteUpdated = {
     ...quote,
     status: 'placed',
-    updateHistory: newUpdateHistory,
+    updateHistory: quote.updateHistory,
   }
 
   await ctx.clients.masterdata.updateEntireDocument({
