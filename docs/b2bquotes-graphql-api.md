@@ -1,5 +1,7 @@
 # B2B Quotes GraphQL API
 
+This article provides a reference guide to the B2B Quotes GraphQL API, with details about queries and mutations available for the [B2B Quotes app](https://developers.vtex.com/docs/apps/vtex.b2b-quotes). The API allows the management of quotes and associated configurations within a B2B environment. It enables users to perform a range of actions including quote retrieval, creation, and updates, as well as the management of application settings and permissions.
+
 ## Schema overview
 
 ### Query
@@ -139,27 +141,27 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>getQuotes</strong></td>
       <td valign="top"><a href="#quotes">Quotes</a></td>
-      <td>Retrieves a paginated list of quotes with optional filtering.</td>
+      <td>Retrieves a paginated list of quotes and saved carts with optional filtering.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">organization</td>
       <td valign="top">[String]</td>
-      <td>Filter quotes by organization IDs.</td>
+      <td>Filter quotes and saved carts by organization IDs.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">costCenter</td>
       <td valign="top">[String]</td>
-      <td>Filter quotes by cost center IDs.</td>
+      <td>Filter quotes and saved carts by cost center IDs.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">status</td>
       <td valign="top">[String]</td>
-      <td>Filter quotes by their status (e.g., pending, approved).</td>
+      <td>Filter by status: READY, PENDING, REVISED, DECLINED, EXPIRED, or PLACED.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">search</td>
       <td valign="top">String</td>
-      <td>Search term to filter quotes by reference name or ID.</td>
+      <td>Search quotes and saved carts by reference name.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">page</td>
@@ -257,7 +259,7 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>createQuote</strong></td>
       <td valign="top">String</td>
-      <td>Creates a new quote and returns its ID.</td>
+      <td>Creates a new quote (PENDING status) or saved cart (READY status) from the current shopping cart.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">input</td>
@@ -267,7 +269,7 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>updateQuote</strong></td>
       <td valign="top">String</td>
-      <td>Updates an existing quote and returns its ID.</td>
+      <td>Updates an existing quote or saved cart, including price adjustments, quantities, and status changes.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">input</td>
@@ -277,7 +279,7 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>useQuote</strong></td>
       <td valign="top">String</td>
-      <td>Applies a quote to a shopping cart.</td>
+      <td>Applies a quote or saved cart to the current shopping cart and redirects to checkout.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">id</td>
@@ -292,7 +294,7 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>clearCart</strong></td>
       <td valign="top">String</td>
-      <td>Removes all items from a shopping cart.</td>
+      <td>Removes all items from the current shopping cart before applying a quote.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">orderFormId</td>
@@ -352,12 +354,12 @@ classDiagram
     <tr>
       <td valign="top"><strong>cartLifeSpan</strong></td>
       <td valign="top">Int</td>
-      <td>Duration in days that a quote-based cart remains valid.</td>
+      <td>Default expiration period in days for quotes and saved carts. Minimum value is 1 day.</td>
     </tr>
     <tr>
       <td valign="top"><strong>quotesManagedBy</strong></td>
       <td valign="top"><a href="#quotesmanagedby">QuotesManagedBy</a></td>
-      <td>Defines who has permission to manage quotes (e.g., sales representatives, administrators).</td>
+      <td>Defines who has permission to manage quotes (marketplace administrators or individual sellers).</td>
     </tr>
   </tbody>
 </table>
@@ -378,12 +380,12 @@ classDiagram
     <tr>
       <td valign="top"><strong>cartLifeSpan</strong></td>
       <td valign="top">Int</td>
-      <td>Duration in days that a quote-based cart remains valid.</td>
+      <td>Default expiration period in days for quotes and saved carts. Minimum value is 1 day.</td>
     </tr>
     <tr>
       <td valign="top"><strong>quotesManagedBy</strong></td>
       <td valign="top"><a href="#quotesmanagedby">QuotesManagedBy</a>!</td>
-      <td>Defines who has permission to manage quotes (e.g., sales representatives, administrators).</td>
+      <td>Defines who has permission to manage quotes (marketplace administrators or individual sellers).</td>
     </tr>
   </tbody>
 </table>
@@ -435,7 +437,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>referenceName</strong></td>
       <td valign="top">String</td>
-      <td>User-defined name for the quote.</td>
+      <td>User-defined name to identify the quote or saved cart.</td>
     </tr>
     <tr>
       <td valign="top"><strong>creatorEmail</strong></td>
@@ -460,12 +462,12 @@ classDiagram
     <tr>
       <td valign="top"><strong>lastUpdate</strong></td>
       <td valign="top">String</td>
-      <td>Date and time of the most recent update to the quote.</td>
+      <td>Date when the quote or saved cart was updated for the last time.</td>
     </tr>
     <tr>
       <td valign="top"><strong>updateHistory</strong></td>
       <td valign="top">[<a href="#quoteupdate">QuoteUpdate</a>]</td>
-      <td>List of all changes made to the quote.</td>
+      <td>History of all events related to the quote, including creation, discounts, and notes.</td>
     </tr>
     <tr>
       <td valign="top"><strong>items</strong></td>
@@ -475,12 +477,22 @@ classDiagram
     <tr>
       <td valign="top"><strong>subtotal</strong></td>
       <td valign="top">Float</td>
-      <td>Total price of all items in the quote.</td>
+      <td>Total price of all items, including any discounts offered by sales representatives.</td>
     </tr>
     <tr>
       <td valign="top"><strong>status</strong></td>
       <td valign="top">String</td>
-      <td>Current status of the quote (e.g., pending, approved, declined).</td>
+      <td>
+        Current status of the quote. The possible values are:
+        <ul>
+          <li>READY (ready to place order)</li>
+          <li>PENDING (waiting for review)</li>
+          <li>REVISED (waiting for additional review)</li>
+          <li>DECLINED (cannot be used)</li>
+          <li>EXPIRED (past expiration date)</li>
+          <li>PLACED (already used)</li>
+        </ul>
+      </td>
     </tr>
     <tr>
       <td valign="top"><strong>organization</strong></td>
@@ -505,17 +517,17 @@ classDiagram
     <tr>
       <td valign="top"><strong>viewedBySales</strong></td>
       <td valign="top">Boolean</td>
-      <td>Indicates if a sales representative has viewed the quote.</td>
+      <td>Indicates if a sales representative has viewed the quote or saved cart.</td>
     </tr>
     <tr>
       <td valign="top"><strong>viewedByCustomer</strong></td>
       <td valign="top">Boolean</td>
-      <td>Indicates if the customer has viewed the quote.</td>
+      <td>Indicates if the customer has viewed the quote or saved cart.</td>
     </tr>
     <tr>
       <td valign="top"><strong>salesChannel</strong></td>
       <td valign="top">String</td>
-      <td>Sales channel through which the quote was created.</td>
+      <td>Sales channel associated with the quote or saved cart.</td>
     </tr>
     <tr>
       <td valign="top"><strong>seller</strong></td>
@@ -562,22 +574,119 @@ classDiagram
     <tr>
       <td valign="top"><strong>subtotal</strong></td>
       <td valign="top">Float</td>
-      <td>Total price of all items in the quote.</td>
+      <td>Total price of all items, including any discounts offered by sales representatives.</td>
     </tr>
     <tr>
       <td valign="top"><strong>note</strong></td>
       <td valign="top">String</td>
-      <td>Additional comments or instructions for the quote.</td>
+      <td>Optional note that will be visible in the quote's update history to salespeople and organization members.</td>
     </tr>
     <tr>
       <td valign="top"><strong>sendToSalesRep</strong></td>
       <td valign="top">Boolean</td>
-      <td>Whether to notify a sales representative about this quote.</td>
+      <td>When true, creates a quote with PENDING status for sales review. When false, creates a saved cart with READY status.</td>
     </tr>
   </tbody>
 </table>
 
 <div style="text-align: right"><a href="#mutation">Mutation</a> 🔼</div>
+
+### QuoteUpdate
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Field</th>
+      <th align="left">Type</th>
+      <th align="left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td valign="top"><strong>email</strong></td>
+      <td valign="top">String</td>
+      <td>Email of the user who made the update.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>role</strong></td>
+      <td valign="top">String</td>
+      <td>Role of the user who made the update (e.g., sales representative, organization buyer).</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>date</strong></td>
+      <td valign="top">String</td>
+      <td>Date when the update was made.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>status</strong></td>
+      <td valign="top">String</td>
+      <td>Status change made in this update, if any.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>note</strong></td>
+      <td valign="top">String</td>
+      <td>Optional comment or instruction added during this update.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="text-align: right"><a href="#quote">Quote</a> 🔼</div>
+
+### QuoteItem
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Field</th>
+      <th align="left">Type</th>
+      <th align="left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td valign="top"><strong>name</strong></td>
+      <td valign="top">String</td>
+      <td>Name of the product.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>skuName</strong></td>
+      <td valign="top">String</td>
+      <td>Name of the specific SKU variant.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>refId</strong></td>
+      <td valign="top">String</td>
+      <td>Reference ID of the product.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>imageUrl</strong></td>
+      <td valign="top">String</td>
+      <td>URL of the product image.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>listPrice</strong></td>
+      <td valign="top">Float</td>
+      <td>Original price before any discounts.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>price</strong></td>
+      <td valign="top">Float</td>
+      <td>Original price of the product before any discounts.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>quantity</strong></td>
+      <td valign="top">Int</td>
+      <td>Quantity of items.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>sellingPrice</strong></td>
+      <td valign="top">Float</td>
+      <td>Price of the product including any discounts offered by sales representatives.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="text-align: right"><a href="#quote">Quote</a> 🔼</div>
 
 ### QuoteUpdateInput
 
@@ -598,7 +707,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>items</strong></td>
       <td valign="top">[<a href="#quoteiteminput">QuoteItemInput</a>]</td>
-      <td>Updated list of products in the quote.</td>
+      <td>Updated list of products with their quantities and prices.</td>
     </tr>
     <tr>
       <td valign="top"><strong>subtotal</strong></td>
@@ -608,17 +717,17 @@ classDiagram
     <tr>
       <td valign="top"><strong>note</strong></td>
       <td valign="top">String</td>
-      <td>New or updated note for the quote.</td>
+      <td>Optional comment or instruction that will appear in the quote's update history.</td>
     </tr>
     <tr>
       <td valign="top"><strong>decline</strong></td>
       <td valign="top">Boolean</td>
-      <td>Whether to decline the quote.</td>
+      <td>When true, changes the quote status to DECLINED, preventing further use.</td>
     </tr>
     <tr>
       <td valign="top"><strong>expirationDate</strong></td>
       <td valign="top">String</td>
-      <td>New expiration date for the quote.</td>
+      <td>New expiration date for the quote or saved cart.</td>
     </tr>
   </tbody>
 </table>
@@ -649,7 +758,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>refId</strong></td>
       <td valign="top">String</td>
-      <td>External reference ID for the product.</td>
+      <td>Reference ID of the product.</td>
     </tr>
     <tr>
       <td valign="top"><strong>id</strong></td>
@@ -674,17 +783,17 @@ classDiagram
     <tr>
       <td valign="top"><strong>price</strong></td>
       <td valign="top">Float</td>
-      <td>Current price of the item.</td>
+      <td>Original price of the product before any discounts.</td>
     </tr>
     <tr>
       <td valign="top"><strong>quantity</strong></td>
       <td valign="top">Int</td>
-      <td>Number of units requested.</td>
+      <td>Quantity of items.</td>
     </tr>
     <tr>
       <td valign="top"><strong>sellingPrice</strong></td>
       <td valign="top">Float</td>
-      <td>Final price after applying discounts.</td>
+      <td>Price of the product including any discounts offered by sales representatives.</td>
     </tr>
     <tr>
       <td valign="top"><strong>seller</strong></td>
@@ -695,6 +804,37 @@ classDiagram
 </table>
 
 <div style="text-align: right"><a href="#quoteupdateinput">QuoteUpdateInput</a> 🔼</div>
+
+### Pagination
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Field</th>
+      <th align="left">Type</th>
+      <th align="left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td valign="top"><strong>page</strong></td>
+      <td valign="top">Int</td>
+      <td>Current page number.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>pageSize</strong></td>
+      <td valign="top">Int</td>
+      <td>Number of items per page.</td>
+    </tr>
+    <tr>
+      <td valign="top"><strong>total</strong></td>
+      <td valign="top">Int</td>
+      <td>Total number of items across all pages.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="text-align: right"><a href="#quotes">Quotes</a> 🔼</div>
 
 ## Enums
 
