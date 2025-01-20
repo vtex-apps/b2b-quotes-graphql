@@ -24,7 +24,7 @@ export async function splitItemsBySeller({
 
   // The ternary check is to not request again from the same seller
   const verifyResponse = quoteBySeller[seller]
-    ? { receiveQuotes: true, sellerName: quoteBySeller[seller].sellerName }
+    ? { receiveQuotes: true }
     : await ctx.clients.sellerQuotes
         .verifyQuoteSettings(seller)
         .catch(() => null)
@@ -36,11 +36,13 @@ export async function splitItemsBySeller({
   }
 
   if (!quoteBySeller[seller]) {
+    const sellerData = await ctx.clients.seller.getSeller(seller)
+
     quoteBySeller[seller] = {
       items: [],
       subtotal: 0,
       seller,
-      sellerName: verifyResponse.sellerName,
+      sellerName: sellerData?.name,
     }
   }
 

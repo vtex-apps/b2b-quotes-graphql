@@ -166,12 +166,14 @@ export const Mutation = {
             0
           )
 
+          const marketplaceSeller = await ctx.clients.seller.getSeller('1')
+
           const marketplaceQuote = createQuoteObject({
             ...quoteCommonFields,
             items: parentQuoteItems,
             subtotal: marketplaceSubtotal,
             seller: '1',
-            sellerName: settings?.storeName ?? ctx.vtex.account,
+            sellerName: marketplaceSeller?.name ?? ctx.vtex.account,
             parentQuote: parentQuoteId,
           })
 
@@ -683,10 +685,6 @@ export const Mutation = {
       noSettingsFound = true
     }
 
-    const accountData = await ctx.clients.licenseManager
-      .getAccountData(ctx.vtex.adminUserAuthToken ?? '')
-      .catch(() => null)
-
     const newSettings = {
       ...settings,
       adminSetup: {
@@ -694,7 +692,6 @@ export const Mutation = {
         cartLifeSpan,
         quotesManagedBy,
       },
-      storeName: accountData?.name,
     }
 
     try {

@@ -10,10 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add fields creatorName, sellerName and childrenQuantity on quote entity
-- Saving marketplace trade name in settings to display in quotes list when splitting a quote
 - Saving masterdata schema hash in settings to update when it changes
 - Create a new quote to marketplace responsibility for remaining items when splitting a quote
-- Receiving seller trade name on verify seller quotes settings to save it in sellerName quote field
+- Create a new query to check sellers quotes on frontend
 
 ### Changed
 

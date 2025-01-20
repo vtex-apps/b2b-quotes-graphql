@@ -376,4 +376,34 @@ export const Query = {
 
     return settings
   },
+  checkSellerQuotes: async (
+    _: void,
+    { sellers }: { sellers: string[] },
+    ctx: Context
+  ) => {
+    // guarantee at least the marketplace seller to use your name if necessary
+    const allSellers = sellers.filter((seller) => seller !== '1')
+
+    allSellers.push('1')
+
+    const verifiedSellers = await Promise.all(
+      allSellers.map(async (seller) => {
+        if (seller === '1') {
+          return ctx.clients.seller.getSeller(seller)
+        }
+
+        const verifyResponse = await ctx.clients.sellerQuotes
+          .verifyQuoteSettings(seller)
+          .catch(() => null)
+
+        if (verifyResponse?.receiveQuotes) {
+          return ctx.clients.seller.getSeller(seller)
+        }
+
+        return null
+      })
+    )
+
+    return verifiedSellers.filter(Boolean)
+  },
 }

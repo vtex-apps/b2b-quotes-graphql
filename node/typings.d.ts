@@ -117,7 +117,6 @@ interface Settings {
   schemaVersion: string
   schemaHash: string | null
   templateHash: string | null
-  storeName?: string | null
 }
 
 interface SessionData {
@@ -149,11 +148,15 @@ type SellerQuoteMap = Record<string, SellerQuoteInput>
 
 interface VerifyQuoteSettingsResponse {
   receiveQuotes: boolean
-  sellerName: string
 }
 
 interface SellerQuoteNotifyInput {
   quoteId: string
   marketplaceAccount: string
   creationDate: string
+}
+
+interface Seller {
+  id: string
+  name: string
 }

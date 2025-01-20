@@ -88,3 +88,8 @@ type QuoteItem {
   sellingPrice: Float
   seller: String
 }
+
+type Seller {
+  id: String
+  name: String
+}

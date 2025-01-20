@@ -36,6 +36,12 @@ type Query {
     @withSession
     @withSegment
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  checkSellerQuotes(sellers: [String!]!): [Seller!]!
+    @auditAccess
+    @withPermissions
+    @withSession
+    @withSegment
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
 }
 
 type Mutation {
