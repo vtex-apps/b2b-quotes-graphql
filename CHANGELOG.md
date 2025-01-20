@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add GraphQL API documentation
+
 ## [2.8.0] - 2025-01-13
 
 ### Added
