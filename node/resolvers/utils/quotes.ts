@@ -36,7 +36,14 @@ export async function splitItemsBySeller({
   }
 
   if (!quoteBySeller[seller]) {
-    quoteBySeller[seller] = { items: [], subtotal: 0 }
+    const sellerData = await ctx.clients.seller.getSeller(seller)
+
+    quoteBySeller[seller] = {
+      items: [],
+      subtotal: 0,
+      seller,
+      sellerName: sellerData?.name,
+    }
   }
 
   quoteBySeller[seller].items.push(item)
@@ -62,8 +69,10 @@ export const createQuoteObject = ({
   note,
   sendToSalesRep,
   seller,
+  sellerName,
   parentQuote,
   hasChildren,
+  sellerQuotesQuantity,
 }: {
   sessionData: SessionData
   storefrontPermissions: { role: { slug: string } }
@@ -75,10 +84,16 @@ export const createQuoteObject = ({
   note: string
   sendToSalesRep: boolean
   seller?: string
+  sellerName?: string
   parentQuote?: string | null
   hasChildren?: boolean | null
+  sellerQuotesQuantity?: number
 }): Omit<Quote, 'id'> => {
-  const email = sessionData.namespaces.profile.email.value
+  const { email, firstName, lastName } = sessionData.namespaces.profile
+  const { value: creatorEmail } = email
+  const creatorName = `${firstName?.value ?? ''}${
+    lastName?.value ? ` ${lastName.value}` : ''
+  }`.trim()
 
   const {
     role: { slug },
@@ -98,12 +113,17 @@ export const createQuoteObject = ({
   )
   const expirationDateISO = expirationDate.toISOString()
 
-  const status = sendToSalesRep ? 'pending' : 'ready'
+  const isSellerQuote = seller && seller !== '1'
+  const status =
+    sendToSalesRep || isSellerQuote || (!seller && sellerQuotesQuantity)
+      ? 'pending'
+      : 'ready'
+
   const lastUpdate = nowISO
   const updateHistory = [
     {
       date: nowISO,
-      email,
+      email: creatorEmail,
       note,
       role: slug,
       status,
@@ -115,7 +135,8 @@ export const createQuoteObject = ({
   return {
     costCenter: costCenterId,
     creationDate: nowISO,
-    creatorEmail: email,
+    creatorEmail,
+    creatorName,
     creatorRole: slug,
     expirationDate: expirationDateISO,
     items,
@@ -129,6 +150,7 @@ export const createQuoteObject = ({
     viewedBySales: !sendToSalesRep,
     salesChannel,
     seller,
+    sellerName,
     parentQuote,
     hasChildren,
   }

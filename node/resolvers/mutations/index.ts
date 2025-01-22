@@ -29,6 +29,7 @@ import {
   createQuoteObject,
   splitItemsBySeller,
 } from '../utils/quotes'
+import SellerQuotesController from '../utils/sellerQuotesController'
 
 export const Mutation = {
   clearCart: async (_: any, params: any, ctx: Context) => {
@@ -99,16 +100,27 @@ export const Mutation = {
         })
       }
 
-      const hasSellerQuotes = Object.keys(quoteBySeller).length
+      const sellerQuotesQuantity = Object.keys(quoteBySeller).length
 
-      const parentQuoteItems = hasSellerQuotes
-        ? items.filter(
-            (item) =>
-              !Object.values(quoteBySeller).some((quote) =>
-                quote.items.some(createItemComparator(item))
-              )
+      const remainingItems = items.filter(
+        (item) =>
+          !Object.values(quoteBySeller).some((quote) =>
+            quote.items.some(createItemComparator(item))
           )
-        : items
+      )
+
+      const isOnlyOneQuote =
+        !sellerQuotesQuantity ||
+        (sellerQuotesQuantity === 1 && !remainingItems.length)
+
+      const [firstSellerQuote] = Object.values(quoteBySeller)
+
+      const parentQuoteItems =
+        isOnlyOneQuote && firstSellerQuote
+          ? firstSellerQuote.items
+          : sellerQuotesQuantity
+          ? remainingItems
+          : items
 
       const quoteCommonFields = {
         sessionData,
@@ -118,23 +130,18 @@ export const Mutation = {
         referenceName,
         note,
         sendToSalesRep,
+        sellerQuotesQuantity,
       }
 
-      // We believe that parent quote should contain the overall subtotal.
-      // If for some reason it is necessary to subtract the subtotal from
-      // sellers quotes, we can use the adjustedSubtotal below, assigning
-      // it to subtotal in createQuoteObject -> `subtotal: adjustedSubtotal`
-      //
-      // const adjustedSubtotal = hasSellerQuotes
-      //   ? Object.values(quoteBySeller).reduce(
-      //       (acc, quote) => acc - quote.subtotal,
-      //       subtotal
-      //     )
-      //   : subtotal
       const parentQuote = createQuoteObject({
         ...quoteCommonFields,
         items: parentQuoteItems,
         subtotal,
+        ...(isOnlyOneQuote &&
+          firstSellerQuote && {
+            seller: firstSellerQuote.seller,
+            sellerName: firstSellerQuote.sellerName,
+          }),
       })
 
       const { DocumentId: parentQuoteId } = await masterdata.createDocument({
@@ -143,13 +150,50 @@ export const Mutation = {
         schema: SCHEMA_VERSION,
       })
 
-      if (hasSellerQuotes) {
+      if (isOnlyOneQuote) {
+        if (firstSellerQuote) {
+          await ctx.clients.sellerQuotes.notifyNewQuote(
+            firstSellerQuote.seller,
+            parentQuoteId,
+            parentQuote.creationDate
+          )
+        }
+      } else {
+        const childrenQuoteIds: string[] = []
+
+        if (parentQuoteItems.length) {
+          const marketplaceSubtotal = parentQuoteItems.reduce(
+            (acc, item) => acc + item.sellingPrice * item.quantity,
+            0
+          )
+
+          const marketplaceSeller = await ctx.clients.seller.getSeller('1')
+
+          const marketplaceQuote = createQuoteObject({
+            ...quoteCommonFields,
+            items: parentQuoteItems,
+            subtotal: marketplaceSubtotal,
+            seller: '1',
+            sellerName: marketplaceSeller?.name ?? ctx.vtex.account,
+            parentQuote: parentQuoteId,
+          })
+
+          const {
+            DocumentId: markerplaceQuoteId,
+          } = await masterdata.createDocument({
+            dataEntity: QUOTE_DATA_ENTITY,
+            fields: marketplaceQuote,
+            schema: SCHEMA_VERSION,
+          })
+
+          childrenQuoteIds.push(markerplaceQuoteId)
+        }
+
         const sellerQuoteIds = await Promise.all(
           Object.entries(quoteBySeller).map(async ([seller, sellerQuote]) => {
             const sellerQuoteObject = createQuoteObject({
               ...quoteCommonFields,
               ...sellerQuote,
-              seller,
               parentQuote: parentQuoteId,
             })
 
@@ -169,10 +213,15 @@ export const Mutation = {
           })
         )
 
-        if (sellerQuoteIds.length) {
+        childrenQuoteIds.push(...sellerQuoteIds)
+
+        if (childrenQuoteIds.length) {
           await masterdata.updatePartialDocument({
             dataEntity: QUOTE_DATA_ENTITY,
-            fields: { hasChildren: true },
+            fields: {
+              hasChildren: true,
+              childrenQuantity: childrenQuoteIds.length,
+            },
             id: parentQuoteId,
             schema: SCHEMA_VERSION,
           })
@@ -341,6 +390,14 @@ export const Mutation = {
         })
         .then((res: any) => res)
 
+      const sellerQuotesController = new SellerQuotesController(ctx)
+
+      if (existingQuote.parentQuote) {
+        sellerQuotesController.handleParentQuoteSubtotalAndStatus(
+          existingQuote.parentQuote
+        )
+      }
+
       const users = updateHistory.map((anUpdate) => anUpdate.email)
       const uniqueUsers = [
         ...new Set(
@@ -404,15 +461,45 @@ export const Mutation = {
 
     try {
       // GET QUOTE DATA
-      const quote: Quote = await masterdata.getDocument({
+      const mainQuote: Quote = await masterdata.getDocument({
         dataEntity: QUOTE_DATA_ENTITY,
         fields: QUOTE_FIELDS,
         id,
       })
 
-      checkQuoteStatus(quote)
+      const quotes: Quote[] = []
+      const items: QuoteItem[] = []
 
-      const { items, salesChannel } = quote
+      if (mainQuote.hasChildren) {
+        const sellerQuotesController = new SellerQuotesController(ctx)
+        const childrenQuotes = await sellerQuotesController.getAllChildrenQuotes(
+          id
+        )
+
+        let errorsCount = 0
+
+        for (const quote of childrenQuotes) {
+          try {
+            checkQuoteStatus(quote)
+            quotes.push(quote)
+          } catch (e) {
+            if (++errorsCount === childrenQuotes.length) {
+              throw e
+            }
+
+            continue
+          }
+        }
+      } else {
+        checkQuoteStatus(mainQuote)
+        quotes.push(mainQuote)
+      }
+
+      for (const quote of quotes) {
+        items.push(...quote.items)
+      }
+
+      const { salesChannel } = mainQuote
 
       // CLEAR CURRENT CART
       if (orderFormId !== 'default-order-form') {
@@ -511,14 +598,16 @@ export const Mutation = {
         useHeaders
       )
 
-      const metricParams: UseQuoteMetricsParams = {
-        quote,
-        orderFormId,
-        account,
-        userEmail: sessionData?.namespaces?.profile?.email?.value,
-      }
+      for (const quote of quotes) {
+        const metricParams: UseQuoteMetricsParams = {
+          quote,
+          orderFormId,
+          account,
+          userEmail: sessionData?.namespaces?.profile?.email?.value,
+        }
 
-      sendUseQuoteMetric(ctx, metricParams)
+        sendUseQuoteMetric(ctx, metricParams)
+      }
     } catch (error) {
       logger.error({
         error,
