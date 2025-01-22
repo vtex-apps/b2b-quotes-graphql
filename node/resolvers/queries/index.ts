@@ -313,7 +313,7 @@ export const Query = {
     const sellerQuotesController = new SellerQuotesController(ctx)
 
     try {
-      return sellerQuotesController.getAllChildrenQuotes(
+      return await sellerQuotesController.getAllChildrenQuotes(
         id,
         sortOrder,
         sortedBy
