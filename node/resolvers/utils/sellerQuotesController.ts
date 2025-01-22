@@ -170,15 +170,17 @@ export default class SellerQuotesController {
       (quote) => quote.status === 'pending'
     )
 
-    const status = isEverySameStatus
-      ? childrenQuotes[0].status
-      : isEverySameStatusExceptDeclined
-      ? quotesExceptDeclined[0].status
-      : isSomePending
-      ? 'pending'
-      : isSomeRevised
-      ? 'revised'
-      : undefined
+    let status: string | undefined
+
+    if (isEverySameStatus) {
+      status = childrenQuotes[0].status
+    } else if (isEverySameStatusExceptDeclined) {
+      status = quotesExceptDeclined[0].status
+    } else if (isSomePending) {
+      status = 'pending'
+    } else if (isSomeRevised) {
+      status = 'revised'
+    }
 
     const lastUpdate = new Date().toISOString()
 
