@@ -130,6 +130,7 @@ export const Mutation = {
         referenceName,
         note,
         sendToSalesRep,
+        sellerQuotesQuantity,
       }
 
       const parentQuote = createQuoteObject({
@@ -394,35 +395,6 @@ export const Mutation = {
       if (existingQuote.parentQuote) {
         sellerQuotesController.handleParentQuoteSubtotalAndStatus(
           existingQuote.parentQuote
-        )
-      }
-
-      if (existingQuote.hasChildren && decline) {
-        const childrenQuotes = await sellerQuotesController.getAllChildrenQuotes(
-          id
-        )
-
-        await Promise.all(
-          childrenQuotes.map((quote) => {
-            const { updateHistory: childUpdateHistory } = quote
-
-            childUpdateHistory.push(update)
-
-            return masterdata.updateEntireDocument({
-              dataEntity: QUOTE_DATA_ENTITY,
-              fields: {
-                ...quote,
-                status: 'declined',
-                lastUpdate,
-                expirationDate: updatedQuote.expirationDate,
-                updateHistory: childUpdateHistory,
-                viewedByCustomer: !!(decline || isCustomer),
-                viewedBySales: !!(decline || isSales),
-              },
-              id: quote.id,
-              schema: SCHEMA_VERSION,
-            })
-          })
         )
       }
 

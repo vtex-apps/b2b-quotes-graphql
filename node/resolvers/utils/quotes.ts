@@ -72,6 +72,7 @@ export const createQuoteObject = ({
   sellerName,
   parentQuote,
   hasChildren,
+  sellerQuotesQuantity,
 }: {
   sessionData: SessionData
   storefrontPermissions: { role: { slug: string } }
@@ -86,6 +87,7 @@ export const createQuoteObject = ({
   sellerName?: string
   parentQuote?: string | null
   hasChildren?: boolean | null
+  sellerQuotesQuantity?: number
 }): Omit<Quote, 'id'> => {
   const { email, firstName, lastName } = sessionData.namespaces.profile
   const { value: creatorEmail } = email
@@ -111,7 +113,12 @@ export const createQuoteObject = ({
   )
   const expirationDateISO = expirationDate.toISOString()
 
-  const status = sendToSalesRep ? 'pending' : 'ready'
+  const isSellerQuote = seller && seller !== '1'
+  const status =
+    sendToSalesRep || isSellerQuote || (!seller && sellerQuotesQuantity)
+      ? 'pending'
+      : 'ready'
+
   const lastUpdate = nowISO
   const updateHistory = [
     {
