@@ -109,18 +109,16 @@ export const Mutation = {
           )
       )
 
-      const isOnlyOneQuote =
-        !sellerQuotesQuantity ||
-        (sellerQuotesQuantity === 1 && !remainingItems.length)
+      const oneSellerQuoteAndNoRemainingItems = sellerQuotesQuantity === 1 && !remainingItems.length;
+      const isOnlyOneQuote = !sellerQuotesQuantity || oneSellerQuoteAndNoRemainingItems;
 
       const [firstSellerQuote] = Object.values(quoteBySeller)
 
-      const parentQuoteItems =
-        isOnlyOneQuote && firstSellerQuote
-          ? firstSellerQuote.items
-          : sellerQuotesQuantity
-          ? remainingItems
-          : items
+      let parentQuoteItems = sellerQuotesQuantity ? remainingItems : items
+
+      if (isOnlyOneQuote && firstSellerQuote) {
+        parentQuoteItems = firstSellerQuote.items
+      }
 
       const quoteCommonFields = {
         sessionData,
@@ -150,15 +148,15 @@ export const Mutation = {
         schema: SCHEMA_VERSION,
       })
 
-      if (isOnlyOneQuote) {
-        if (firstSellerQuote) {
-          await ctx.clients.sellerQuotes.notifyNewQuote(
-            firstSellerQuote.seller,
-            parentQuoteId,
-            parentQuote.creationDate
-          )
-        }
-      } else {
+      if (isOnlyOneQuote && firstSellerQuote) {
+        await ctx.clients.sellerQuotes.notifyNewQuote(
+          firstSellerQuote.seller,
+          parentQuoteId,
+          parentQuote.creationDate
+        )
+      } 
+      
+      if (!isOnlyOneQuote) {
         const childrenQuoteIds: string[] = []
 
         if (parentQuoteItems.length) {
@@ -271,13 +269,12 @@ export const Mutation = {
         error,
         message: 'createQuote-error ',
       })
-      if (error.message) {
+      
+      if (error.message) 
         throw new GraphQLError(error.message)
-      } else if (error.response?.data?.message) {
+      if (error.response?.data?.message) 
         throw new GraphQLError(error.response.data.message)
-      } else {
-        throw new GraphQLError(error)
-      }
+      throw new GraphQLError(error)
     }
   },
   updateQuote: async (
