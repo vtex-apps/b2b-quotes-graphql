@@ -109,8 +109,11 @@ export const Mutation = {
           )
       )
 
-      const oneSellerQuoteAndNoRemainingItems = sellerQuotesQuantity === 1 && !remainingItems.length;
-      const isOnlyOneQuote = !sellerQuotesQuantity || oneSellerQuoteAndNoRemainingItems;
+      const oneSellerQuoteAndNoRemainingItems =
+        sellerQuotesQuantity === 1 && !remainingItems.length
+
+      const isOnlyOneQuote =
+        !sellerQuotesQuantity || oneSellerQuoteAndNoRemainingItems
 
       const [firstSellerQuote] = Object.values(quoteBySeller)
 
@@ -154,8 +157,8 @@ export const Mutation = {
           parentQuoteId,
           parentQuote.creationDate
         )
-      } 
-      
+      }
+
       if (!isOnlyOneQuote) {
         const childrenQuoteIds: string[] = []
 
@@ -269,12 +272,11 @@ export const Mutation = {
         error,
         message: 'createQuote-error ',
       })
-      
-      if (error.message) 
-        throw new GraphQLError(error.message)
-      if (error.response?.data?.message) 
-        throw new GraphQLError(error.response.data.message)
-      throw new GraphQLError(error)
+
+      const errorMessage =
+        error.message || error.response?.data?.message || error
+
+      throw new GraphQLError(errorMessage)
     }
   },
   updateQuote: async (
