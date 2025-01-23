@@ -2,6 +2,7 @@ interface Quote {
   id: string
   referenceName: string
   creatorEmail: string
+  creatorName: string
   creatorRole: string
   creationDate: string
   expirationDate: string
@@ -16,8 +17,10 @@ interface Quote {
   viewedByCustomer: boolean
   salesChannel: string | null
   seller?: string | null
+  sellerName?: string | null
   parentQuote?: string | null
   hasChildren?: boolean | null
+  childrenQuantity?: number | null
 }
 
 interface QuoteUpdate {
@@ -111,8 +114,8 @@ interface Settings {
     cronWorkspace?: string
     quotesManagedBy?: string
   }
-  hasSplittingQuoteFieldsInSchema?: boolean
   schemaVersion: string
+  schemaHash: string | null
   templateHash: string | null
 }
 
@@ -121,6 +124,8 @@ interface SessionData {
     profile: {
       id: { value: string }
       email: { value: string }
+      firstName: { value: string }
+      lastName: { value: string }
     }
     account: {
       accountName: { value: string }
@@ -135,6 +140,8 @@ interface SessionData {
 interface SellerQuoteInput {
   items: QuoteItem[]
   subtotal: number
+  seller: string
+  sellerName: string
 }
 
 type SellerQuoteMap = Record<string, SellerQuoteInput>
@@ -147,4 +154,9 @@ interface SellerQuoteNotifyInput {
   quoteId: string
   marketplaceAccount: string
   creationDate: string
+}
+
+interface Seller {
+  id: string
+  name: string
 }

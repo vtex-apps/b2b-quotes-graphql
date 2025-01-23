@@ -8,6 +8,7 @@ import {
 } from '../../constants'
 import GraphQLError from '../../utils/GraphQLError'
 import { checkConfig } from '../utils/checkConfig'
+import SellerQuotesController from '../utils/sellerQuotesController'
 
 // This function checks if given email is an user part of a buyer org.
 export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
@@ -295,35 +296,28 @@ export const Query = {
     _: any,
     {
       id,
-      page,
-      pageSize,
       sortOrder,
       sortedBy,
     }: {
       id: string
-      page: number
-      pageSize: number
       sortOrder: string
       sortedBy: string
     },
     ctx: Context
   ) => {
     const {
-      clients: { masterdata },
       vtex: { logger },
     } = ctx
 
     await checkConfig(ctx)
+    const sellerQuotesController = new SellerQuotesController(ctx)
 
     try {
-      return await masterdata.searchDocumentsWithPaginationInfo({
-        dataEntity: QUOTE_DATA_ENTITY,
-        fields: QUOTE_FIELDS,
-        pagination: { page, pageSize },
-        schema: SCHEMA_VERSION,
-        sort: `${sortedBy} ${sortOrder}`,
-        where: `parentQuote=${id}`,
-      })
+      return await sellerQuotesController.getAllChildrenQuotes(
+        id,
+        sortOrder,
+        sortedBy
+      )
     } catch (error) {
       logger.error({
         error,
@@ -381,5 +375,35 @@ export const Query = {
     }
 
     return settings
+  },
+  checkSellerQuotes: async (
+    _: void,
+    { sellers }: { sellers: string[] },
+    ctx: Context
+  ) => {
+    // guarantee at least the marketplace seller to use your name if necessary
+    const allSellers = sellers.filter((seller) => seller !== '1')
+
+    allSellers.push('1')
+
+    const verifiedSellers = await Promise.all(
+      allSellers.map(async (seller) => {
+        if (seller === '1') {
+          return ctx.clients.seller.getSeller(seller)
+        }
+
+        const verifyResponse = await ctx.clients.sellerQuotes
+          .verifyQuoteSettings(seller)
+          .catch(() => null)
+
+        if (verifyResponse?.receiveQuotes) {
+          return ctx.clients.seller.getSeller(seller)
+        }
+
+        return null
+      })
+    )
+
+    return verifiedSellers.filter(Boolean)
   },
 }

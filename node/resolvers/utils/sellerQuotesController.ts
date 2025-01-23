@@ -19,7 +19,10 @@ type GetQuotesArgs = {
 }
 
 export default class SellerQuotesController {
-  constructor(private readonly ctx: Context, private readonly seller: string) {}
+  constructor(
+    private readonly ctx: Context | EventBroadcastContext,
+    private readonly seller?: string
+  ) {}
 
   private async getSellerQuotes({
     page = 1,
@@ -59,7 +62,11 @@ export default class SellerQuotesController {
     return { organizationName, costCenterName }
   }
 
-  private async getAllChildrenQuotes(parentQuote: string) {
+  public async getAllChildrenQuotes(
+    parentQuote: string,
+    sortOrder = 'DESC',
+    sortedBy = 'lastUpdate'
+  ) {
     const result: Quote[] = []
 
     const getQuotes = async (page = 1) => {
@@ -67,8 +74,9 @@ export default class SellerQuotesController {
         dataEntity: QUOTE_DATA_ENTITY,
         schema: SCHEMA_VERSION,
         pagination: { page, pageSize: 100 },
-        fields: ['subtotal'],
+        fields: QUOTE_FIELDS,
         where: `parentQuote=${parentQuote}`,
+        sort: `${sortedBy} ${sortOrder}`,
       })
 
       if (quotes.length) {
@@ -96,7 +104,7 @@ export default class SellerQuotesController {
     page,
     pageSize,
     where,
-    sort = 'creationDate DESC',
+    sort = 'lastUpdate DESC',
   }: {
     page: number
     pageSize: number
@@ -130,9 +138,61 @@ export default class SellerQuotesController {
     }
   }
 
-  public async saveSellerQuote(id: string, fields: Partial<Quote>) {
-    const currentQuote = await this.getSellerQuote(id)
+  public async handleParentQuoteSubtotalAndStatus(parentQuote: string) {
+    const childrenQuotes = await this.getAllChildrenQuotes(parentQuote)
 
+    if (!childrenQuotes?.length) return
+
+    const sumSubtotal = childrenQuotes.reduce(
+      (acc, quote) => acc + quote.subtotal,
+      0
+    )
+
+    const isEverySameStatus = childrenQuotes.every(
+      (quote) => quote.status === childrenQuotes[0].status
+    )
+
+    const quotesExceptDeclined = childrenQuotes.filter(
+      (quote) => quote.status !== 'declined'
+    )
+
+    const isEverySameStatusExceptDeclined =
+      !!quotesExceptDeclined.length &&
+      quotesExceptDeclined.every(
+        (quote) => quote.status === quotesExceptDeclined[0].status
+      )
+
+    const isSomeRevised = childrenQuotes.some(
+      (quote) => quote.status === 'revised'
+    )
+
+    const isSomePending = childrenQuotes.some(
+      (quote) => quote.status === 'pending'
+    )
+
+    let status: string | undefined
+
+    if (isEverySameStatus) {
+      status = childrenQuotes[0].status
+    } else if (isEverySameStatusExceptDeclined) {
+      status = quotesExceptDeclined[0].status
+    } else if (isSomePending) {
+      status = 'pending'
+    } else if (isSomeRevised) {
+      status = 'revised'
+    }
+
+    const lastUpdate = new Date().toISOString()
+
+    this.ctx.clients.masterdata.updatePartialDocument({
+      dataEntity: QUOTE_DATA_ENTITY,
+      schema: SCHEMA_VERSION,
+      fields: { subtotal: sumSubtotal, status, lastUpdate },
+      id: parentQuote,
+    })
+  }
+
+  public async saveSellerQuote(id: string, fields: Partial<Quote>) {
     await this.ctx.clients.masterdata.updatePartialDocument({
       dataEntity: QUOTE_DATA_ENTITY,
       schema: SCHEMA_VERSION,
@@ -140,32 +200,10 @@ export default class SellerQuotesController {
       id,
     })
 
-    const { subtotal } = currentQuote
-    const subtotalDelta = (fields?.subtotal ?? subtotal) - subtotal
     const { parentQuote } = fields
 
-    if (!subtotalDelta || !parentQuote) return
-
-    /**
-     * The seller can update the subtotal of your quote changing items
-     * prices. Therefore, it is necessary to update the subtotal of the
-     * parent quote. The call below is asynchronous as there is no need
-     * to stop the flow because of this operation.
-     */
-    this.getAllChildrenQuotes(parentQuote)
-      .then((childrenQuotes) => {
-        const sumSubtotal = childrenQuotes.reduce(
-          (acc, quote) => acc + quote.subtotal,
-          0
-        )
-
-        this.ctx.clients.masterdata.updatePartialDocument({
-          dataEntity: QUOTE_DATA_ENTITY,
-          schema: SCHEMA_VERSION,
-          fields: { subtotal: sumSubtotal },
-          id: parentQuote,
-        })
-      })
-      .catch(() => null)
+    if (parentQuote) {
+      this.handleParentQuoteSubtotalAndStatus(parentQuote)
+    }
   }
 }

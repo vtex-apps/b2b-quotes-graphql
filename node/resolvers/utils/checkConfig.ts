@@ -17,6 +17,7 @@ export const defaultSettings: Settings = {
     hasCron: false,
   },
   schemaVersion: '',
+  schemaHash: null,
   templateHash: null,
 }
 
@@ -180,6 +181,7 @@ const initializeSchema = async (settings: Settings, ctx: Context) => {
     })
 
     settings.schemaVersion = SCHEMA_VERSION
+    settings.schemaHash = toHash(schema)
   } catch (error) {
     if (error.response.status >= 400) {
       settings.schemaVersion = ''
@@ -271,8 +273,6 @@ const checkInitializations = async ({
     vtex: { workspace },
   } = ctx
 
-  const hasSplittingQuoteFields = settings.hasSplittingQuoteFieldsInSchema
-
   if (
     !settings?.adminSetup?.hasCron ||
     settings?.adminSetup?.cronExpression !== CRON_EXPRESSION ||
@@ -293,16 +293,22 @@ const checkInitializations = async ({
     }
   }
 
-  if (settings?.schemaVersion !== SCHEMA_VERSION || !hasSplittingQuoteFields) {
+  const currentSchemaHash = toHash(schema)
+
+  if (
+    settings?.schemaVersion !== SCHEMA_VERSION ||
+    settings?.schemaHash !== currentSchemaHash
+  ) {
     const oldSchemaVersion = settings?.schemaVersion
+    const oldSchemaHash = settings?.schemaHash
 
     settings = await initializeSchema(settings, ctx)
 
     const mustUpdateSettings =
-      settings.schemaVersion !== oldSchemaVersion || !hasSplittingQuoteFields
+      settings.schemaVersion !== oldSchemaVersion ||
+      settings.schemaHash !== oldSchemaHash
 
     if (mustUpdateSettings) {
-      settings.hasSplittingQuoteFieldsInSchema = true
       changed = true
     }
   }
