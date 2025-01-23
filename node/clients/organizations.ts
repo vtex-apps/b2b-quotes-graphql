@@ -42,7 +42,7 @@ export default class Organizations extends AppGraphQLClient {
     })
   }
 
-  private getPersistedQuery = () => {
+  private readonly getPersistedQuery = () => {
     return {
       persistedQuery: {
         provider: 'vtex.b2b-organizations-graphql@0.x',
@@ -51,7 +51,7 @@ export default class Organizations extends AppGraphQLClient {
     }
   }
 
-  private query = async (param: {
+  private readonly query = async (param: {
     query: string
     variables: any
     extensions: any
