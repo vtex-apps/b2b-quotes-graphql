@@ -1,7 +1,7 @@
 export const organizationName = async (
   { organization }: { organization: string },
   _: any,
-  ctx: Context
+  ctx: Context | EventBroadcastContext
 ) => {
   const {
     clients: { organizations },
@@ -25,7 +25,7 @@ export const organizationName = async (
 export const costCenterName = async (
   { costCenter }: { costCenter: string },
   _: any,
-  ctx: Context
+  ctx: Context | EventBroadcastContext
 ) => {
   const {
     clients: { organizations },

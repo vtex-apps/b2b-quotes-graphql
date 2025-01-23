@@ -14,9 +14,7 @@
     "vtex.b2b-organizations-graphql": "0.x",
     "vtex.orders-broadcast": "0.x"
   },
-  "registries": [
-    "smartcheckout"
-  ],
+  "registries": ["smartcheckout"],
   "policies": [
     {
       "name": "vbase-read-write"

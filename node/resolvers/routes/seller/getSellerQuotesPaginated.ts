@@ -23,7 +23,7 @@ export async function getSellerQuotesPaginated(ctx: Context, next: NextFn) {
     const searchTerm = `*${search.replace(/'/g, '').split(/\s+/).join('*')}*`
 
     filters.push(
-      `(referenceName='${searchTerm}' OR creatorEmail='${searchTerm}')`
+      `(referenceName='${searchTerm}' OR creatorEmail='${searchTerm}' OR creatorName='${searchTerm}')`
     )
   }
 
