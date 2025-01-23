@@ -88,7 +88,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     })
   }
 
-  private getPersistedQuery = () => {
+  private readonly getPersistedQuery = () => {
     return {
       persistedQuery: {
         provider: 'vtex.storefront-permissions@1.x',
@@ -97,7 +97,7 @@ export default class StorefrontPermissions extends AppGraphQLClient {
     }
   }
 
-  private query = async (param: {
+  private readonly query = async (param: {
     query: string
     variables: any
     extensions: any
