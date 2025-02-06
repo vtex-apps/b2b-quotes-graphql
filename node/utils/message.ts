@@ -27,14 +27,14 @@ const getOrgSalesAdminEmail = async (
   }
 
   const {
-    data: { getOrgSalesAdminEmailResult },
+    data: { listUsersPaginated },
   }: any = await storefrontPermissions.getOrgSalesAdminEmail({
     roleId: role.id,
     ...(organizationId && { organizationId }),
   })
 
   // we only return the first page of sales-admin users (25)
-  return getOrgSalesAdminEmailResult.data
+  return listUsersPaginated.data
 }
 
 const getOrgAndCostCenterNames = async (
