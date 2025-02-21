@@ -1,6 +1,6 @@
 # B2B Quotes GraphQL API
 
-This article provides a reference guide to the B2B Quotes GraphQL API, with details about queries and mutations available for the [B2B Quotes app](https://developers.vtex.com/docs/apps/vtex.b2b-quotes). The API allows the management of quotes and associated configurations within a B2B environment. It enables users to perform a range of actions including quote retrieval, creation, and updates, as well as the management of application settings and permissions.
+This article provides a reference guide to the B2B Quotes GraphQL API, with details about the available queries and mutations for the [B2B Quotes app](https://developers.vtex.com/docs/apps/vtex.b2b-quotes). The API supports quote management and related configurations in a B2B environment, enabling users to retrieve, create, and update quotes, as well as manage application settings and permissions.
 
 ## Schema overview
 
@@ -116,7 +116,7 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>getAppSettings</strong></td>
       <td valign="top"><a href="#appsettings">AppSettings</a></td>
-      <td>Retrieves the current B2B Quotes app configuration settings.</td>
+      <td>Retrieves the current configuration settings of the B2B Quotes app.</td>
     </tr>
     <tr>
       <td colspan="2" valign="top"><strong>getQuoteEnabledForUser</strong></td>
@@ -131,7 +131,7 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>getQuote</strong></td>
       <td valign="top"><a href="#quote">Quote</a></td>
-      <td>Retrieves a specific quote by its ID.</td>
+      <td>Retrieves a specific quote by ID.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">id</td>
@@ -141,27 +141,27 @@ classDiagram
     <tr>
       <td colspan="2" valign="top"><strong>getQuotes</strong></td>
       <td valign="top"><a href="#quotes">Quotes</a></td>
-      <td>Retrieves a paginated list of quotes and saved carts with optional filtering.</td>
+      <td>Retrieves a paginated list of quotes and saved carts with optional filters.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">organization</td>
       <td valign="top">[String]</td>
-      <td>Filter quotes and saved carts by organization IDs.</td>
+      <td>Filters quotes and saved carts by organization IDs.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">costCenter</td>
       <td valign="top">[String]</td>
-      <td>Filter quotes and saved carts by cost center IDs.</td>
+      <td>Filters quotes and saved carts by cost center IDs.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">status</td>
       <td valign="top">[String]</td>
-      <td>Filter by status: READY, PENDING, REVISED, DECLINED, EXPIRED, or PLACED.</td>
+      <td>Filters by status: READY, PENDING, REVISED, DECLINED, EXPIRED, or PLACED.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">search</td>
       <td valign="top">String</td>
-      <td>Search quotes and saved carts by reference name.</td>
+      <td>Searches quotes and saved carts by reference name.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">page</td>
@@ -176,7 +176,7 @@ classDiagram
     <tr>
       <td colspan="2" align="right" valign="top">sortOrder</td>
       <td valign="top">String</td>
-      <td>Sort direction (ASC or DESC).</td>
+      <td>Specifies the sort direction (ASC or DESC).</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">sortedBy</td>
@@ -206,7 +206,7 @@ classDiagram
     <tr>
       <td colspan="2" align="right" valign="top">sortOrder</td>
       <td valign="top">String</td>
-      <td>Sort direction (ASC or DESC).</td>
+      <td>Specifies the sort direction (ASC or DESC).</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">sortedBy</td>
@@ -284,7 +284,7 @@ classDiagram
     <tr>
       <td colspan="2" align="right" valign="top">id</td>
       <td valign="top">String</td>
-      <td>ID of the quote to apply.</td>
+      <td>ID of the quote to be applied.</td>
     </tr>
     <tr>
       <td colspan="2" align="right" valign="top">orderFormId</td>
@@ -299,7 +299,7 @@ classDiagram
     <tr>
       <td colspan="2" align="right" valign="top">orderFormId</td>
       <td valign="top">String</td>
-      <td>ID of the order form to clear.</td>
+      <td>ID of the order form to be cleared.</td>
     </tr>
     <tr>
       <td colspan="2" valign="top"><strong>saveAppSettings</strong></td>
@@ -309,14 +309,14 @@ classDiagram
     <tr>
       <td colspan="2" align="right" valign="top">input</td>
       <td valign="top"><a href="#appsettingsinput">AppSettingsInput</a>!</td>
-      <td>New settings configuration to save.</td>
+      <td>New configuration to be saved.</td>
     </tr>
   </tbody>
 </table>
 
 ## Schema description
 
->⚠️ Arguments must be provided by the user. Required fields are marked with an exclamation mark (`!`).
+> ⚠️ Arguments must be provided by the user. Required fields are marked with an exclamation mark (`!`).
 
 ### AppSettings
 
@@ -332,7 +332,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>adminSetup</strong></td>
       <td valign="top"><a href="#adminsetup">AdminSetup</a></td>
-      <td>Configuration settings for the B2B Quotes administration.</td>
+      <td>Configuration settings for the B2B Quotes admin.</td>
     </tr>
   </tbody>
 </table>
@@ -354,12 +354,12 @@ classDiagram
     <tr>
       <td valign="top"><strong>cartLifeSpan</strong></td>
       <td valign="top">Int</td>
-      <td>Default expiration period in days for quotes and saved carts. Minimum value is 1 day.</td>
+      <td>Default expiration period in days for quotes and saved carts. The minimum value is 1 day.</td>
     </tr>
     <tr>
       <td valign="top"><strong>quotesManagedBy</strong></td>
       <td valign="top"><a href="#quotesmanagedby">QuotesManagedBy</a></td>
-      <td>Defines who has permission to manage quotes (marketplace administrators or individual sellers).</td>
+      <td>Defines who has permission to manage quotes (marketplace admins or individual sellers).</td>
     </tr>
   </tbody>
 </table>
@@ -380,7 +380,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>cartLifeSpan</strong></td>
       <td valign="top">Int</td>
-      <td>Default expiration period in days for quotes and saved carts. Minimum value is 1 day.</td>
+      <td>Default expiration period in days for quotes and saved carts. The minimum value is 1 day.</td>
     </tr>
     <tr>
       <td valign="top"><strong>quotesManagedBy</strong></td>
@@ -411,7 +411,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>pagination</strong></td>
       <td valign="top"><a href="#pagination">Pagination</a></td>
-      <td>Pagination information for the quotes list.</td>
+      <td>Pagination details for the quotes list.</td>
     </tr>
   </tbody>
 </table>
@@ -462,7 +462,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>lastUpdate</strong></td>
       <td valign="top">String</td>
-      <td>Date when the quote or saved cart was updated for the last time.</td>
+      <td>Date of the last time when the quote or saved cart was updated.</td>
     </tr>
     <tr>
       <td valign="top"><strong>updateHistory</strong></td>
@@ -477,18 +477,18 @@ classDiagram
     <tr>
       <td valign="top"><strong>subtotal</strong></td>
       <td valign="top">Float</td>
-      <td>Total price of all items, including any discounts offered by sales representatives.</td>
+      <td>Total price of all items, including any discounts offered by sales associates.</td>
     </tr>
     <tr>
       <td valign="top"><strong>status</strong></td>
       <td valign="top">String</td>
       <td>
-        Current status of the quote. The possible values are:
+        Current status of the quote. Possible values are:        
         <ul>
-          <li>READY (ready to place order)</li>
+          <li>READY (ready to place the order)</li>
           <li>PENDING (waiting for review)</li>
           <li>REVISED (waiting for additional review)</li>
-          <li>DECLINED (cannot be used)</li>
+          <li>DECLINED (can't be used)</li>
           <li>EXPIRED (past expiration date)</li>
           <li>PLACED (already used)</li>
         </ul>
@@ -517,7 +517,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>viewedBySales</strong></td>
       <td valign="top">Boolean</td>
-      <td>Indicates if a sales representative has viewed the quote or saved cart.</td>
+      <td>Indicates if a sales associate has viewed the quote or saved cart.</td>
     </tr>
     <tr>
       <td valign="top"><strong>viewedByCustomer</strong></td>
@@ -574,7 +574,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>subtotal</strong></td>
       <td valign="top">Float</td>
-      <td>Total price of all items, including any discounts offered by sales representatives.</td>
+      <td>Total price of all items, including any discounts offered by sales associates.</td>
     </tr>
     <tr>
       <td valign="top"><strong>note</strong></td>
@@ -584,7 +584,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>sendToSalesRep</strong></td>
       <td valign="top">Boolean</td>
-      <td>When true, creates a quote with PENDING status for sales review. When false, creates a saved cart with READY status.</td>
+      <td>If true, creates a quote with PENDING status for sales review. If false, creates a saved cart with READY status.</td>
     </tr>
   </tbody>
 </table>
@@ -610,7 +610,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>role</strong></td>
       <td valign="top">String</td>
-      <td>Role of the user who made the update (e.g., sales representative, organization buyer).</td>
+      <td>Role of the user who made the update (such as sales associate or organization buyer).</td>
     </tr>
     <tr>
       <td valign="top"><strong>date</strong></td>
@@ -646,7 +646,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>name</strong></td>
       <td valign="top">String</td>
-      <td>Name of the product.</td>
+      <td>Product name.</td>
     </tr>
     <tr>
       <td valign="top"><strong>skuName</strong></td>
@@ -671,17 +671,17 @@ classDiagram
     <tr>
       <td valign="top"><strong>price</strong></td>
       <td valign="top">Float</td>
-      <td>Original price of the product before any discounts.</td>
+      <td>Original product price before any discounts.</td>
     </tr>
     <tr>
       <td valign="top"><strong>quantity</strong></td>
       <td valign="top">Int</td>
-      <td>Quantity of items.</td>
+      <td>Number of items.</td>
     </tr>
     <tr>
       <td valign="top"><strong>sellingPrice</strong></td>
       <td valign="top">Float</td>
-      <td>Price of the product including any discounts offered by sales representatives.</td>
+      <td>Product price including any discounts offered by sales associates.</td>
     </tr>
   </tbody>
 </table>
@@ -702,7 +702,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>id</strong></td>
       <td valign="top">String</td>
-      <td>Unique identifier of the quote to update.</td>
+      <td>Unique identifier of the quote to be updated.</td>
     </tr>
     <tr>
       <td valign="top"><strong>items</strong></td>
@@ -717,7 +717,7 @@ classDiagram
     <tr>
       <td valign="top"><strong>note</strong></td>
       <td valign="top">String</td>
-      <td>Optional comment or instruction that will appear in the quote's update history.</td>
+      <td>Optional comment or instruction that will be displayed in the quote's update history.</td>
     </tr>
     <tr>
       <td valign="top"><strong>decline</strong></td>
@@ -783,17 +783,17 @@ classDiagram
     <tr>
       <td valign="top"><strong>price</strong></td>
       <td valign="top">Float</td>
-      <td>Original price of the product before any discounts.</td>
+      <td>Original product price before any discounts.</td>
     </tr>
     <tr>
       <td valign="top"><strong>quantity</strong></td>
       <td valign="top">Int</td>
-      <td>Quantity of items.</td>
+      <td>Number of items.</td>
     </tr>
     <tr>
       <td valign="top"><strong>sellingPrice</strong></td>
       <td valign="top">Float</td>
-      <td>Price of the product including any discounts offered by sales representatives.</td>
+      <td>Product price including any discounts offered by sales associates.</td>
     </tr>
     <tr>
       <td valign="top"><strong>seller</strong></td>
@@ -850,7 +850,7 @@ classDiagram
   <tbody>
     <tr>
       <td valign="top"><strong>MARKETPLACE</strong></td>
-      <td>Quotes are managed by the marketplace administrators.</td>
+      <td>Quotes are managed by the marketplace admins.</td>
     </tr>
     <tr>
       <td valign="top"><strong>SELLER</strong></td>
