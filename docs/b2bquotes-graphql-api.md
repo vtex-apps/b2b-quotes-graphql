@@ -483,7 +483,7 @@ classDiagram
       <td valign="top"><strong>status</strong></td>
       <td valign="top">String</td>
       <td>
-        Current status of the quote. Possible values are:        
+        Current status of the quote. Possible values are:
         <ul>
           <li>READY (ready to place the order)</li>
           <li>PENDING (waiting for review)</li>
