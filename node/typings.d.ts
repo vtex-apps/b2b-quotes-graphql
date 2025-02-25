@@ -2,6 +2,7 @@ interface Quote {
   id: string
   referenceName: string
   creatorEmail: string
+  creatorName: string
   creatorRole: string
   creationDate: string
   expirationDate: string
@@ -15,6 +16,11 @@ interface Quote {
   viewedBySales: boolean
   viewedByCustomer: boolean
   salesChannel: string | null
+  seller?: string | null
+  sellerName?: string | null
+  parentQuote?: string | null
+  hasChildren?: boolean | null
+  childrenQuantity?: number | null
 }
 
 interface QuoteUpdate {
@@ -106,7 +112,51 @@ interface Settings {
     hasCron?: boolean
     cronExpression?: string
     cronWorkspace?: string
+    quotesManagedBy?: string
   }
   schemaVersion: string
+  schemaHash: string | null
   templateHash: string | null
+}
+
+interface SessionData {
+  namespaces: {
+    profile: {
+      id: { value: string }
+      email: { value: string }
+      firstName: { value: string }
+      lastName: { value: string }
+    }
+    account: {
+      accountName: { value: string }
+    }
+    'storefront-permissions': {
+      organization: { value: string }
+      costcenter: { value: string }
+    }
+  }
+}
+
+interface SellerQuoteInput {
+  items: QuoteItem[]
+  subtotal: number
+  seller: string
+  sellerName: string
+}
+
+type SellerQuoteMap = Record<string, SellerQuoteInput>
+
+interface VerifyQuoteSettingsResponse {
+  receiveQuotes: boolean
+}
+
+interface SellerQuoteNotifyInput {
+  quoteId: string
+  marketplaceAccount: string
+  creationDate: string
+}
+
+interface Seller {
+  id: string
+  name: string
 }

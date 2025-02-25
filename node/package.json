@@ -1,6 +1,6 @@
 {
   "name": "vtex.b2b-quotes-graphql",
-  "version": "2.6.4",
+  "version": "2.9.2",
   "dependencies": {
     "co-body": "^6.0.0",
     "graphql": "^14.0.0",
@@ -9,7 +9,7 @@
     "ramda": "^0.25.0",
     "atob": "^2.1.2",
     "axios": "0.27.2",
-    "@vtex/api": "6.47.0"
+    "@vtex/api": "6.48.0"
   },
   "devDependencies": {
     "@types/atob": "^2.1.2",

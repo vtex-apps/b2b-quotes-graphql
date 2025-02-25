@@ -13,9 +13,11 @@ export const defaultSettings: Settings = {
   adminSetup: {
     allowManualPrice: false,
     cartLifeSpan: 30,
+    quotesManagedBy: 'MARKETPLACE',
     hasCron: false,
   },
   schemaVersion: '',
+  schemaHash: null,
   templateHash: null,
 }
 
@@ -179,6 +181,7 @@ const initializeSchema = async (settings: Settings, ctx: Context) => {
     })
 
     settings.schemaVersion = SCHEMA_VERSION
+    settings.schemaHash = toHash(schema)
   } catch (error) {
     if (error.response.status >= 400) {
       settings.schemaVersion = ''
@@ -290,12 +293,22 @@ const checkInitializations = async ({
     }
   }
 
-  if (settings?.schemaVersion !== SCHEMA_VERSION) {
+  const currentSchemaHash = toHash(schema)
+
+  if (
+    settings?.schemaVersion !== SCHEMA_VERSION ||
+    settings?.schemaHash !== currentSchemaHash
+  ) {
     const oldSchemaVersion = settings?.schemaVersion
+    const oldSchemaHash = settings?.schemaHash
 
     settings = await initializeSchema(settings, ctx)
 
-    if (settings.schemaVersion !== oldSchemaVersion) {
+    const mustUpdateSettings =
+      settings.schemaVersion !== oldSchemaVersion ||
+      settings.schemaHash !== oldSchemaHash
+
+    if (mustUpdateSettings) {
       changed = true
     }
   }
@@ -345,7 +358,10 @@ export const checkConfig = async (ctx: Context) => {
     return null
   }
 
-  if (!settings?.adminSetup?.cartLifeSpan) {
+  if (
+    !settings?.adminSetup?.cartLifeSpan &&
+    !settings?.adminSetup?.quotesManagedBy
+  ) {
     settings = defaultSettings
     changed = true
   }

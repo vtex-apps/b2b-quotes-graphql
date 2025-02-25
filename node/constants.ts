@@ -9,6 +9,7 @@ export const QUOTE_FIELDS = [
   'id',
   'referenceName',
   'creatorEmail',
+  'creatorName',
   'creatorRole',
   'creationDate',
   'expirationDate',
@@ -22,6 +23,11 @@ export const QUOTE_FIELDS = [
   'viewedBySales',
   'viewedByCustomer',
   'salesChannel',
+  'seller',
+  'sellerName',
+  'parentQuote',
+  'hasChildren',
+  'childrenQuantity',
 ]
 
 export const routes = {
@@ -84,6 +90,10 @@ export const schema = {
       title: 'Creator Email',
       type: 'string',
     },
+    creatorName: {
+      title: 'Creator Name',
+      type: ['null', 'string'],
+    },
     creatorRole: {
       title: 'Creator Role',
       type: 'string',
@@ -134,21 +144,48 @@ export const schema = {
       title: 'Viewed by Sales',
       type: 'boolean',
     },
+    seller: {
+      title: 'Seller',
+      type: ['null', 'string'],
+    },
+    sellerName: {
+      title: 'Seller Name',
+      type: ['null', 'string'],
+    },
+    parentQuote: {
+      title: 'Parent quote',
+      type: ['null', 'string'],
+    },
+    hasChildren: {
+      title: 'Has children',
+      type: ['null', 'boolean'],
+    },
+    childrenQuantity: {
+      title: 'Children Quantity',
+      type: ['null', 'number'],
+    },
   },
   'v-cache': false,
   'v-default-fields': [
     'referenceName',
     'creatorEmail',
+    'creatorName',
     'creationDate',
     'expirationDate',
     'lastUpdate',
     'items',
     'subtotal',
     'status',
+    'seller',
+    'sellerName',
+    'parentQuote',
+    'hasChildren',
+    'childrenQuantity',
   ],
   'v-immediate-indexing': true,
   'v-indexed': [
     'creatorEmail',
+    'creatorName',
     'creationDate',
     'expirationDate',
     'lastUpdate',
@@ -157,5 +194,9 @@ export const schema = {
     'organization',
     'costCenter',
     'salesChannel',
+    'seller',
+    'sellerName',
+    'parentQuote',
+    'hasChildren',
   ],
 }

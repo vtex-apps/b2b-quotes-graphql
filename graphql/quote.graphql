@@ -44,6 +44,7 @@ type Quote {
   id: String
   referenceName: String
   creatorEmail: String
+  creatorName: String
   creatorRole: String
   creationDate: String
   expirationDate: String
@@ -59,6 +60,11 @@ type Quote {
   viewedBySales: Boolean
   viewedByCustomer: Boolean
   salesChannel: String
+  seller: String
+  sellerName: String
+  parentQuote: String
+  hasChildren: Boolean
+  childrenQuantity: Int
 }
 
 type QuoteUpdate {
@@ -81,4 +87,9 @@ type QuoteItem {
   quantity: Int
   sellingPrice: Float
   seller: String
+}
+
+type Seller {
+  id: String
+  name: String
 }

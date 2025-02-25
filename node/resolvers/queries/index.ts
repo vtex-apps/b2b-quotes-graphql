@@ -1,5 +1,3 @@
-import { checkConfig } from '../utils/checkConfig'
-import GraphQLError from '../../utils/GraphQLError'
 import {
   APP_NAME,
   B2B_USER_DATA_ENTITY,
@@ -8,6 +6,9 @@ import {
   QUOTE_FIELDS,
   SCHEMA_VERSION,
 } from '../../constants'
+import GraphQLError from '../../utils/GraphQLError'
+import { checkConfig } from '../utils/checkConfig'
+import SellerQuotesController from '../utils/sellerQuotesController'
 
 // This function checks if given email is an user part of a buyer org.
 export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
@@ -57,7 +58,8 @@ const buildWhereStatement = async ({
   userCostCenterId: string
   userSalesChannel?: string
 }) => {
-  const whereArray = []
+  // only the main quotes must be fetched
+  const whereArray = ['(parentQuote is null)']
 
   // if user only has permission to access their organization's quotes,
   // hard-code that organization into the masterdata search
@@ -290,6 +292,40 @@ export const Query = {
       throw new GraphQLError(error)
     }
   },
+  getChildrenQuotes: async (
+    _: any,
+    {
+      id,
+      sortOrder,
+      sortedBy,
+    }: {
+      id: string
+      sortOrder: string
+      sortedBy: string
+    },
+    ctx: Context
+  ) => {
+    const {
+      vtex: { logger },
+    } = ctx
+
+    await checkConfig(ctx)
+    const sellerQuotesController = new SellerQuotesController(ctx)
+
+    try {
+      return await sellerQuotesController.getAllChildrenQuotes(
+        id,
+        sortOrder,
+        sortedBy
+      )
+    } catch (error) {
+      logger.error({
+        error,
+        message: 'getQuotes-error',
+      })
+      throw new GraphQLError(error)
+    }
+  },
   getQuoteEnabledForUser: async (
     _: any,
     { email }: { email: string },
@@ -334,6 +370,40 @@ export const Query = {
       return null
     }
 
+    if (settings && !settings?.adminSetup.quotesManagedBy) {
+      settings.adminSetup.quotesManagedBy = 'MARKETPLACE'
+    }
+
     return settings
+  },
+  checkSellerQuotes: async (
+    _: void,
+    { sellers }: { sellers: string[] },
+    ctx: Context
+  ) => {
+    // guarantee at least the marketplace seller to use your name if necessary
+    const allSellers = sellers.filter((seller) => seller !== '1')
+
+    allSellers.push('1')
+
+    const verifiedSellers = await Promise.all(
+      allSellers.map(async (seller) => {
+        if (seller === '1') {
+          return ctx.clients.seller.getSeller(seller)
+        }
+
+        const verifyResponse = await ctx.clients.sellerQuotes
+          .verifyQuoteSettings(seller)
+          .catch(() => null)
+
+        if (verifyResponse?.receiveQuotes) {
+          return ctx.clients.seller.getSeller(seller)
+        }
+
+        return null
+      })
+    )
+
+    return verifiedSellers.filter(Boolean)
   },
 }
