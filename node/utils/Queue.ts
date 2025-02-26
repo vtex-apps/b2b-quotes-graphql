@@ -2,7 +2,17 @@ import { QUOTE_DATA_ENTITY, QUOTE_FIELDS, SCHEMA_VERSION } from '../constants'
 import { NO_REPLY_EMAIL } from './index'
 import message from './message'
 
-const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
+const processItem = ({
+  ctx,
+  item,
+  baseDate,
+  index,
+}: {
+  ctx: Context
+  item: Quote
+  baseDate: Date
+  index: number
+}) => {
   const {
     clients: { masterdata },
     vtex: { logger },
@@ -15,7 +25,10 @@ const processItem = ({ ctx, item }: { ctx: Context; item: Quote }) => {
   }
 
   const status = 'expired'
-  const now = new Date()
+  const now = new Date(baseDate)
+
+  now.setSeconds(now.getSeconds() + index)
+
   const nowISO = now.toISOString()
 
   const users = updateHistory.map((anUpdate) => anUpdate.email)
@@ -86,8 +99,8 @@ export const processQueue = (ctx: Context) => {
           message: `expirationQueue-foundItems`,
         })
 
-        data.forEach((item) => {
-          processItem({ ctx, item })
+        data.forEach((item, index) => {
+          processItem({ ctx, item, index, baseDate: now })
         })
       }
     })

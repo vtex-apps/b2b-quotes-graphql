@@ -6,12 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Prevent identical lastUpdate at expiration quotes queue
+
 
 ## [2.9.2] - 2025-02-24
 
 ### Added
 
 - Add GraphQL API documentation
+- Prevent identical lastUpdate at expiration quotes queue
 
 ## [2.9.1] - 2025-02-06
 ### Fixed
@@ -52,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Process splitting quote by seller if it accepts to manage quotes
 - Notify seller with quote reference data as payload
 - Provides a route for seller get a quote by id at marketplace
+
 
 ## [2.6.4] - 2024-10-31
 
