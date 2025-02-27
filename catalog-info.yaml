@@ -5,6 +5,7 @@ metadata:
   annotations:
     github.com/project-slug: vtex-apps/b2b-quotes-graphql
     backstage.io/techdocs-ref: dir:./
+    vtex.com/application-id: 3EX7MZ5V
 spec:
   system: b2b-suite
   type: backend-api
