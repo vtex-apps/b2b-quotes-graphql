@@ -500,9 +500,8 @@ export const Mutation = {
 
       const { salesChannel } = mainQuote
 
-      // TODO -> CHECK IF STATUS IS READY BEFORE CLEARING
       // CLEAR CURRENT CART
-      if (orderFormId !== 'default-order-form' && mainQuote.status == 'ready') {
+      if (orderFormId !== 'default-order-form') {
         await hub.post(
           routes.clearCart(account, orderFormId),
           {
@@ -523,31 +522,28 @@ export const Mutation = {
       }
 
       await checkAndCreateQuotesConfig(ctx)
-     
-      if (mainQuote.status == 'ready'){
-        await hub
-          .put(
-            routes.addCustomData({
-              account,
-              orderFormId,
-              appId: APP_NAME,
-              property: 'quoteId',
-            }),
-            {
-              value: id,
-            },
-            useHeaders
-          )
-          .then((res: any) => {
-            return res.data
+      await hub
+        .put(
+          routes.addCustomData({
+            account,
+            orderFormId,
+            appId: APP_NAME,
+            property: 'quoteId',
+          }),
+          {
+            value: id,
+          },
+          useHeaders
+        )
+        .then((res: any) => {
+          return res.data
+        })
+        .catch((error) =>
+          logger.error({
+            error,
+            message: 'useQuote-addCustomDataError',
           })
-          .catch((error) =>
-            logger.error({
-              error,
-              message: 'useQuote-addCustomDataError',
-            })
-          )
-      }
+        )
 
       const salesChannelQueryString = salesChannel ? `?sc=${salesChannel}` : ''
 
@@ -570,48 +566,46 @@ export const Mutation = {
           return res.data
         })
 
-      if (mainQuote.status == 'ready'){
-        const { items: itemsAdded } = data
-        const sellingPriceMap = indexBy(
-          prop('id'),
-          map(
-            (item: any) => ({
-              id: item.id,
-              price: item.sellingPrice,
-            }),
-            items
-          )
+      const { items: itemsAdded } = data
+
+      const sellingPriceMap = indexBy(
+        prop('id'),
+        map(
+          (item: any) => ({
+            id: item.id,
+            price: item.sellingPrice,
+          }),
+          items
         )
-  
-        const orderItems: any[] = []
-  
-        itemsAdded.forEach((item: any, key: number) => {
-          orderItems.push({
-            index: key,
-            price: prop(item.id, sellingPriceMap).price,
-            quantity: null,
-          })
+      )
+
+      const orderItems: any[] = []
+
+      itemsAdded.forEach((item: any, key: number) => {
+        orderItems.push({
+          index: key,
+          price: prop(item.id, sellingPriceMap).price,
+          quantity: null,
         })
-  
-        await hub.post(
-          routes.addPriceToItems(account, orderFormId),
-          {
-            orderItems,
-          },
-          useHeaders
-        )
-  
-        for (const quote of quotes) {
-          const metricParams: UseQuoteMetricsParams = {
-            quote,
-            orderFormId,
-            account,
-            userEmail: sessionData?.namespaces?.profile?.email?.value,
-          }
-  
-          sendUseQuoteMetric(ctx, metricParams)
+      })
+
+      await hub.post(
+        routes.addPriceToItems(account, orderFormId),
+        {
+          orderItems,
+        },
+        useHeaders
+      )
+
+      for (const quote of quotes) {
+        const metricParams: UseQuoteMetricsParams = {
+          quote,
+          orderFormId,
+          account,
+          userEmail: sessionData?.namespaces?.profile?.email?.value,
         }
 
+        sendUseQuoteMetric(ctx, metricParams)
       }
     } catch (error) {
       logger.error({
