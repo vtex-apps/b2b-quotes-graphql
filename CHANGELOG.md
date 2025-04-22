@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed token validation directives
+
 ## [2.9.3] - 2025-02-26
 ### Fixed
 - Prevent identical lastUpdate at expiration quotes queue
