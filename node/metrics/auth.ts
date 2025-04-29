@@ -13,6 +13,7 @@ export interface AuthAuditMetric {
   hasAdminToken?: boolean
   hasValidAdminToken?: boolean
   hasStoreToken?: boolean
+  hasCurrentValidStoreToken?: boolean
   hasValidStoreToken?: boolean
   hasApiToken?: boolean
   hasValidApiToken?: boolean
@@ -27,11 +28,11 @@ export class AuthMetric implements Metric {
   public readonly fields: AuthAuditMetric
   public readonly name = B2B_METRIC_NAME
 
-  constructor(account: string, fields: AuthAuditMetric) {
+  constructor(account: string, fields: AuthAuditMetric, description?: string) {
     this.account = account
     this.fields = fields
     this.kind = 'b2b-quotes-graphql-auth-event'
-    this.description = 'Auth metric event'
+    this.description = description ?? 'Auth metric event'
   }
 }
 
