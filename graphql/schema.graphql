@@ -6,7 +6,7 @@ type Query {
     @auditAccess
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   getQuote(id: String): Quote
-    @auditAccess
+    @validateStoreUserAccess
     @withPermissions
     @withSession
     @withSegment
@@ -21,7 +21,7 @@ type Query {
     sortOrder: String = "DESC"
     sortedBy: String = "lastUpdate"
   ): Quotes
-    @auditAccess
+    @validateStoreUserAccess
     @withPermissions
     @withSession
     @withSegment
@@ -31,13 +31,13 @@ type Query {
     sortOrder: String = "DESC"
     sortedBy: String = "lastUpdate"
   ): [Quote]
-    @auditAccess
+    @validateStoreUserAccess
     @withPermissions
     @withSession
     @withSegment
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
   checkSellerQuotes(sellers: [String!]!): [Seller!]!
-    @auditAccess
+    @validateStoreUserAccess
     @withPermissions
     @withSession
     @withSegment
@@ -46,21 +46,20 @@ type Query {
 
 type Mutation {
   createQuote(input: QuoteInput!): String
-    @auditAccess
+    @validateStoreUserAccess
     @withPermissions
     @withSession
     @withSegment
   updateQuote(input: QuoteUpdateInput!): String
-    @auditAccess
+    @validateStoreUserAccess
     @withPermissions
     @withSession
   useQuote(id: String, orderFormId: String): String
-    @auditAccess
+    @validateStoreUserAccess
     @withPermissions
     @withSession
-  clearCart(orderFormId: String): String @auditAccess @checkUserAccess
+  clearCart(orderFormId: String): String @validateStoreUserAccess
   saveAppSettings(input: AppSettingsInput!): AppSettings
-    @auditAccess
+    @validateAdminUserAccess
     @cacheControl(scope: PRIVATE)
-    @checkAdminAccess
 }
