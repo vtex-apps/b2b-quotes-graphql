@@ -52,7 +52,7 @@ export const QUERIES = {
 
 export default class StorefrontPermissions extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
-    super('vtex.storefront-permissions@2.x', ctx, options)
+    super('vtex.storefront-permissions@3.x', ctx, options)
   }
 
   public checkUserPermission = async (): Promise<any> => {
@@ -91,8 +91,8 @@ export default class StorefrontPermissions extends AppGraphQLClient {
   private readonly getPersistedQuery = () => {
     return {
       persistedQuery: {
-        provider: 'vtex.storefront-permissions@2.x',
-        sender: 'vtex.b2b-quotes@2.x',
+        provider: 'vtex.storefront-permissions@3.x',
+        sender: 'vtex.b2b-quotes@3.x',
       },
     }
   }

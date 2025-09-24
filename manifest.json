@@ -10,8 +10,8 @@
     "docs": "0.x"
   },
   "dependencies": {
-    "vtex.storefront-permissions": "2.x",
-    "vtex.b2b-organizations-graphql": "1.x",
+    "vtex.storefront-permissions": "3.x",
+    "vtex.b2b-organizations-graphql": "2.x",
     "vtex.orders-broadcast": "0.x"
   },
   "registries": [

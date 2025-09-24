@@ -5,7 +5,7 @@ import { getTokenToHeader } from './index'
 
 export default class Organizations extends AppGraphQLClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
-    super('vtex.b2b-organizations-graphql@1.x', ctx, options)
+    super('vtex.b2b-organizations-graphql@2.x', ctx, options)
   }
 
   public getOrganizationById = async (id: string): Promise<any> => {
@@ -45,8 +45,8 @@ export default class Organizations extends AppGraphQLClient {
   private readonly getPersistedQuery = () => {
     return {
       persistedQuery: {
-        provider: 'vtex.b2b-organizations-graphql@1.x',
-        sender: 'vtex.b2b-quotes@2.x',
+        provider: 'vtex.b2b-organizations-graphql@2.x',
+        sender: 'vtex.b2b-quotes@3.x',
       },
     }
   }
