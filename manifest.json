@@ -64,6 +64,12 @@
       "name": "send-message"
     },
     {
+      "name": "buyer_organization_view"
+    },
+    {
+      "name": "buyer_organization_edit"
+    },
+    {
       "name": "outbound-access",
       "attrs": {
         "host": "portal.vtexcommercestable.com.br",
