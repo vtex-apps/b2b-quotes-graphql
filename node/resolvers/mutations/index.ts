@@ -1,4 +1,4 @@
-import { indexBy, map, prop } from 'ramda'
+import { map, groupBy, values } from 'ramda'
 
 import {
   APP_NAME,
@@ -547,19 +547,29 @@ export const Mutation = {
 
       const salesChannelQueryString = salesChannel ? `?sc=${salesChannel}` : ''
 
+      const groupedByIdSeller = groupBy(
+        (item) => `${item.id}-${item.seller || '1'}`,
+        items
+      )
+
+      const mergedItems = values(
+        map(
+          (group) => ({
+            id: group[0].id,
+            seller: group[0].seller || '1',
+            quantity: group.reduce((sum, i) => sum + i.quantity, 0),
+          }),
+          groupedByIdSeller
+        )
+      )
+
       // ADD ITEMS TO CART
       const data = await hub
         .post(
           `${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`,
           {
             expectedOrderFormSections: ['items'],
-            orderItems: items.map((item) => {
-              return {
-                id: item.id,
-                quantity: item.quantity,
-                seller: item.seller || '1',
-              }
-            }),
+            orderItems: mergedItems,
           }
         )
         .then((res: any) => {
@@ -568,24 +578,23 @@ export const Mutation = {
 
       const { items: itemsAdded } = data
 
-      const sellingPriceMap = indexBy(
-        prop('id'),
-        map(
-          (item: any) => ({
-            id: item.id,
-            price: item.sellingPrice,
-          }),
-          items
-        )
-      )
+      const sellingPriceMap = items.reduce((acc : any, item : any, index : any) => {
+        acc[String(index + 1)] = {
+          id: item.id,
+          price: item.sellingPrice,
+          quantity: item.quantity
+        }
+        return acc
+      }, {})
 
       const orderItems: any[] = []
 
-      itemsAdded.forEach((item: any, key: number) => {
+      itemsAdded.forEach((_ : any, key: number) => {
+        const sellingData = sellingPriceMap[String(key + 1)]
         orderItems.push({
           index: key,
-          price: prop(item.id, sellingPriceMap).price,
-          quantity: null,
+          price: sellingData?.price,
+          quantity: sellingData?.quantity,
         })
       })
 
