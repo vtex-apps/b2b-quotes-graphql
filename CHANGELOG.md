@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Reduce get permission error log level to warn
+
 ## [4.0.1] - 2025-10-06
 
 ### Added
