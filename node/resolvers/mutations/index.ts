@@ -578,19 +578,24 @@ export const Mutation = {
 
       const { items: itemsAdded } = data
 
-      const sellingPriceMap = items.reduce((acc : any, item : any, index : any) => {
-        acc[String(index + 1)] = {
-          id: item.id,
-          price: item.sellingPrice,
-          quantity: item.quantity
-        }
-        return acc
-      }, {})
+      const sellingPriceMap = items.reduce(
+        (acc: any, item: any, index: any) => {
+          acc[String(Number(index) + 1)] = {
+            id: item.id,
+            price: item.sellingPrice,
+            quantity: item.quantity,
+          }
+
+          return acc
+        },
+        {}
+      )
 
       const orderItems: any[] = []
 
-      itemsAdded.forEach((_ : any, key: number) => {
+      itemsAdded.forEach((_item: any, key: number) => {
         const sellingData = sellingPriceMap[String(key + 1)]
+
         orderItems.push({
           index: key,
           price: sellingData?.price,
