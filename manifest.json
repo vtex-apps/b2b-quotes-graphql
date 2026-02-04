@@ -1,7 +1,7 @@
 {
   "vendor": "vtex",
   "name": "b2b-quotes-graphql",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "title": "B2B Quotes GraphQL",
   "description": "Backend for the B2B Quotes & Carts app",
   "builders": {
