@@ -64,6 +64,9 @@
       "name": "send-message"
     },
     {
+      "name": "view-seller"
+    },
+    {
       "name": "outbound-access",
       "attrs": {
         "host": "portal.vtexcommercestable.com.br",
