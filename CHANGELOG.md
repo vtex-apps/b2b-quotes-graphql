@@ -10,11 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Quote subtotal calculation now correctly applies unitMultiplier to item prices, fixing discrepancies between quote subtotal and cart total when using quotes with items that have unitMultiplier values different from 1
+- Fixed pricing discrepancies when applying quotes with multiple lines of the same SKU at different prices. The system now calculates weighted average prices instead of using only the last price found, preventing issues where quoted prices didn't match cart totals
+- Fixed ORD024 error (invalid price precision) when applying quotes in stores using currencies without decimal places (e.g., CLP, JPY). The system now automatically detects currency precision via `storePreferencesData.currencyFormatInfo.currencyDecimalDigits` and rounds prices accordingly (multiples of 100 for 0-decimal currencies, normal rounding for currencies with decimals)
+- Fixed error when attempting to apply manual prices to gift items during quote application. Gift items are now properly skipped
 
 ### Added
 
 - Added unitMultiplier field to QuoteItem and QuoteItemInput GraphQL types
 - Added warning log when product unitMultiplier in catalog differs from the value saved in quote, helping identify catalog configuration issues
+- Added automatic currency-aware price rounding that adapts to store's currency configuration (CLP/JPY vs USD/BRL/EUR)
 
 ## [4.0.4] - 2026-02-04
 

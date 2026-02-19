@@ -578,23 +578,56 @@ export const Mutation = {
           return res.data
         })
 
-      const { items: itemsAdded } = data
+      const { items: itemsAdded, storePreferencesData } = data
 
-      // Create a map of prices by id-seller
+      // Determine currency precision (0 = no decimals like CLP, 2 = cents like USD/BRL)
+      const currencyDecimalDigits =
+        storePreferencesData?.currencyFormatInfo?.currencyDecimalDigits ?? 2
+
+      // Create a map of weighted average prices by id-seller
+      // This handles cases where the same SKU appears multiple times with different prices
       const sellingPriceMap = items.reduce((acc: any, item: any) => {
         const key = `${item.id}-${item.seller || '1'}`
 
-        acc[key] = {
-          sellingPrice: item.sellingPrice,
-          quoteUnitMultiplier: item.unitMultiplier ?? 1,
+        if (!acc[key]) {
+          acc[key] = {
+            totalValue: 0,
+            totalQuantity: 0,
+            quoteUnitMultiplier: item.unitMultiplier ?? 1,
+          }
         }
+
+        // Accumulate total value and quantity for weighted average calculation
+        acc[key].totalValue += item.sellingPrice * item.quantity
+        acc[key].totalQuantity += item.quantity
 
         return acc
       }, {})
 
+      // Calculate weighted average price for each item
+      Object.keys(sellingPriceMap).forEach((key) => {
+        const data = sellingPriceMap[key]
+        // Calculate weighted average
+        const averagePrice = data.totalValue / data.totalQuantity
+
+        // For currencies without decimal places (e.g., CLP with decimalDigits=0),
+        // round to nearest 100 to avoid VTEX ORD024 error
+        // For currencies with decimals (e.g., USD, BRL), just round normally
+        if (currencyDecimalDigits === 0) {
+          data.sellingPrice = Math.round(averagePrice / 100) * 100
+        } else {
+          data.sellingPrice = Math.round(averagePrice)
+        }
+      })
+
       const orderItems: any[] = []
 
       itemsAdded.forEach((item: any, key: number) => {
+        // Skip gift items - they cannot have manual prices
+        if (item.isGift === true) {
+          return
+        }
+
         const itemKey = `${item.id}-${item.seller || '1'}`
         const priceData = sellingPriceMap[itemKey]
 
