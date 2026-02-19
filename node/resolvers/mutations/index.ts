@@ -164,7 +164,9 @@ export const Mutation = {
 
         if (parentQuoteItems.length) {
           const marketplaceSubtotal = parentQuoteItems.reduce(
-            (acc, item) => acc + item.sellingPrice * item.quantity,
+            (acc, item) =>
+              acc +
+              item.sellingPrice * item.quantity * (item.unitMultiplier ?? 1),
             0
           )
 
@@ -578,29 +580,50 @@ export const Mutation = {
 
       const { items: itemsAdded } = data
 
-      const sellingPriceMap = items.reduce(
-        (acc: any, item: any, index: any) => {
-          acc[String(Number(index) + 1)] = {
-            id: item.id,
-            price: item.sellingPrice,
-            quantity: item.quantity,
-          }
+      // Create a map of prices by id-seller
+      const sellingPriceMap = items.reduce((acc: any, item: any) => {
+        const key = `${item.id}-${item.seller || '1'}`
 
-          return acc
-        },
-        {}
-      )
+        acc[key] = {
+          sellingPrice: item.sellingPrice,
+          quoteUnitMultiplier: item.unitMultiplier ?? 1,
+        }
+
+        return acc
+      }, {})
 
       const orderItems: any[] = []
 
-      itemsAdded.forEach((_item: any, key: number) => {
-        const sellingData = sellingPriceMap[String(key + 1)]
+      itemsAdded.forEach((item: any, key: number) => {
+        const itemKey = `${item.id}-${item.seller || '1'}`
+        const priceData = sellingPriceMap[itemKey]
 
-        orderItems.push({
-          index: key,
-          price: sellingData?.price,
-          quantity: sellingData?.quantity,
-        })
+        if (priceData !== undefined) {
+          const catalogUnitMultiplier = item.unitMultiplier ?? 1
+          const quoteUnitMultiplier = priceData.quoteUnitMultiplier
+
+          // Log warning if unitMultiplier changed in catalog
+          if (catalogUnitMultiplier !== quoteUnitMultiplier) {
+            logger.warn({
+              message: 'useQuote-unitMultiplierMismatch',
+              itemId: item.id,
+              itemName: item.name,
+              seller: item.seller || '1',
+              catalogUnitMultiplier,
+              quoteUnitMultiplier,
+              warning:
+                'Product unitMultiplier in catalog differs from quote. Please verify catalog configuration.',
+            })
+          }
+
+          // Use sellingPrice from quote as base price (without multiplier applied)
+          // VTEX OrderForm will NOT multiply by unitMultiplier when manualPrice is set
+          orderItems.push({
+            index: key,
+            price: priceData.sellingPrice,
+            quantity: item.quantity,
+          })
+        }
       })
 
       await hub.post(

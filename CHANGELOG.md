@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Quote subtotal calculation now correctly applies unitMultiplier to item prices, fixing discrepancies between quote subtotal and cart total when using quotes with items that have unitMultiplier values different from 1
+
+### Added
+
+- Added unitMultiplier field to QuoteItem and QuoteItemInput GraphQL types
+- Added warning log when product unitMultiplier in catalog differs from the value saved in quote, helping identify catalog configuration issues
+
 ## [4.0.4] - 2026-02-04
 
 ### Added

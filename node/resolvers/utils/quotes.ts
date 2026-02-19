@@ -47,7 +47,8 @@ export async function splitItemsBySeller({
   }
 
   quoteBySeller[seller].items.push(item)
-  quoteBySeller[seller].subtotal += item.sellingPrice * item.quantity
+  quoteBySeller[seller].subtotal +=
+    item.sellingPrice * item.quantity * (item.unitMultiplier ?? 1)
 
   await next()
 
