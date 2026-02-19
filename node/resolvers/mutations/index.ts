@@ -593,7 +593,7 @@ export const Mutation = {
 
       const orderItems: any[] = []
 
-      itemsAdded.forEach((_item: any, key: number) => {
+      itemsAdded.filter((item: any) => !item.isGift).forEach((_item: any, key: number) => {
         const sellingData = sellingPriceMap[String(key + 1)]
 
         orderItems.push({
