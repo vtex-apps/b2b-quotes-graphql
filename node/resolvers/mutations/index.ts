@@ -592,12 +592,16 @@ export const Mutation = {
       )
 
       const orderItems: any[] = []
+      let quoteItemIndex = 0
 
-      itemsAdded.filter((item: any) => !item.isGift).forEach((_item: any, key: number) => {
-        const sellingData = sellingPriceMap[String(key + 1)]
+      itemsAdded.forEach((item: any, realIndex: number) => {
+        if (item.isGift) return
+
+        quoteItemIndex++
+        const sellingData = sellingPriceMap[String(quoteItemIndex)]
 
         orderItems.push({
-          index: key,
+          index: realIndex,
           price: sellingData?.price,
           quantity: sellingData?.quantity,
         })
