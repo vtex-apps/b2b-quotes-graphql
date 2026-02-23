@@ -2,6 +2,8 @@
 
 This article provides a reference guide to the B2B Quotes GraphQL API, with details about the available queries and mutations for the [B2B Quotes app](https://developers.vtex.com/docs/apps/vtex.b2b-quotes). The API supports quote management and related configurations in a B2B environment, enabling users to retrieve, create, and update quotes, as well as manage application settings and permissions.
 
+> ⚠️ This specification applies to B2B Suite only.
+
 ## Schema overview
 
 ### Query
