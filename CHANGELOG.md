@@ -8,7 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [4.0.5] - 2026-03-06
+### Fixed
+
+- Fix `itemsAdded` to skip giftItems when creating the order items.
+
+### Changed
+
+- Added unitMultiplier to QuoteItem schema and typings
+- Fixed subtotal calculations to include unitMultiplier
+- Updated quote application logic to support unitMultiplier
 
 ### Changed
 - Update documentation version.

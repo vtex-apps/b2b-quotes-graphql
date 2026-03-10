@@ -43,6 +43,7 @@ interface QuoteItem {
   quantity: number
   sellingPrice: number
   seller: string
+  unitMultiplier?: number
 }
 
 interface ReqContext {
