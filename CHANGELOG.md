@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.6] - 2026-03-10
+
 ### Fixed
 
 - Fix `itemsAdded` to skip giftItems when creating the order items.
