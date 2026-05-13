@@ -6,6 +6,8 @@ metadata:
     github.com/project-slug: vtex-apps/b2b-quotes-graphql
     backstage.io/techdocs-ref: dir:./
     vtex.com/application-id: 3EX7MZ5V
+    vtex.com/sdd-check-skip: 'true'
+    vtex.com/sdd-check-skip-reason: This repository is part of the B2B Suite package.
 spec:
   system: b2b-suite
   type: backend-api
