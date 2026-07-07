@@ -3,6 +3,7 @@ import { toHash } from '../../utils'
 import {
   APP_NAME,
   CRON_EXPRESSION,
+  getSettingsVBaseKey,
   QUOTE_DATA_ENTITY,
   SCHEMA_VERSION,
   routes,
@@ -348,7 +349,11 @@ export const checkConfig = async (ctx: Context) => {
   const currTemplateHash = toHash(templates)
 
   try {
-    settings = await vbase.getJSON<Settings | null>(APP_NAME, 'settings', true)
+    settings = await vbase.getJSON<Settings | null>(
+      APP_NAME,
+      getSettingsVBaseKey(),
+      true
+    )
   } catch (error) {
     logger.error({
       error,
@@ -377,7 +382,7 @@ export const checkConfig = async (ctx: Context) => {
   changed = initializationResult.changed
 
   if (changed) {
-    await vbase.saveJSON(APP_NAME, 'settings', settings)
+    await vbase.saveJSON(APP_NAME, getSettingsVBaseKey(), settings)
   }
 
   await checkAndCreateQuotesConfig(ctx)

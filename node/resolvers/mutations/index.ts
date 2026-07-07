@@ -2,6 +2,7 @@ import { map, groupBy, values } from 'ramda'
 
 import {
   APP_NAME,
+  getSettingsVBaseKey,
   QUOTE_DATA_ENTITY,
   QUOTE_FIELDS,
   routes,
@@ -657,7 +658,7 @@ export const Mutation = {
     try {
       settings = await vbase.getJSON<Settings | null>(
         APP_NAME,
-        'settings',
+        getSettingsVBaseKey(),
         true
       )
     } catch (error) {
@@ -684,7 +685,7 @@ export const Mutation = {
     }
 
     try {
-      await vbase.saveJSON(APP_NAME, 'settings', newSettings)
+      await vbase.saveJSON(APP_NAME, getSettingsVBaseKey(), newSettings)
     } catch (error) {
       logger.error({
         error,

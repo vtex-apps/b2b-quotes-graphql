@@ -1,5 +1,5 @@
 export const APP_NAME = 'b2b-quotes-graphql'
-export const SCHEMA_VERSION = 'v1.3'
+export const SCHEMA_VERSION = 'v4.3'
 export const QUOTE_DATA_ENTITY = 'quotes'
 export const B2B_USER_SCHEMA_VERSION = 'v0.1.2'
 export const B2B_USER_DATA_ENTITY = 'b2b_users'
@@ -74,6 +74,16 @@ export const routes = {
 export const getAppId = (): string => {
   return process.env.VTEX_APP_ID ?? ''
 }
+
+export const getAppMajorVersion = (): string => {
+  const appId = getAppId()
+  const version = appId.split('@')[1] ?? ''
+
+  return version.split('.')[0] || '0'
+}
+
+export const getSettingsVBaseKey = (): string =>
+  `settings-v${getAppMajorVersion()}`
 
 export const schema = {
   properties: {
