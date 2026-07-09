@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Scoped Master Data schema sync hash storage per app major version (`settings-v{N}` VBase key) to prevent infinite sync loops when multiple app majors coexist in the same account
+- Bumped quotes Master Data schema version to align with app major 4 (`SCHEMA_VERSION` → `v4.3`)
+
 ## [4.0.6] - 2026-03-10
 
 ### Fixed

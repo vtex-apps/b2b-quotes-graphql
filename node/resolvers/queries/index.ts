@@ -2,6 +2,7 @@ import {
   APP_NAME,
   B2B_USER_DATA_ENTITY,
   B2B_USER_SCHEMA_VERSION,
+  getSettingsVBaseKey,
   QUOTE_DATA_ENTITY,
   QUOTE_FIELDS,
   SCHEMA_VERSION,
@@ -358,7 +359,7 @@ export const Query = {
     try {
       settings = await vbase.getJSON<Settings | null>(
         APP_NAME,
-        'settings',
+        getSettingsVBaseKey(),
         true
       )
     } catch (error) {
