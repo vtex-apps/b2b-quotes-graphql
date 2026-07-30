@@ -5,6 +5,7 @@ import AnalyticsClient from './analytics'
 import RequestHub from '../utils/Hub'
 import Identity from '../utils/Identity'
 import { Scheduler } from '../utils/Scheduler'
+import Catalog from './catalog'
 import Checkout from './checkout'
 import LMClient from './LMClient'
 import MailClient from './email'
@@ -51,6 +52,10 @@ export class Clients extends IOClients {
 
   public get vtexId() {
     return this.getOrSet('vtexId', VtexId)
+  }
+
+  public get catalog() {
+    return this.getOrSet('catalog', Catalog)
   }
 
   public get checkout() {

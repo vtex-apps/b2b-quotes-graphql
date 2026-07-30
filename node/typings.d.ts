@@ -161,3 +161,26 @@ interface Seller {
   id: string
   name: string
 }
+
+interface CatalogCommertialOffer {
+  Price: number
+  ListPrice: number
+  // Signed price generated per search request, valid for 30 minutes. Only
+  // returned by accounts where the Pricing Fallback feature flag is enabled.
+  PriceToken?: string
+}
+
+interface CatalogSeller {
+  sellerId: string
+  commertialOffer: CatalogCommertialOffer
+}
+
+interface CatalogItem {
+  itemId: string
+  sellers: CatalogSeller[]
+}
+
+interface CatalogProduct {
+  productId: string
+  items: CatalogItem[]
+}

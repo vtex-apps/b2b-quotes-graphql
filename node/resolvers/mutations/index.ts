@@ -24,6 +24,7 @@ import {
   checkQuoteStatus,
   checkSession,
 } from '../utils/checkPermissions'
+import { getPriceTokens, priceTokenKey } from '../utils/priceTokens'
 import {
   createItemComparator,
   createQuoteObject,
@@ -563,13 +564,25 @@ export const Mutation = {
         )
       )
 
+      // GET SIGNED PRICES SO CHECKOUT CAN ADD THE ITEMS EVEN IF PRICING IS DOWN
+      const priceTokens = await getPriceTokens(ctx, {
+        skuIds: mergedItems.map((item) => item.id),
+        salesChannel,
+      })
+
+      const orderItemsToAdd = mergedItems.map((item) => {
+        const priceToken = priceTokens[priceTokenKey(item.id, item.seller)]
+
+        return priceToken ? { ...item, priceToken } : item
+      })
+
       // ADD ITEMS TO CART
       const data = await hub
         .post(
           `${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`,
           {
             expectedOrderFormSections: ['items'],
-            orderItems: mergedItems,
+            orderItems: orderItemsToAdd,
           }
         )
         .then((res: any) => {

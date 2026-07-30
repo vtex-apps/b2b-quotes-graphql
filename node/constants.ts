@@ -5,6 +5,9 @@ export const B2B_USER_SCHEMA_VERSION = 'v0.1.2'
 export const B2B_USER_DATA_ENTITY = 'b2b_users'
 export const CRON_EXPRESSION = '0 */12 * * *'
 
+// The catalog search API returns at most 50 products per request.
+export const CATALOG_SEARCH_PAGE_SIZE = 50
+
 export const QUOTE_FIELDS = [
   'id',
   'referenceName',
