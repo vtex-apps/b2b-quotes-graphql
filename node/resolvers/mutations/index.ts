@@ -576,6 +576,16 @@ export const Mutation = {
         return priceToken ? { ...item, priceToken } : item
       })
 
+      // Tracks how often the fallback is actually available, so the rollout of
+      // the feature flag on the search API can be followed from this app too.
+      logger.info({
+        message: 'useQuote-priceTokenCoverage',
+        itemsWithPriceToken: orderItemsToAdd.filter(
+          (item) => 'priceToken' in item
+        ).length,
+        totalItems: orderItemsToAdd.length,
+      })
+
       // ADD ITEMS TO CART
       const data = await hub
         .post(

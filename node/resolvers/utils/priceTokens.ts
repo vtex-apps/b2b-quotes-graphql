@@ -16,10 +16,14 @@ export const priceTokenKey = (skuId: string, seller: string) =>
  * `PUT /orderForm/{id}/items/update`, so the token never changes the final
  * price charged.
  *
- * The token is optional by design: the field is behind a feature flag on the
- * search API, and this whole call is a resilience improvement. Any failure is
- * logged and ignored, keeping the previous behavior of adding items without a
- * token.
+ * The token is optional by design: it is only used when Pricing is down, it is
+ * behind a feature flag on the search API, and this whole call is a resilience
+ * improvement. Any failure is logged and ignored, keeping the previous behavior
+ * of adding items without a token.
+ *
+ * The raw search API returns the field as `PriceToken` (PascalCase), while
+ * `search-graphql` exposes it as `priceToken`. Both are accepted so the reader
+ * does not depend on which one answers the request.
  */
 export const getPriceTokens = async (
   ctx: Context,
@@ -46,7 +50,9 @@ export const getPriceTokens = async (
     for (const product of products) {
       for (const item of product?.items ?? []) {
         for (const seller of item?.sellers ?? []) {
-          const priceToken = seller?.commertialOffer?.PriceToken
+          const { commertialOffer } = seller ?? {}
+          const priceToken =
+            commertialOffer?.PriceToken ?? commertialOffer?.priceToken
 
           if (priceToken) {
             priceTokens[priceTokenKey(item.itemId, seller.sellerId)] =

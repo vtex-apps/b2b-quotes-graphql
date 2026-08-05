@@ -167,7 +167,10 @@ interface CatalogCommertialOffer {
   ListPrice: number
   // Signed price generated per search request, valid for 30 minutes. Only
   // returned by accounts where the Pricing Fallback feature flag is enabled.
+  // The raw search API returns it as `PriceToken`; `search-graphql` exposes the
+  // same value as `priceToken`.
   PriceToken?: string
+  priceToken?: string
 }
 
 interface CatalogSeller {
