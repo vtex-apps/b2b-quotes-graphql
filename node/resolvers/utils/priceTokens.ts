@@ -21,9 +21,17 @@ export const priceTokenKey = (skuId: string, seller: string) =>
  * improvement. Any failure is logged and ignored, keeping the previous behavior
  * of adding items without a token.
  *
- * The raw search API returns the field as `PriceToken` (PascalCase), while
- * `search-graphql` exposes it as `priceToken`. Both are accepted so the reader
- * does not depend on which one answers the request.
+ * The field is `PriceToken` (PascalCase) here because this reads the Catalog
+ * Search REST API. Do not switch to the camelCase `priceToken`: that name only
+ * exists in `vtex.search-graphql`, which maps the REST field - reading
+ * PascalCase from a search-graphql query is a known source of bugs.
+ *
+ * The token is a JWT signed by `session/data-signer`, valid for 30 minutes,
+ * whose claims bind the price to `{ id, seller, accountName, salesChannel }` -
+ * hence the sales channel must be forwarded to the search, so the token is not
+ * bound to a channel other than the one the item is added on. When the quote
+ * carries no sales channel, the search resolves it to the account default, the
+ * same one `addToCart` falls back to.
  */
 export const getPriceTokens = async (
   ctx: Context,
@@ -50,9 +58,7 @@ export const getPriceTokens = async (
     for (const product of products) {
       for (const item of product?.items ?? []) {
         for (const seller of item?.sellers ?? []) {
-          const { commertialOffer } = seller ?? {}
-          const priceToken =
-            commertialOffer?.PriceToken ?? commertialOffer?.priceToken
+          const priceToken = seller?.commertialOffer?.PriceToken
 
           if (priceToken) {
             priceTokens[priceTokenKey(item.itemId, seller.sellerId)] =

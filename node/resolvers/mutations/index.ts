@@ -576,14 +576,17 @@ export const Mutation = {
         return priceToken ? { ...item, priceToken } : item
       })
 
-      // Tracks how often the fallback is actually available, so the rollout of
-      // the feature flag on the search API can be followed from this app too.
+      // Neither the addToCart response nor the orderForm reports whether the
+      // token was received or used, and the fallback only kicks in during a
+      // Pricing outage - so this is the only practical evidence that the tokens
+      // are getting through, and how the feature flag rollout is followed here.
       logger.info({
         message: 'useQuote-priceTokenCoverage',
         itemsWithPriceToken: orderItemsToAdd.filter(
           (item) => 'priceToken' in item
         ).length,
         totalItems: orderItemsToAdd.length,
+        salesChannel,
       })
 
       // ADD ITEMS TO CART
