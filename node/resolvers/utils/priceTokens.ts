@@ -61,8 +61,9 @@ export const getPriceTokens = async (
           const priceToken = seller?.commertialOffer?.PriceToken
 
           if (priceToken) {
-            priceTokens[priceTokenKey(item.itemId, seller.sellerId)] =
-              priceToken
+            priceTokens[
+              priceTokenKey(item.itemId, seller.sellerId)
+            ] = priceToken
           }
         }
       }
