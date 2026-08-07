@@ -50,6 +50,8 @@ export const routes = {
     }`,
   addPriceToItems: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/update`,
+  // Must be called with PATCH: POST does not honor `priceToken` and is no
+  // longer meant to be used.
   addToCart: (account: string, orderFormId: string) =>
     `${routes.orderForm(account)}/${orderFormId}/items/`,
   baseUrl: (account: string) =>

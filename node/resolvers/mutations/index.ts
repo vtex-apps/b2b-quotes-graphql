@@ -590,17 +590,17 @@ export const Mutation = {
       })
 
       // ADD ITEMS TO CART
-      const data = await hub
-        .post(
-          `${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`,
-          {
-            expectedOrderFormSections: ['items'],
-            orderItems: orderItemsToAdd,
-          }
-        )
-        .then((res: any) => {
-          return res.data
-        })
+      // PATCH, not POST: only PATCH honors `priceToken`, and POST is no longer
+      // meant to be used. Omitting `index` on the items is what makes PATCH add
+      // them as new items instead of updating existing ones - which is the
+      // intent here, since the cart was cleared above.
+      const data = await hub.patch(
+        `${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`,
+        {
+          expectedOrderFormSections: ['items'],
+          orderItems: orderItemsToAdd,
+        }
+      )
 
       const { items: itemsAdded } = data
 

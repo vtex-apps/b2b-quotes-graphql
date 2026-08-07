@@ -37,6 +37,14 @@ export default class RequestHub extends ExternalClient {
     })
   }
 
+  // Unlike the methods above there is no `patchRaw`, so this resolves to the
+  // response body instead of the whole response.
+  public patch(url: string, data: any, headers?: any) {
+    return this.http.patch<any>(url, data, {
+      headers,
+    })
+  }
+
   public delete(url: string) {
     return this.http.delete(url)
   }

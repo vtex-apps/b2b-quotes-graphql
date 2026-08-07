@@ -11,7 +11,7 @@ export const priceTokenKey = (skuId: string, seller: string) =>
  * The `useQuote` flow applies items stored in Master Data, so there is no live
  * search to reuse a token from - we have to ask the catalog search for a fresh
  * one at the moment the quote is applied. Sending the token to
- * `POST /orderForm/{id}/items` lets Checkout add the items even when Pricing is
+ * `PATCH /orderForm/{id}/items` lets Checkout add the items even when Pricing is
  * unavailable. The negotiated price is still applied afterwards through
  * `PUT /orderForm/{id}/items/update`, so the token never changes the final
  * price charged.
