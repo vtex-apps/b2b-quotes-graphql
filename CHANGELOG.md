@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- [B2BTEAM-3733] `useQuote` now adds the quote items to the cart with `PATCH /orderForm/{id}/items` instead of `POST`. Only `PATCH` honors `priceToken`, and `POST` is no longer meant to be used. Items are still added as new items, since no `index` is sent.
+- [B2BTEAM-3733] `useQuote` now uses `PATCH /orderForm/{id}/items` for both cart operations: adding the quote items (no `index` sent) and overwriting their price with the negotiated one (`index` sent, replacing `POST /orderForm/{id}/items/update`). `PATCH` is the only route that honors `priceToken`, and the previous routes are no longer meant to be used. The price payload now also carries `id` and `seller`, which `PATCH` requires.
 
 ## [4.0.6] - 2026-03-10
 

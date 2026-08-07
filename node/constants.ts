@@ -48,12 +48,12 @@ export const routes = {
     `${routes.orderForm(account)}/${orderFormId}/customData/${appId}/${
       property ?? ''
     }`,
-  addPriceToItems: (account: string, orderFormId: string) =>
-    `${routes.orderForm(account)}/${orderFormId}/items/update`,
-  // Must be called with PATCH: POST does not honor `priceToken` and is no
-  // longer meant to be used.
-  addToCart: (account: string, orderFormId: string) =>
-    `${routes.orderForm(account)}/${orderFormId}/items/`,
+  // Always call this with PATCH. It both adds items (no `index` sent) and
+  // changes their price (`index` sent), and it is the only route that honors
+  // `priceToken` - neither `POST /items` nor `POST /items/update` does, and
+  // they are no longer meant to be used.
+  cartItems: (account: string, orderFormId: string) =>
+    `${routes.orderForm(account)}/${orderFormId}/items`,
   baseUrl: (account: string) =>
     `http://${account}.vtexcommercestable.com.br/api`,
   checkoutConfig: (account: string) =>

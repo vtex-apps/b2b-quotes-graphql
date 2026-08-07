@@ -11,10 +11,10 @@ export const priceTokenKey = (skuId: string, seller: string) =>
  * The `useQuote` flow applies items stored in Master Data, so there is no live
  * search to reuse a token from - we have to ask the catalog search for a fresh
  * one at the moment the quote is applied. Sending the token to
- * `PATCH /orderForm/{id}/items` lets Checkout add the items even when Pricing is
- * unavailable. The negotiated price is still applied afterwards through
- * `PUT /orderForm/{id}/items/update`, so the token never changes the final
- * price charged.
+ * `PATCH /orderForm/{id}/items` lets Checkout build the cart even when Pricing
+ * is unavailable. `useQuote` calls that route twice: once without `index` to add
+ * the items, then again with `index` to overwrite the price with the negotiated
+ * one - so the token never changes the final price charged.
  *
  * The token is optional by design: it is only used when Pricing is down, it is
  * behind a feature flag on the search API, and this whole call is a resilience

@@ -595,7 +595,7 @@ export const Mutation = {
       // them as new items instead of updating existing ones - which is the
       // intent here, since the cart was cleared above.
       const data = await hub.patch(
-        `${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`,
+        `${routes.cartItems(account, orderFormId)}${salesChannelQueryString}`,
         {
           expectedOrderFormSections: ['items'],
           orderItems: orderItemsToAdd,
@@ -625,16 +625,27 @@ export const Mutation = {
 
         quoteItemIndex++
         const sellingData = sellingPriceMap[String(quoteItemIndex)]
+        const priceToken = priceTokens[priceTokenKey(item.id, item.seller)]
 
         orderItems.push({
+          // `id` and `seller` are required by PATCH /items, unlike the
+          // POST /items/update this call used to make.
+          id: item.id,
+          seller: item.seller,
           index: realIndex,
           price: sellingData?.price,
           quantity: sellingData?.quantity,
+          ...(priceToken ? { priceToken } : {}),
         })
       })
 
-      await hub.post(
-        routes.addPriceToItems(account, orderFormId),
+      // APPLY THE NEGOTIATED PRICE
+      // Sending `index` is what makes PATCH change the existing items instead
+      // of adding new ones. This replaced POST /items/update, which does not
+      // honor `priceToken` either - so during a Pricing outage the price
+      // override would have failed even with the items already in the cart.
+      await hub.patch(
+        routes.cartItems(account, orderFormId),
         {
           orderItems,
         },
