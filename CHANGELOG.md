@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [B2BTEAM-3733] Send `priceToken` (signed price) when adding the quote items to the cart in `useQuote`, so Checkout can still build the cart while Pricing is unavailable. The token is fetched from the catalog search at the moment the quote is applied and is optional: if it is not available, items are added exactly as before.
+
+### Changed
+
+- [B2BTEAM-3733] `useQuote` now uses `PATCH /orderForm/{id}/items` for both cart operations: adding the quote items (no `index` sent) and overwriting their price with the negotiated one (`index` sent, replacing `POST /orderForm/{id}/items/update`). `PATCH` is the only route that honors `priceToken`, and the previous routes are no longer meant to be used. The price payload now also carries `id` and `seller`, which `PATCH` requires.
+
 ## [4.0.6] - 2026-03-10
 
 ### Fixed

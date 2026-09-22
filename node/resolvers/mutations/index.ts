@@ -24,6 +24,7 @@ import {
   checkQuoteStatus,
   checkSession,
 } from '../utils/checkPermissions'
+import { getPriceTokens, priceTokenKey } from '../utils/priceTokens'
 import {
   createItemComparator,
   createQuoteObject,
@@ -563,18 +564,43 @@ export const Mutation = {
         )
       )
 
+      // GET SIGNED PRICES SO CHECKOUT CAN ADD THE ITEMS EVEN IF PRICING IS DOWN
+      const priceTokens = await getPriceTokens(ctx, {
+        skuIds: mergedItems.map((item) => item.id),
+        salesChannel,
+      })
+
+      const orderItemsToAdd = mergedItems.map((item) => {
+        const priceToken = priceTokens[priceTokenKey(item.id, item.seller)]
+
+        return priceToken ? { ...item, priceToken } : item
+      })
+
+      // Neither the addToCart response nor the orderForm reports whether the
+      // token was received or used, and the fallback only kicks in during a
+      // Pricing outage - so this is the only practical evidence that the tokens
+      // are getting through, and how the feature flag rollout is followed here.
+      logger.info({
+        message: 'useQuote-priceTokenCoverage',
+        itemsWithPriceToken: orderItemsToAdd.filter(
+          (item) => 'priceToken' in item
+        ).length,
+        totalItems: orderItemsToAdd.length,
+        salesChannel,
+      })
+
       // ADD ITEMS TO CART
-      const data = await hub
-        .post(
-          `${routes.addToCart(account, orderFormId)}${salesChannelQueryString}`,
-          {
-            expectedOrderFormSections: ['items'],
-            orderItems: mergedItems,
-          }
-        )
-        .then((res: any) => {
-          return res.data
-        })
+      // PATCH, not POST: only PATCH honors `priceToken`, and POST is no longer
+      // meant to be used. Omitting `index` on the items is what makes PATCH add
+      // them as new items instead of updating existing ones - which is the
+      // intent here, since the cart was cleared above.
+      const data = await hub.patch(
+        `${routes.cartItems(account, orderFormId)}${salesChannelQueryString}`,
+        {
+          expectedOrderFormSections: ['items'],
+          orderItems: orderItemsToAdd,
+        }
+      )
 
       const { items: itemsAdded } = data
 
@@ -599,16 +625,27 @@ export const Mutation = {
 
         quoteItemIndex++
         const sellingData = sellingPriceMap[String(quoteItemIndex)]
+        const priceToken = priceTokens[priceTokenKey(item.id, item.seller)]
 
         orderItems.push({
+          // `id` and `seller` are required by PATCH /items, unlike the
+          // POST /items/update this call used to make.
+          id: item.id,
+          seller: item.seller,
           index: realIndex,
           price: sellingData?.price,
           quantity: sellingData?.quantity,
+          ...(priceToken ? { priceToken } : {}),
         })
       })
 
-      await hub.post(
-        routes.addPriceToItems(account, orderFormId),
+      // APPLY THE NEGOTIATED PRICE
+      // Sending `index` is what makes PATCH change the existing items instead
+      // of adding new ones. This replaced POST /items/update, which does not
+      // honor `priceToken` either - so during a Pricing outage the price
+      // override would have failed even with the items already in the cart.
+      await hub.patch(
+        routes.cartItems(account, orderFormId),
         {
           orderItems,
         },
