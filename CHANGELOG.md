@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.7] - 2026-09-22
+
 ### Added
 
 - [B2BTEAM-3733] Send `priceToken` (signed price) when adding the quote items to the cart in `useQuote`, so Checkout can still build the cart while Pricing is unavailable. The token is fetched from the catalog search at the moment the quote is applied and is optional: if it is not available, items are added exactly as before.
