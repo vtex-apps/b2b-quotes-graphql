@@ -52,4 +52,19 @@ export default class Catalog extends JanusClient {
       }
     )
   }
+
+  /**
+   * Fetches a SKU by id. The response carries `UnitMultiplier` for that SKU.
+   */
+  public getSkuById(skuId: string) {
+    return this.http.get<CatalogSku>(
+      `/api/catalog/pvt/stockkeepingunit/${skuId}`,
+      {
+        headers: {
+          VtexIdclientAutCookie: this.context.authToken,
+        },
+        metric: 'catalog-get-sku-by-id',
+      }
+    )
+  }
 }

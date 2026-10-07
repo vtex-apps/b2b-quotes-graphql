@@ -182,6 +182,11 @@ interface CatalogItem {
   sellers: CatalogSeller[]
 }
 
+interface CatalogSku {
+  Id?: number
+  UnitMultiplier?: number
+}
+
 interface CatalogProduct {
   productId: string
   items: CatalogItem[]
