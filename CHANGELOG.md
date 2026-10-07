@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [B2BTEAM-4234] `getUnitMultiplier` reads `UnitMultiplier` from `GET /api/catalog/pvt/stockkeepingunit/{skuId}`, the same route as `vtex.catalog-graphql`. The catalog call uses this app's token. `@validateStoreUserAccess` checks the caller before the resolver runs, and the app declares the `ViewProduct` policy so that token can read the SKU.
+
 ## [4.0.7] - 2026-09-22
 
 ### Added

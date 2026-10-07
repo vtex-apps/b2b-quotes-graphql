@@ -9,6 +9,7 @@ import {
 import GraphQLError from '../../utils/GraphQLError'
 import { checkConfig } from '../utils/checkConfig'
 import SellerQuotesController from '../utils/sellerQuotesController'
+import { getUnitMultiplier } from './getUnitMultiplier'
 
 // This function checks if given email is an user part of a buyer org.
 export const isUserPartOfBuyerOrg = async (email: string, ctx: Context) => {
@@ -406,4 +407,5 @@ export const Query = {
 
     return verifiedSellers.filter(Boolean)
   },
+  getUnitMultiplier,
 }

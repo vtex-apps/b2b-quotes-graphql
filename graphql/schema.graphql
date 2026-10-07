@@ -42,6 +42,9 @@ type Query {
     @withSession
     @withSegment
     @cacheControl(scope: PRIVATE, maxAge: SHORT)
+  getUnitMultiplier(skuId: ID!): Float
+    @validateStoreUserAccess
+    @cacheControl(scope: PRIVATE, maxAge: SHORT)
 }
 
 type Mutation {

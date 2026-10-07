@@ -73,6 +73,9 @@
       "name": "view-seller"
     },
     {
+      "name": "ViewProduct"
+    },
+    {
       "name": "outbound-access",
       "attrs": {
         "host": "portal.vtexcommercestable.com.br",
@@ -91,6 +94,13 @@
       "attrs": {
         "host": "{{account}}.vtexcommercestable.com.br",
         "path": "/api/catalog_system/pub/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "{{account}}.vtexcommercestable.com.br",
+        "path": "/api/catalog/pvt/stockkeepingunit/*"
       }
     },
     {
